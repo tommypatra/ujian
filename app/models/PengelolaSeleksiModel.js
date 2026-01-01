@@ -1,20 +1,32 @@
-// app/models/SeleksiModel.js
+// app/models/PengelolaSeleksiModel.js
 
-class SeleksiModel {
+class PengelolaSeleksiModel {
     //setup tabel
-    static tableName = `seleksis`;
-    static tableAlias = ``;
-    static selectFields = `id,nama, waktu_mulai, waktu_selesai, prefix_nomor_peserta, prefix_login, keterangan ,created_at,updated_at`;
-    static joinTables = ``;
-    static countColumns = `COUNT(*)`;
-    static orderBy = `ORDER BY waktu_mulai DESC, nama ASC`;
-    static insertColumns = `nama, waktu_mulai, waktu_selesai, prefix_nomor_peserta, prefix_login, keterangan, created_at`;
-    static insertValues  = `?,?,?,?,?,?,?`;
+    static tableName = 'pengelola_seleksis';
+    static tableAlias = 'ps';
+    static selectFields = `
+        ps.id,
+        ps.user_id,
+        ps.seleksi_id,
+        u.name as nama_user,
+        s.nama as nama_seleksi,
+        ps.jabatan,
+        ps.created_at,
+        ps.updated_at
+    `;    
+    static joinTables = `        
+        LEFT JOIN users u ON u.id = ps.user_id
+        LEFT JOIN seleksis s ON s.id = ps.seleksi_id
+    `;
+    static countColumns = `COUNT(DISTINCT ps.id)`;
+    static orderBy = `ORDER BY s.waktu_mulai DESC, ps.jabatan ASC, u.name ASC`;
+    static insertColumns = `user_id, seleksi_id, created_at`;
+    static insertValues  = `?, ?, ?`;
     /**
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['id'];
+        const allowedFields = ['ps.id','ps.user_id','ps.seleksi_id'];
 
         if (!allowedFields.includes(field)) {
             throw new Error('Field tidak diizinkan');
@@ -33,9 +45,36 @@ class SeleksiModel {
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'id', id);
+        return this.findByKey(conn, 'ps.id', id);
     }
 
+
+    /**
+     * cari berdasarkan id
+     */
+    static async findAllByUserId(conn, user_id) {
+        const [rows] = await conn.query(
+            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
+            WHERE ps.user_id = ?`,
+            [user_id]
+        );
+
+        return rows;
+    }
+
+    /**
+     * cari berdasarkan id
+     */
+    static async findAllBySeleksiId(conn, seleksi_id) {
+        const [rows] = await conn.query(
+            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
+            WHERE ps.seleksi_id = ?`,
+            [seleksi_id]
+        );
+
+        return rows;
+    }
+    
     /**
      * Ambil data (paged)
      */
@@ -73,12 +112,8 @@ class SeleksiModel {
             VALUES (${this.insertValues})
             `,
             [
-                data.nama,
-                data.waktu_mulai,
-                data.waktu_selesai,
-                data.prefix_nomor_peserta,
-                data.prefix_login,
-                data.keterangan,
+                data.user_id,
+                data.seleksi_id,
                 data.created_at
             ]
         );
@@ -93,35 +128,14 @@ class SeleksiModel {
         const fields = [];
         const values = [];
 
-
-        if (data.nama !== undefined) {
-            fields.push('nama = ?');
-            values.push(data.nama);
+        if (data.user_id !== undefined) {
+            fields.push('user_id = ?');
+            values.push(data.user_id);
         }
 
-        if (data.waktu_mulai !== undefined) {
-            fields.push('waktu_mulai = ?');
-            values.push(data.waktu_mulai);
-        }
-
-        if (data.waktu_selesai !== undefined) {
-            fields.push('waktu_selesai = ?');
-            values.push(data.waktu_selesai);
-        }
-
-        if (data.prefix_login !== undefined) {
-            fields.push('prefix_login = ?');
-            values.push(data.prefix_login);
-        }
-
-        if (data.prefix_nomor_peserta !== undefined) {
-            fields.push('prefix_nomor_peserta = ?');
-            values.push(data.prefix_nomor_peserta);
-        }
-
-        if (data.keterangan !== undefined) {
-            fields.push('keterangan = ?');
-            values.push(data.keterangan);
+        if (data.seleksi_id !== undefined) {
+            fields.push('seleksi_id = ?');
+            values.push(data.seleksi_id);
         }
 
         if (fields.length === 0) {
@@ -159,6 +173,22 @@ class SeleksiModel {
 
         return result.affectedRows;
     }
+
+    static async deleteByUserId(conn, userId) {
+        const [result] = await conn.query(
+            `DELETE FROM ${this.tableName} WHERE user_id = ?`,
+            [userId]
+        );
+        return result.affectedRows;
+    }
+
+    static async deleteBySeleksiId(conn, seleksiId) {
+        const [result] = await conn.query(
+            `DELETE FROM ${this.tableName} WHERE seleksi_id = ?`,
+            [seleksiId]
+        );
+        return result.affectedRows;
+    }
 }
 
-module.exports = SeleksiModel;
+module.exports = PengelolaSeleksiModel;
