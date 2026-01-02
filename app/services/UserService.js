@@ -3,6 +3,7 @@ const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const UserModel = require('../models/UserModel');
 const UserRoleModel = require('../models/UserRoleModel');
+const {pickFields} = require('../helpers/payloadHelper');
 
 class UserService {
 
@@ -14,13 +15,19 @@ class UserService {
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        let whereSql = '';
-        let params = [];
+ const where = [];
+        const params = [];
 
+        // search umum
         if (query.search) {
-            whereSql = `WHERE name LIKE ? OR email LIKE ?`;
-            params.push(`%${query.search}%`, `%${query.search}%`);
+            where.push(`(nama LIKE ? OR email LIKE ?)`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
         }
+
+        const whereSql = where.length
+            ? `WHERE ${where.join(' AND ')}`
+            : '';
 
         const conn = await db.getConnection();
         try {
@@ -64,14 +71,13 @@ class UserService {
         try {
             await conn.beginTransaction();
 
-            const hashedPassword = await bcrypt.hash(data.password, 10);
+            const payload = pickFields(data,UserModel.columns);
+            // transform business logic
+            if (payload.password) {
+                payload.password = await bcrypt.hash(payload.password, 10);
+            }
 
-            const userId = await UserModel.insert(conn, {
-                name: data.name,
-                email: data.email,
-                password: hashedPassword,
-                created_at: new Date()
-            });
+            const userId = await UserModel.insert(conn, payload);
 
             // role default (misal: pengguna = 2)
             await UserRoleModel.insert(conn, {
@@ -100,12 +106,10 @@ class UserService {
         try {
             await conn.beginTransaction();
 
-            const payload = {};
-
-            if (data.name !== undefined) payload.name = data.name;
-            if (data.email !== undefined) payload.email = data.email;
-            if (data.password !== undefined) {
-                payload.password = await bcrypt.hash(data.password, 10);
+            const payload = pickFields(data,UserModel.columns);
+            // transform business logic
+            if (payload.password) {
+                payload.password = await bcrypt.hash(payload.password, 10);
             }
 
             const affected = await UserModel.update(conn, id, payload);

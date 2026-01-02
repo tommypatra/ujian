@@ -1,27 +1,32 @@
-// app/models/UserModel.js
+// app/models/PengawasSeleksiModel.js
 const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 
-class UserModel {
+class PengawasSeleksiModel {
     //setup tabel
-    static tableName = `users`;
-    static tableAlias = ``;
-    static selectFields = `id,name,email,created_at,updated_at`;    
-    static selectAuthFields = `id,name,email,password,created_at,updated_at`;    
-    static joinTables = ``;
-    static countColumns = `COUNT(*)`;
-    static orderBy = `ORDER BY name ASC`;
+    static tableName = `pengawas_seleksis`;
+    static tableAlias = `ps`;
+    static selectFields = `
+    ps.id, ps.jadwal_id, ps.nama, ps.user_name, ps.created_at, ps.updated_at,
+    js.id, js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, 
+    js.status`;
+    static joinTables = `
+        LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+    `;
+    static countColumns = `COUNT(js.id)`;
+    static orderBy = `ORDER BY js.seleksi_id ASC, js.sesi ASC, js.tanggal ASC, js.jam_mulai ASC, js.lokasi_ujian, ps.nama`;
 
     static columns = [
-        'name', 
-        'email', 
-        'password', 
+        'jadwal_seleksi_id',
+        'nama',
+        'user_name',
+        'password'
     ];
 
     /**
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['id','name','email'];
+        const allowedFields = ['js.id','js.sesi'];
 
         if (!allowedFields.includes(field)) {
             throw new Error('Field tidak diizinkan');
@@ -40,18 +45,14 @@ class UserModel {
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'id', id);
+        return this.findByKey(conn, 'js.id', id);
     }
 
     /**
-     * cari berdasarkan email
+     * cari berdasarkan sesi
      */
-    static async findByEmail(conn, email) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.selectAuthFields} FROM ${this.tableName} WHERE email = ?`,
-            [email]
-        );
-        return row || null;
+    static async findBySesi(conn, sesi) {
+        return this.findByKey(conn, 'js.sesi', sesi);
     }
 
     /**
@@ -81,7 +82,7 @@ class UserModel {
         return row.total;
     }
 
-/**
+    /**
      * Insert baru
      */
     static async insert(conn, data) {
@@ -130,4 +131,4 @@ class UserModel {
     }
 }
 
-module.exports = UserModel;
+module.exports = PengawasSeleksiModel;

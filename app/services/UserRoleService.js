@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const UserRoleModel = require('../models/UserRoleModel');
 const UserModel = require('../models/UserModel');
 const RoleModel = require('../models/RoleModel');
+const {pickFields} = require('../helpers/payloadHelper');
 
 class UserRoleService {
 
@@ -15,13 +16,31 @@ class UserRoleService {
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        let whereSql = '';
-        let params = [];
+        const where = [];
+        const params = [];
 
+        // search umum
         if (query.search) {
-            whereSql = `WHERE r.role LIKE ? u.name LIKE ? OR u.email LIKE ?`;
-            params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
+            where.push(`(u.nama LIKE ? OR u.email LIKE ?)`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
         }
+
+        // filter by role_id
+        if (query.role_id) {
+            where.push(`(ur.role_id = ?)`);
+            params.push(parseInt(query.role_id));
+        }
+
+        // filter by role
+        if (query.role) {
+            where.push(`(r.role = ?)`);
+            params.push(query.role);
+        }
+
+        const whereSql = where.length
+            ? `WHERE ${where.join(' AND ')}`
+            : '';
 
         const conn = await db.getConnection();
         try {
@@ -75,11 +94,9 @@ class UserRoleService {
                 throw new Error('Role tidak ditemukan');
             }            
 
-            const UserRoleId = await UserRoleModel.insert(conn, {
-                user_id: data.user_id,
-                role_id: data.role_id,
-                created_at: new Date()
-            });
+            const payload = pickFields(data,UserRoleModel.columns);
+
+            const UserRoleId = await UserRoleModel.insert(conn, payload);
 
             await conn.commit();
 
@@ -100,24 +117,18 @@ class UserRoleService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const payload = {};
-
-            if (data.user_id !== undefined){ 
-                const user = await UserModel.findById(conn, data.user_id);
-                if (!user) {
-                    throw new Error('User tidak ditemukan');
-                }
-
-                payload.user_id = data.user_id;
+            const user = await UserModel.findById(conn, data.user_id);
+            if (!user) {
+                throw new Error('User tidak ditemukan');
             }
-            if (data.role_id !== undefined){ 
-                const role = await RoleModel.findById(conn, data.role_id);
-                if (!role) {
-                    throw new Error('Role tidak ditemukan');
-                }            
 
-                payload.role_id = data.role_id;
-            }
+            const role = await RoleModel.findById(conn, data.role_id);
+            if (!role) {
+                throw new Error('Role tidak ditemukan');
+            }            
+
+            const payload = pickFields(data,UserRoleModel.columns);
+
             const affected = await UserRoleModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');

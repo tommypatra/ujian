@@ -1,4 +1,5 @@
 // app/models/RoleModel.js
+const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 
 class RoleModel {
     //setup tabel
@@ -8,8 +9,11 @@ class RoleModel {
     static joinTables = ``;
     static countColumns = `COUNT(*)`;
     static orderBy = `ORDER BY role ASC`;
-    static insertColumns = `role, created_at`;
-    static insertValues  = `?, ?`;
+
+    static columns = [
+        'role',
+    ];
+
     /**
      * helper internal pencarian berdasarkan field dan value
      */
@@ -70,19 +74,17 @@ class RoleModel {
         return row.total;
     }
 
-    /**
+/**
      * Insert baru
      */
     static async insert(conn, data) {
-        const [result] = await conn.query(
-            `
-            INSERT INTO ${this.tableName} (${this.insertColumns})
-            VALUES (${this.insertValues})
+        const insert = buildInsert(data, this.columns);
+
+        const [result] = await conn.query(`
+            INSERT INTO ${this.tableName} (${insert.columns})
+            VALUES (${insert.placeholders})
             `,
-            [
-                data.role,
-                data.created_at
-            ]
+            insert.values
         );
 
         return result.insertId;
@@ -92,30 +94,14 @@ class RoleModel {
      * Update data
      */
     static async update(conn, id, data) {
-        const fields = [];
-        const values = [];
+        const update = buildUpdate(data, this.columns);
+        if (!update) return 0;
 
-        if (data.role !== undefined) {
-            fields.push('role = ?');
-            values.push(data.role);
-        }
+        update.values.push(id);
 
-        if (fields.length === 0) {
-            return 0; // tidak ada yang diupdate
-        }
-
-        fields.push('updated_at = ?');
-        values.push(new Date());
-
-        values.push(id);
-
-        const [result] = await conn.query(
-            `
-            UPDATE ${this.tableName}
-            SET ${fields.join(', ')}
-            WHERE id = ?
-            `,
-            values
+        const [result] = await conn.query(`UPDATE ${this.tableName}
+            SET ${update.setClause} WHERE id = ?`,
+            update.values
         );
 
         return result.affectedRows;

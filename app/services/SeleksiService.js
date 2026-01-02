@@ -2,24 +2,38 @@
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const SeleksiModel = require('../models/SeleksiModel');
+const {pickFields} = require('../helpers/payloadHelper');
 
 class SeleksiService {
 
     /**
      * Ambil semua Seleksi (paging + search)
      */
-    static async getAll(query) {
+    static async getAll(dataWeb) {
+        const query = dataWeb.query;
+        const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
+
         const page  = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        let whereSql = '';
-        let params = [];
+        const where = [];
+        const params = [];
 
+        // search umum
         if (query.search) {
-            whereSql = `WHERE nama LIKE ?`;
+            where.push(`(nama LIKE ?)`);
             params.push(`%${query.search}%`);
         }
+
+        if(seleksi_id){
+            where.push(`(id = ?)`);
+            params.push(`${seleksi_id}`);
+        }
+
+        const whereSql = where.length
+            ? `WHERE ${where.join(' AND ')}`
+            : '';
 
         const conn = await db.getConnection();
         try {
@@ -62,16 +76,10 @@ class SeleksiService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
+            
+            const payload = pickFields(data,SeleksiModel.columns);
 
-            const SeleksiId = await SeleksiModel.insert(conn, {
-                nama: data.nama,
-                waktu_mulai: data.waktu_mulai,
-                waktu_selesai: data.waktu_selesai,
-                prefix_nomor_peserta: data.prefix_nomor_peserta,
-                prefix_login: data.prefix_login,
-                keterangan: data.keterangan,
-                created_at: new Date()
-            });
+            const SeleksiId = await SeleksiModel.insert(conn, payload);
 
             await conn.commit();
 
@@ -93,14 +101,7 @@ class SeleksiService {
         try {
             await conn.beginTransaction();
 
-            const payload = {};
-
-            if (data.nama !== undefined) payload.nama = data.nama;
-            if (data.waktu_mulai !== undefined) payload.waktu_mulai = data.waktu_mulai;
-            if (data.waktu_selesai !== undefined) payload.waktu_selesai = data.waktu_selesai;
-            if (data.keterangan !== undefined) payload.keterangan = data.keterangan;
-            if (data.prefix_login !== undefined) payload.prefix_login = data.prefix_login;
-            if (data.prefix_nomor_peserta !== undefined) payload.prefix_nomor_peserta = data.prefix_nomor_peserta;
+            const payload = pickFields(data,SeleksiModel.columns);
 
             const affected = await SeleksiModel.update(conn, id, payload);
             if (affected === 0) {

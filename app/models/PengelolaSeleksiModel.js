@@ -1,4 +1,5 @@
 // app/models/PengelolaSeleksiModel.js
+const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 
 class PengelolaSeleksiModel {
     //setup tabel
@@ -20,8 +21,12 @@ class PengelolaSeleksiModel {
     `;
     static countColumns = `COUNT(DISTINCT ps.id)`;
     static orderBy = `ORDER BY s.waktu_mulai DESC, ps.jabatan ASC, u.name ASC`;
-    static insertColumns = `user_id, seleksi_id, created_at`;
-    static insertValues  = `?, ?, ?`;
+
+    static columns = [
+        'user_id',
+        'seleksi_id',
+    ];
+
     /**
      * helper internal pencarian berdasarkan field dan value
      */
@@ -102,20 +107,17 @@ class PengelolaSeleksiModel {
         return row.total;
     }
 
-    /**
+/**
      * Insert baru
      */
     static async insert(conn, data) {
-        const [result] = await conn.query(
-            `
-            INSERT INTO ${this.tableName} (${this.insertColumns})
-            VALUES (${this.insertValues})
+        const insert = buildInsert(data, this.columns);
+
+        const [result] = await conn.query(`
+            INSERT INTO ${this.tableName} (${insert.columns})
+            VALUES (${insert.placeholders})
             `,
-            [
-                data.user_id,
-                data.seleksi_id,
-                data.created_at
-            ]
+            insert.values
         );
 
         return result.insertId;
@@ -125,35 +127,14 @@ class PengelolaSeleksiModel {
      * Update data
      */
     static async update(conn, id, data) {
-        const fields = [];
-        const values = [];
+        const update = buildUpdate(data, this.columns);
+        if (!update) return 0;
 
-        if (data.user_id !== undefined) {
-            fields.push('user_id = ?');
-            values.push(data.user_id);
-        }
+        update.values.push(id);
 
-        if (data.seleksi_id !== undefined) {
-            fields.push('seleksi_id = ?');
-            values.push(data.seleksi_id);
-        }
-
-        if (fields.length === 0) {
-            return 0; // tidak ada yang diupdate
-        }
-
-        fields.push('updated_at = ?');
-        values.push(new Date());
-
-        values.push(id);
-
-        const [result] = await conn.query(
-            `
-            UPDATE ${this.tableName}
-            SET ${fields.join(', ')}
-            WHERE id = ?
-            `,
-            values
+        const [result] = await conn.query(`UPDATE ${this.tableName}
+            SET ${update.setClause} WHERE id = ?`,
+            update.values
         );
 
         return result.affectedRows;

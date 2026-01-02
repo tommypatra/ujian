@@ -2,6 +2,7 @@
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const RoleModel = require('../models/RoleModel');
+const {pickFields} = require('../helpers/payloadHelper');
 
 class RoleService {
 
@@ -13,14 +14,19 @@ class RoleService {
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
 
-        let whereSql = '';
-        let params = [];
+        const where = [];
+        const params = [];
 
+        // search umum
         if (query.search) {
-            whereSql = `WHERE role LIKE ?`;
+            where.push(`(role LIKE ?)`);
             params.push(`%${query.search}%`);
         }
 
+
+        const whereSql = where.length
+            ? `WHERE ${where.join(' AND ')}`
+            : '';
         const conn = await db.getConnection();
         try {
             const data  = await RoleModel.findAll(conn, whereSql, params, limit, offset);
@@ -62,11 +68,9 @@ class RoleService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
+            const payload = pickFields(data,RoleModel.columns);
 
-            const RoleId = await RoleModel.insert(conn, {
-                role: data.role,
-                created_at: new Date()
-            });
+            const RoleId = await RoleModel.insert(conn, payload);
 
             await conn.commit();
 
@@ -88,9 +92,7 @@ class RoleService {
         try {
             await conn.beginTransaction();
 
-            const payload = {};
-
-            if (data.role !== undefined) payload.role = data.role;
+            const payload = pickFields(data,RoleModel.columns);
 
             const affected = await RoleModel.update(conn, id, payload);
             if (affected === 0) {

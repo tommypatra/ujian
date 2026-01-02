@@ -1,15 +1,14 @@
-// app/services/PengelolaSeleksiService.js
+// app/services/JadwalSeleksiService.js
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const PengelolaSeleksiModel = require('../models/PengelolaSeleksiModel');
-const UserModel = require('../models/UserModel');
-const SeleksiModel = require('../models/SeleksiModel');
+const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
-class PengelolaSeleksiService {
+
+class JadwalSeleksiService {
 
     /**
-     * Ambil semua PengelolaSeleksi (paging + search)
+     * Ambil semua JadwalSeleksi (paging + search)
      */
     static async getAll(dataWeb) {
         const query = dataWeb.query;
@@ -24,32 +23,30 @@ class PengelolaSeleksiService {
 
         // search umum
         if (query.search) {
-            where.push(`(s.nama LIKE ? OR u.name LIKE ?)`);
-            params.push(
-                `%${query.search}%`,
-                `%${query.search}%`
-            );
+            where.push(`(s.nama LIKE ?)`);
+            params.push(`%${query.search}%`);
         }
 
         // filter by seleksi_id
         if (query.seleksi_id) {
-            where.push(`s.id = ?`);
+            where.push(`(js.seleksi_id = ?)`);
             params.push(parseInt(query.seleksi_id));
         }
 
         if(seleksi_id){
-            where.push(`(ps.seleksi_id = ?)`);
+            where.push(`(js.seleksi_id = ?)`);
             params.push(`${seleksi_id}`);
         }
-        
+
+
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
             : '';
 
         const conn = await db.getConnection();
         try {
-            const data  = await PengelolaSeleksiModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await PengelolaSeleksiModel.countAll(conn, whereSql, params);
+            const data  = await JadwalSeleksiModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await JadwalSeleksiModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -65,46 +62,53 @@ class PengelolaSeleksiService {
     }
 
     /**
-     * Detail PengelolaSeleksi
+     * Detail JadwalSeleksi
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const exec_query = await PengelolaSeleksiModel.findById(conn, id);
-            if (!exec_query) {
+            const JadwalSeleksi = await JadwalSeleksiModel.findById(conn, id);
+            if (!JadwalSeleksi) {
                 throw new Error('Data tidak ditemukan');
             }
-            return exec_query;
+            return JadwalSeleksi;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Simpan PengelolaSeleksi baru + PengelolaSeleksi default
+     * Detail JadwalSeleksi
+     */
+    static async findBySesi(sesi) {
+        const conn = await db.getConnection();
+        try {
+            const JadwalSeleksi = await JadwalSeleksiModel.findBySesi(conn, sesi);
+            if (!JadwalSeleksi) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return JadwalSeleksi;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Simpan JadwalSeleksi baru + JadwalSeleksi default
      */
     static async store(data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const user = await UserModel.findById(conn, data.user_id);
-            if (!user) {
-                throw new Error('User tidak ditemukan');
-            }
 
-            const seleksi_id = await SeleksiModel.findById(conn, data.seleksi_id);
-            if (!seleksi_id) {
-                throw new Error('Seleksi tidak ditemukan');
-            }            
+            const payload = pickFields(data,JadwalSeleksiModel.columns);
 
-            const payload = pickFields(data,PengelolaSeleksiModel.columns);
-
-            const PengelolaSeleksiId = await PengelolaSeleksiModel.insert(conn, payload);
+            const JadwalSeleksiId = await JadwalSeleksiModel.insert(conn,payload);
 
             await conn.commit();
 
-            return await PengelolaSeleksiModel.findById(conn, PengelolaSeleksiId);
+            return await JadwalSeleksiModel.findById(conn, JadwalSeleksiId);
 
         } catch (err) {
             await conn.rollback();
@@ -115,31 +119,21 @@ class PengelolaSeleksiService {
     }
 
     /**
-     * Update PengelolaSeleksi
+     * Update JadwalSeleksi
      */
     static async update(id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const user = await UserModel.findById(conn, data.user_id);
-            if (!user) {
-                throw new Error('User tidak ditemukan');
-            }
+            const payload = pickFields(data,JadwalSeleksiModel.columns);
 
-            const seleksi_id = await SeleksiModel.findById(conn, data.seleksi_id);
-            if (!seleksi_id) {
-                throw new Error('Seleksi tidak ditemukan');
-            }            
-
-            const payload = pickFields(data,PengelolaSeleksiModel.columns);
-
-            const affected = await PengelolaSeleksiModel.update(conn, id, payload);
+            const affected = await JadwalSeleksiModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await PengelolaSeleksiModel.findById(conn, id);
+            return await JadwalSeleksiModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
@@ -150,14 +144,14 @@ class PengelolaSeleksiService {
     }
 
     /**
-     * Hapus PengelolaSeleksi + relasi PengelolaSeleksi
+     * Hapus JadwalSeleksi + relasi JadwalSeleksi
      */
     static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PengelolaSeleksiModel.deleteById(conn, id);
+            const affected = await JadwalSeleksiModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -175,4 +169,4 @@ class PengelolaSeleksiService {
     }
 }
 
-module.exports = PengelolaSeleksiService;
+module.exports = JadwalSeleksiService;

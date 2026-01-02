@@ -12,7 +12,7 @@ class SeleksiController {
      */
     static async index(req, res) {
         try {
-            const data_exec = await SeleksiService.getAll(req.query);
+            const data_exec = await SeleksiService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,

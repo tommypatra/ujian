@@ -1,4 +1,5 @@
 // app/models/UserRoleModel.js
+const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 
 class UserRoleModel {
     //setup tabel
@@ -10,6 +11,7 @@ class UserRoleModel {
         ur.role_id,
         u.name AS user_name,
         r.role AS role_name,
+        u.email,
         ur.created_at,
         ur.updated_at
     `;    
@@ -19,8 +21,12 @@ class UserRoleModel {
     `;
     static countColumns = `COUNT(DISTINCT ur.id)`;
     static orderBy = `ORDER BY u.name ASC, r.role ASC`;
-    static insertColumns = `user_id, role_id, created_at`;
-    static insertValues  = `?, ?, ?`;
+
+    static columns = [
+        'user_id', 
+        'role_id', 
+    ];
+
     /**
      * helper internal pencarian berdasarkan field dan value
      */
@@ -89,20 +95,17 @@ class UserRoleModel {
         return row.total;
     }
 
-    /**
+/**
      * Insert baru
      */
     static async insert(conn, data) {
-        const [result] = await conn.query(
-            `
-            INSERT INTO ${this.tableName} (${this.insertColumns})
-            VALUES (${this.insertValues})
+        const insert = buildInsert(data, this.columns);
+
+        const [result] = await conn.query(`
+            INSERT INTO ${this.tableName} (${insert.columns})
+            VALUES (${insert.placeholders})
             `,
-            [
-                data.user_id,
-                data.role_id,
-                data.created_at
-            ]
+            insert.values
         );
 
         return result.insertId;
@@ -112,35 +115,14 @@ class UserRoleModel {
      * Update data
      */
     static async update(conn, id, data) {
-        const fields = [];
-        const values = [];
+        const update = buildUpdate(data, this.columns);
+        if (!update) return 0;
 
-        if (data.user_id !== undefined) {
-            fields.push('user_id = ?');
-            values.push(data.user_id);
-        }
+        update.values.push(id);
 
-        if (data.role_id !== undefined) {
-            fields.push('role_id = ?');
-            values.push(data.role_id);
-        }
-
-        if (fields.length === 0) {
-            return 0; // tidak ada yang diupdate
-        }
-
-        fields.push('updated_at = ?');
-        values.push(new Date());
-
-        values.push(id);
-
-        const [result] = await conn.query(
-            `
-            UPDATE ${this.tableName}
-            SET ${fields.join(', ')}
-            WHERE id = ?
-            `,
-            values
+        const [result] = await conn.query(`UPDATE ${this.tableName}
+            SET ${update.setClause} WHERE id = ?`,
+            update.values
         );
 
         return result.affectedRows;

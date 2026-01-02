@@ -1,4 +1,5 @@
 // app/models/SeleksiModel.js
+const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 
 class SeleksiModel {
     //setup tabel
@@ -8,8 +9,16 @@ class SeleksiModel {
     static joinTables = ``;
     static countColumns = `COUNT(*)`;
     static orderBy = `ORDER BY waktu_mulai DESC, nama ASC`;
-    static insertColumns = `nama, waktu_mulai, waktu_selesai, prefix_nomor_peserta, prefix_login, keterangan, created_at`;
-    static insertValues  = `?,?,?,?,?,?,?`;
+
+    static columns = [
+        'nama', 
+        'waktu_mulai', 
+        'waktu_selesai', 
+        'prefix_nomor_peserta', 
+        'prefix_login',
+        'keterangan'
+    ];
+
     /**
      * helper internal pencarian berdasarkan field dan value
      */
@@ -63,24 +72,17 @@ class SeleksiModel {
         return row.total;
     }
 
-    /**
+/**
      * Insert baru
      */
     static async insert(conn, data) {
-        const [result] = await conn.query(
-            `
-            INSERT INTO ${this.tableName} (${this.insertColumns})
-            VALUES (${this.insertValues})
+        const insert = buildInsert(data, this.columns);
+
+        const [result] = await conn.query(`
+            INSERT INTO ${this.tableName} (${insert.columns})
+            VALUES (${insert.placeholders})
             `,
-            [
-                data.nama,
-                data.waktu_mulai,
-                data.waktu_selesai,
-                data.prefix_nomor_peserta,
-                data.prefix_login,
-                data.keterangan,
-                data.created_at
-            ]
+            insert.values
         );
 
         return result.insertId;
@@ -90,56 +92,14 @@ class SeleksiModel {
      * Update data
      */
     static async update(conn, id, data) {
-        const fields = [];
-        const values = [];
+        const update = buildUpdate(data, this.columns);
+        if (!update) return 0;
 
+        update.values.push(id);
 
-        if (data.nama !== undefined) {
-            fields.push('nama = ?');
-            values.push(data.nama);
-        }
-
-        if (data.waktu_mulai !== undefined) {
-            fields.push('waktu_mulai = ?');
-            values.push(data.waktu_mulai);
-        }
-
-        if (data.waktu_selesai !== undefined) {
-            fields.push('waktu_selesai = ?');
-            values.push(data.waktu_selesai);
-        }
-
-        if (data.prefix_login !== undefined) {
-            fields.push('prefix_login = ?');
-            values.push(data.prefix_login);
-        }
-
-        if (data.prefix_nomor_peserta !== undefined) {
-            fields.push('prefix_nomor_peserta = ?');
-            values.push(data.prefix_nomor_peserta);
-        }
-
-        if (data.keterangan !== undefined) {
-            fields.push('keterangan = ?');
-            values.push(data.keterangan);
-        }
-
-        if (fields.length === 0) {
-            return 0; // tidak ada yang diupdate
-        }
-
-        fields.push('updated_at = ?');
-        values.push(new Date());
-
-        values.push(id);
-
-        const [result] = await conn.query(
-            `
-            UPDATE ${this.tableName}
-            SET ${fields.join(', ')}
-            WHERE id = ?
-            `,
-            values
+        const [result] = await conn.query(`UPDATE ${this.tableName}
+            SET ${update.setClause} WHERE id = ?`,
+            update.values
         );
 
         return result.affectedRows;

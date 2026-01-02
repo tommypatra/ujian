@@ -6,14 +6,16 @@ const RoleController = require('../app/controllers/RoleController');
 const UserRoleController = require('../app/controllers/UserRoleController');
 const SeleksiController = require('../app/controllers/SeleksiController');
 const PengelolaSeleksiController = require('../app/controllers/PengelolaSeleksiController');
+const JadwalSeleksiController = require('../app/controllers/JadwalSeleksiController');
 
 const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
 const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
+const RequirePengelolaSeleksi = require('../app/middlewares/RequirePengelolaSeleksi');
 
 const router = express.Router()
 
 router.post('/login',  AuthController.login)
-
+// ------------- AWAL ROUTE ADMIN --------------
 //route users
 router.post('/user', AuthMiddleware, RequireRoleMiddleware('admin'), UserController.store);
 router.get('/user', AuthMiddleware, RequireRoleMiddleware('admin'), UserController.index);
@@ -42,11 +44,29 @@ router.get('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), Selek
 router.put('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.update);
 router.delete('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.destroy);
 
-//route pengelola-seleksi
-router.post('/pengelola-seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.store);
-router.get('/pengelola-seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.index);
-router.get('/pengelola-seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.show);
-router.put('/pengelola-seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.update);
-router.delete('/pengelola-seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.destroy);
+// ------------- AKHIR ROUTE ADMIN --------------
+
+
+// ------------- AWAL ROUTE PENGELOLA SELEKSI --------------
+
+//route seleksi-jadwal untuk pengelola {index untuk getall dan update sesuai :seleksi_id}
+router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, SeleksiController.index);
+router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, SeleksiController.update);
+
+//route pengelola-seleksi sesuai :seleksi_id
+router.get('/pengelola/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.index);
+router.post('/pengelola/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.store);
+router.get('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.show);
+router.put('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.update);
+router.delete('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.destroy);
+
+//route jadwal-seleksi sesuai :seleksi_id
+router.get('/jadwal/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.index);
+router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.store);
+router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.show);
+router.put('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.update);
+router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.destroy);
+
+// ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
 module.exports = router
