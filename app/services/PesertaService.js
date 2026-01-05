@@ -1,6 +1,8 @@
 // app/services/PesertaService.js
+const jwt = require('jsonwebtoken');
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
+
 const PesertaModel = require('../models/PesertaModel');
 const SeleksiModel = require('../models/SeleksiModel');
 
@@ -204,6 +206,50 @@ class PesertaService {
             conn.release();
         }
     }
+
+    /**
+    * Login Peserta
+    */
+    static async login(data) {
+        const conn = await db.getConnection();
+        try {
+            const { user_name, password, seleksi_id } = data;
+
+            const peserta = await PesertaModel.findByUserName(conn, user_name, seleksi_id);
+            if (!peserta) {
+                throw new Error('Peserta tidak ditemukan');
+            }
+            console.log(peserta.password);
+            const valid = await bcrypt.compare(password, peserta.password);
+            if (!valid) {
+                throw new Error('Password salah');
+            }
+            const user = {
+                    id: peserta.id,
+                    user_name: peserta.user_name,
+                    nama: peserta.nama,
+                    email: peserta.email,
+                    roles:['peserta']
+                };
+
+            const token = jwt.sign(
+                user,
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: process.env.JWT_EXPIRES || '6d'
+                }
+            );
+
+            return {
+                user,
+                token
+            };
+
+        } finally {
+            conn.release();
+        }
+    }
+
 }
 
 module.exports = PesertaService;

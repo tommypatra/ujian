@@ -11,6 +11,7 @@ class PesertaSeleksiRequest {
             login_foto: Joi.string().min(6).optional(),
             login_at: Joi.date().optional(),
             is_allow: Joi.number().integer().optional(),
+            is_done: Joi.number().integer().optional(),
             allow_at: Joi.date().optional(),
         }).validate(data, {
             abortEarly: false,
@@ -26,6 +27,7 @@ class PesertaSeleksiRequest {
             login_foto: Joi.string().min(6).optional(),
             login_at: Joi.date().optional(),
             is_allow: Joi.number().integer().optional(),
+            is_done: Joi.number().integer().optional(),
             allow_at: Joi.date().optional(),
         }).validate(data, {
             abortEarly: false,

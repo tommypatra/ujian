@@ -40,7 +40,7 @@ module.exports = async function RequirePengelolaSeleksi(req, res, next) {
         }
 
     } catch (err) {
-        console.error('RequirePengelolaSeleksi error:', err);
+        console.error('middleware error:', err);
         return res.status(500).json({
             message: 'Internal server error',
             data: null

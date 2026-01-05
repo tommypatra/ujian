@@ -9,7 +9,7 @@ const db = mysql.createPool({
     port: process.env.DB_PORT,
 
     waitForConnections: true,
-    connectionLimit: 20,   // 🔥 KUNCI untuk 1000 user
+    connectionLimit: 20,
     queueLimit: 0
 })
 

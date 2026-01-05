@@ -1,4 +1,10 @@
 const express = require('express')
+
+const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
+const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
+const RequirePengelolaSeleksi = require('../app/middlewares/RequirePengelolaSeleksi');
+const RequirePesertaSeleksi = require('../app/middlewares/RequirePesertaSeleksi');
+
 //controller
 const AuthController = require('../app/controllers/AuthController');
 const UserController = require('../app/controllers/UserController');
@@ -10,15 +16,14 @@ const JadwalSeleksiController = require('../app/controllers/JadwalSeleksiControl
 const PengawasSeleksiController = require('../app/controllers/PengawasSeleksiController');
 const PesertaController = require('../app/controllers/PesertaController');
 const PesertaSeleksiController = require('../app/controllers/PesertaSeleksiController');
-
-
-const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
-const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
-const RequirePengelolaSeleksi = require('../app/middlewares/RequirePengelolaSeleksi');
+const ReschedulleController = require('../app/controllers/ReschedulleController');
+const ReschedulleSeleksiController = require('../app/controllers/ReschedulleSeleksiController');
 
 const router = express.Router()
 
 router.post('/login',  AuthController.login)
+router.post('/login-peserta',  PesertaController.login)
+
 // ------------- AWAL ROUTE ADMIN --------------
 //route users
 router.post('/user', AuthMiddleware, RequireRoleMiddleware('admin'), UserController.store);
@@ -92,6 +97,23 @@ router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSe
 router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.update);
 router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.destroy);
 
+//route reschedulle seleksi sesuai :seleksi_id
+//melihat daftar reschedulle sesuai seleksi_id dan mengubah status reschedulle
+router.get('/reschedulle/:seleksi_id/peserta', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.index);
+router.get('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.show);
+router.put('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.update);
+
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
+
+// ------------- AWAL ROUTE PESERTA --------------
+// lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
+// kalau sudah finalisasi tidak bisa hapus atau ganti
+router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.index);
+router.post('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.store);
+router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.show);
+router.put('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.update);
+router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.destroy);
+// ------------- AKHIR ROUTE PESERTA --------------
+
 
 module.exports = router

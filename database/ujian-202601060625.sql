@@ -36,7 +36,7 @@ CREATE TABLE `jadwal_seleksis` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_seleksi_sesi` (`seleksi_id`,`sesi`),
   CONSTRAINT `jadwal_seleksis_ibfk_1` FOREIGN KEY (`seleksi_id`) REFERENCES `seleksis` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -49,15 +49,16 @@ DROP TABLE IF EXISTS `pengawas_seleksis`;
 CREATE TABLE `pengawas_seleksis` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `jadwal_seleksi_id` bigint unsigned NOT NULL,
-  `nama` varchar(150) NOT NULL,
-  `username` varchar(100) NOT NULL,
+  `name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `user_name` int NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_jadwal_username` (`jadwal_seleksi_id`,`username`),
+  UNIQUE KEY `uniq_jadwal_username` (`jadwal_seleksi_id`,`user_name`),
+  UNIQUE KEY `pengawas_seleksis_unique` (`user_name`),
   CONSTRAINT `pengawas_seleksis_ibfk_1` FOREIGN KEY (`jadwal_seleksi_id`) REFERENCES `jadwal_seleksis` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -83,31 +84,30 @@ CREATE TABLE `pengelola_seleksis` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `peserta_jadwals`
+-- Table structure for table `peserta_seleksis`
 --
 
-DROP TABLE IF EXISTS `peserta_jadwals`;
+DROP TABLE IF EXISTS `peserta_seleksis`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `peserta_jadwals` (
+CREATE TABLE `peserta_seleksis` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `peserta_id` bigint unsigned NOT NULL,
   `jadwal_seleksi_id` bigint unsigned NOT NULL,
   `is_login` tinyint(1) DEFAULT '0',
-  `is_approve` tinyint(1) DEFAULT '0',
-  `is_done` tinyint(1) DEFAULT '0',
-  `last_picture_login` varchar(255) DEFAULT NULL,
+  `login_foto` varchar(255) DEFAULT NULL,
   `login_at` datetime DEFAULT NULL,
-  `approve_at` datetime DEFAULT NULL,
-  `done_at` datetime DEFAULT NULL,
+  `is_done` tinyint(1) DEFAULT '0',
+  `is_allow` tinyint(1) DEFAULT '0',
+  `allow_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_peserta_jadwal` (`peserta_id`,`jadwal_seleksi_id`),
+  UNIQUE KEY `peserta_seleksi_unique` (`peserta_id`,`jadwal_seleksi_id`),
   KEY `jadwal_seleksi_id` (`jadwal_seleksi_id`),
-  CONSTRAINT `peserta_jadwals_ibfk_1` FOREIGN KEY (`peserta_id`) REFERENCES `pesertas` (`id`),
-  CONSTRAINT `peserta_jadwals_ibfk_2` FOREIGN KEY (`jadwal_seleksi_id`) REFERENCES `jadwal_seleksis` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `peserta_seleksis_ibfk_1` FOREIGN KEY (`peserta_id`) REFERENCES `pesertas` (`id`),
+  CONSTRAINT `peserta_seleksis_ibfk_2` FOREIGN KEY (`jadwal_seleksi_id`) REFERENCES `jadwal_seleksis` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,14 +119,23 @@ DROP TABLE IF EXISTS `pesertas`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pesertas` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `nomor_peserta` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `seleksi_id` bigint unsigned NOT NULL,
   `nama` varchar(180) NOT NULL,
+  `user_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `password` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `jenis_kelamin` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `tanggal_lahir` date NOT NULL,
-  `nomor_peserta` varchar(180) NOT NULL,
-  `foto` varchar(180) NOT NULL,
+  `hp` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `foto` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pesertas_unique` (`seleksi_id`,`nomor_peserta`),
+  UNIQUE KEY `pesertas_unique_1` (`user_name`),
+  CONSTRAINT `pesertas_seleksis_FK` FOREIGN KEY (`seleksi_id`) REFERENCES `seleksis` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,20 +147,20 @@ DROP TABLE IF EXISTS `reschedulles`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reschedulles` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `peserta_jadwal_id` bigint unsigned NOT NULL,
+  `peserta_seleksi_id` bigint unsigned NOT NULL,
   `alasan` text NOT NULL,
   `dokumen_pendukung` varchar(180) DEFAULT NULL,
   `status` enum('pending','diterima','ditolak') DEFAULT 'pending',
-  `user_id` bigint unsigned DEFAULT NULL,
+  `verified_user_id` bigint unsigned DEFAULT NULL,
   `verified_at` datetime DEFAULT NULL,
   `catatan_verifikasi` text,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_peserta_jadwal` (`peserta_jadwal_id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `reschedulles_ibfk_1` FOREIGN KEY (`peserta_jadwal_id`) REFERENCES `peserta_jadwals` (`id`),
-  CONSTRAINT `reschedulles_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  UNIQUE KEY `uniq_peserta_seleksi` (`peserta_seleksi_id`),
+  KEY `user_id` (`verified_user_id`),
+  CONSTRAINT `reschedulles_ibfk_1` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`),
+  CONSTRAINT `reschedulles_ibfk_2` FOREIGN KEY (`verified_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -180,18 +189,18 @@ DROP TABLE IF EXISTS `seleksis`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `seleksis` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `tahun` year NOT NULL,
+  `urutan` int NOT NULL,
   `nama` varchar(150) NOT NULL,
   `waktu_mulai` datetime DEFAULT NULL,
   `waktu_selesai` datetime DEFAULT NULL,
-  `prefix_nomor_peserta` varchar(100) NOT NULL,
-  `prefix_login` varchar(100) NOT NULL,
+  `prefix_app` int NOT NULL,
   `keterangan` text,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `seleksi_unique` (`prefix_nomor_peserta`),
-  UNIQUE KEY `seleksi_unique_1` (`prefix_login`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `seleksi_unique_1` (`prefix_app`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -247,4 +256,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-03  7:14:48
+-- Dump completed on 2026-01-06  6:25:37

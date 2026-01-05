@@ -33,7 +33,7 @@ class PesertaModel {
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['p.id'];
+        const allowedFields = ['p.id','p.user_name'];
 
         if (!allowedFields.includes(field)) {
             throw new Error('Field tidak diizinkan');
@@ -53,6 +53,14 @@ class PesertaModel {
      */
     static async findById(conn, id) {
         return this.findByKey(conn, 'p.id', id);
+    }
+
+    static async findByUserName(conn, user_name, seleksi_id) {
+        const [[row]] = await conn.query(
+            `SELECT * FROM pesertas WHERE user_name = ? AND seleksi_id = ?`,
+            [user_name,seleksi_id]
+        );
+        return row || null;    
     }
 
     /**

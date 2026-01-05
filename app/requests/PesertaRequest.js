@@ -37,6 +37,17 @@ class PesertaRequest {
         });
     }
 
+    static login(data) {
+        return Joi.object({
+            user_name: Joi.string().min(3).required(),
+            password: Joi.string().min(3).required(),
+            seleksi_id: Joi.number().integer().positive().required()
+        }).validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
+    }
+
 }
 
 module.exports = PesertaRequest;

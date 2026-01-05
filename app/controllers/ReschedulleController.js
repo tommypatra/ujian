@@ -1,24 +1,24 @@
-// app/controllers/PesertaController.js
-const PesertaService = require('../services/PesertaService');
-const PesertaRequest = require('../requests/PesertaRequest');
+// app/controllers/ReschedulleController.js
+const ReschedulleService = require('../services/ReschedulleService');
+const ReschedulleRequest = require('../requests/ReschedulleRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
-class PesertaController {
+class ReschedulleController {
 
     /**
-     * GET /Pesertas
+     * GET /Reschedulles
      * Ambil list (pagination, search, dll)
      */
     static async index(req, res) {
         try {
-            const data_exec = await PesertaService.getAll(req);
+            const data_exec = await ReschedulleService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,
             });
         } catch (err) {
-            console.error('PesertaController.index error:', err);
+            console.error('ReschedulleController.index error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -28,20 +28,20 @@ class PesertaController {
     }
 
     /**
-     * GET /Pesertas/:id
+     * GET /Reschedulles/:id
      * Ambil detail
      */
     static async show(req, res) {
         try {
             const { id } = req.params;
 
-            const data_exec = await PesertaService.findById(id);
+            const data_exec = await ReschedulleService.findById(id);
             return res.status(200).json({
                 message: 'Data detail',
                 data: data_exec
             });
         } catch (err) {
-            console.error('PesertaController.show error:', err);
+            console.error('ReschedulleController.show error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -50,12 +50,12 @@ class PesertaController {
     }
 
     /**
-     * POST /Pesertas
+     * POST /Reschedulles
      * Tambah baru
      */
     static async store(req, res) {
         try {
-            const { error, value } = PesertaRequest.store(req.body);
+            const { error, value } = ReschedulleRequest.store(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -63,13 +63,13 @@ class PesertaController {
                 });
             }
 
-            const data_exec = await PesertaService.store(value);
+            const data_exec = await ReschedulleService.store(value);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
             });
         } catch (err) {
-            console.error('PesertaController.store error:', err);
+            console.error('ReschedulleController.store error:', err);
             const isDev = process.env.APP_ENV === 'development';   
 
             if (err.code === 'ER_DUP_ENTRY') {
@@ -86,15 +86,16 @@ class PesertaController {
         }
     }
 
+
     /**
-     * PUT /Pesertas/:id
+     * PUT /Reschedulles/:id
      * Update data
      */
     static async update(req, res) {
         try {
             const { id } = req.params;
 
-            const { error, value } = PesertaRequest.update(req.body);
+            const { error, value } = ReschedulleRequest.update(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -102,13 +103,13 @@ class PesertaController {
                 });
             }
 
-            const data_exec = await PesertaService.update(id, value);
+            const data_exec = await ReschedulleService.update(id, value);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
             });
         } catch (err) {
-            console.error('PesertaController.update error:', err);
+            console.error('ReschedulleController.update error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -117,19 +118,19 @@ class PesertaController {
     }
 
     /**
-     * DELETE /Pesertas/:id
+     * DELETE /Reschedulles/:id
      * Hapus
      */
     static async destroy(req, res) {
         try {
             const { id } = req.params;
-            const data_exec = await PesertaService.destroy(id);
+            const data_exec = await ReschedulleService.destroy(id);
             return res.status(200).json({
                 message: 'Data berhasil dihapus',
                 data: data_exec
             });
         } catch (err) {
-            console.error('PesertaController.destroy error:', err);
+            console.error('ReschedulleController.destroy error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -137,32 +138,6 @@ class PesertaController {
         }
     }
 
-    // login peserta
-    static async login(req, res) {
-        try {
-        const { error, value } = PesertaRequest.login(req.body);
-        if (error) {
-            return res.status(422).json({
-                message: error.details[0].message,
-                data: null
-            });
-        }
-
-        const result = await PesertaService.login(value);
-
-        return res.status(200).json({
-            message: 'Login berhasil',
-            data: result
-        });
-
-        } catch (err) {
-            return res.status(401).json({
-                message: err.message,
-                data: null
-            });
-        }
-    }
-
 }
 
-module.exports = PesertaController;
+module.exports = ReschedulleController;
