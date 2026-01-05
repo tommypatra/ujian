@@ -1,4 +1,4 @@
-// requests/UserRequest.js
+// requests/RoleRequest.js
 const Joi = require('joi');
 
 class RoleRequest {

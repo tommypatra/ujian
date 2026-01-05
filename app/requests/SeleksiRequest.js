@@ -1,4 +1,4 @@
-// requests/UserRequest.js
+// requests/SeleksiRequest.js
 const Joi = require('joi');
 
 class SeleksiRequest {
@@ -8,8 +8,7 @@ class SeleksiRequest {
             nama: Joi.string().min(3).required(),
             waktu_mulai: Joi.date().required(),
             waktu_selesai: Joi.date().greater(Joi.ref('waktu_mulai')).required(),            
-            prefix_nomor_peserta: Joi.string().min(3).required(),
-            prefix_login: Joi.string().min(3).required(),
+            tahun: Joi.number().integer().min(2000).max(2100).required(),
             keterangan: Joi.string().allow(null, '').optional(),
         }).validate(data, {
             abortEarly: false,
@@ -22,8 +21,7 @@ class SeleksiRequest {
             nama: Joi.string().min(3).required(),
             waktu_mulai: Joi.date().required(),
             waktu_selesai: Joi.date().greater(Joi.ref('waktu_mulai')).required(),            
-            prefix_nomor_peserta: Joi.string().min(3).required(),
-            prefix_login: Joi.string().min(3).required(),
+            tahun: Joi.number().integer().min(2000).max(2100).required(),
             keterangan: Joi.string().allow(null, '').optional(),
         }).validate(data, {
             abortEarly: false,

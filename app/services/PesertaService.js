@@ -1,18 +1,17 @@
-// app/services/JadwalSeleksiService.js
+// app/services/PesertaService.js
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
-const PengawasSeleksiModel = require('../models/PengawasSeleksiModel');
+const PesertaModel = require('../models/PesertaModel');
 const SeleksiModel = require('../models/SeleksiModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
-const {generatePassword} = require('../helpers/webHelper');
+const {dateToString} = require('../helpers/webHelper');
 
 
-class JadwalSeleksiService {
+class PesertaService {
 
     /**
-     * Ambil semua JadwalSeleksi (paging + search)
+     * Ambil semua Peserta (paging + search)
      */
     static async getAll(dataWeb) {
         const query = dataWeb.query;
@@ -27,16 +26,19 @@ class JadwalSeleksiService {
 
         // search umum
         if (query.search) {
-            where.push(`(s.nama LIKE ?)`);
+            // p.hp, p.email, p.nama, p.nomor_peserta, p.user_name
+            where.push(`(p.email LIKE ? OR p.nama LIKE ? OR p.nomor_peserta LIKE ? OR p.hp LIKE ?)`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }
 
         // filter by seleksi_id
         if(seleksi_id){
-            where.push(`(js.seleksi_id = ?)`);
+            where.push(`(p.seleksi_id = ?)`);
             params.push(`${seleksi_id}`);
         }
-
 
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -44,8 +46,8 @@ class JadwalSeleksiService {
 
         const conn = await db.getConnection();
         try {
-            const data  = await JadwalSeleksiModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await JadwalSeleksiModel.countAll(conn, whereSql, params);
+            const data  = await PesertaModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await PesertaModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -61,39 +63,39 @@ class JadwalSeleksiService {
     }
 
     /**
-     * Detail JadwalSeleksi
+     * Detail Peserta
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const JadwalSeleksi = await JadwalSeleksiModel.findById(conn, id);
-            if (!JadwalSeleksi) {
+            const Peserta = await PesertaModel.findById(conn, id);
+            if (!Peserta) {
                 throw new Error('Data tidak ditemukan');
             }
-            return JadwalSeleksi;
+            return Peserta;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Detail JadwalSeleksi
+     * Detail Peserta
      */
     static async findBySesi(sesi) {
         const conn = await db.getConnection();
         try {
-            const JadwalSeleksi = await JadwalSeleksiModel.findBySesi(conn, sesi);
-            if (!JadwalSeleksi) {
+            const Peserta = await PesertaModel.findBySesi(conn, sesi);
+            if (!Peserta) {
                 throw new Error('Data tidak ditemukan');
             }
-            return JadwalSeleksi;
+            return Peserta;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Simpan JadwalSeleksi baru + pengawas default
+     * Simpan Peserta baru
      */
     static async store(data) {
         const conn = await db.getConnection();
@@ -104,37 +106,28 @@ class JadwalSeleksiService {
             if (!seleksi) {
                 throw new Error('Seleksi tidak ditemukan');
             }
-
-            const payload = pickFields(data,JadwalSeleksiModel.columns);
-            const JadwalSeleksiId = await JadwalSeleksiModel.insert(conn,payload);
-
-            //generate pengawas
+            // console.log(seleksi);
             const prefix = seleksi.prefix_app;
-            const lastUsername = await PengawasSeleksiModel.findLastUsername(conn, prefix);
-            let urutan = 1;
-            if (lastUsername) {
-                urutan = parseInt(lastUserName.slice(prefix.length), 10) + 1;
+
+            const payload = pickFields(data,PesertaModel.columns);
+
+            payload.user_name = `${prefix}${data.nomor_peserta}`;
+            const tanggal_lahir = dateToString(data.tanggal_lahir); 
+            let plainPassword= tanggal_lahir;
+            if (data.password && data.password.trim() !== '') {
+                plainPassword=data.password;
             }
-            const userName = `${prefix}${String(urutan).padStart(3, '0')}`;            
-            const plainPassword = generatePassword();
+            payload.tanggal_lahir = tanggal_lahir;
+            payload.password = await bcrypt.hash(plainPassword, 10);
 
-            const PengawasJadwaliId = await PengawasSeleksiModel.insert(conn,{
-                jadwal_seleksi_id:JadwalSeleksiId,
-                name:`Pengawas ${userName}`,
-                user_name:userName,
-                password: await bcrypt.hash(plainPassword, 10)
-            });
-
-
+            const PesertaId = await PesertaModel.insert(conn,payload);
             await conn.commit();
 
-            const dataJadwal = await JadwalSeleksiModel.findById(conn, JadwalSeleksiId);
-            const dataPengawas = await PengawasSeleksiModel.findById(conn, PengawasJadwaliId);
+            const dataPeserta = await PesertaModel.findById(conn, PesertaId);
 
             return {
-                jadwal : dataJadwal,
-                pengawas : dataPengawas,
-                password_pengawas: plainPassword
+                ...dataPeserta,
+                password: plainPassword
             };            
 
         } catch (err) {
@@ -146,7 +139,7 @@ class JadwalSeleksiService {
     }
 
     /**
-     * Update JadwalSeleksi
+     * Update Peserta
      */
     static async update(id, data) {
         const conn = await db.getConnection();
@@ -158,15 +151,26 @@ class JadwalSeleksiService {
                 throw new Error('Seleksi tidak ditemukan');
             }
 
-            const payload = pickFields(data,JadwalSeleksiModel.columns);
-
-            const affected = await JadwalSeleksiModel.update(conn, id, payload);
+            const payload = pickFields(data,PesertaModel.columns);
+            let plainPassword='';
+            if (data.password && data.password.trim() !== '') {
+                plainPassword=data.password;
+                payload.password = await bcrypt.hash(plainPassword, 10);
+            }
+            
+            const affected = await PesertaModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await JadwalSeleksiModel.findById(conn, id);
+
+            const result = await PesertaModel.findById(conn, id);
+
+            return {
+                ...result,
+                password: plainPassword
+            };            
 
         } catch (err) {
             await conn.rollback();
@@ -177,14 +181,14 @@ class JadwalSeleksiService {
     }
 
     /**
-     * Hapus JadwalSeleksi + relasi JadwalSeleksi
+     * Hapus Peserta
      */
     static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await JadwalSeleksiModel.deleteById(conn, id);
+            const affected = await PesertaModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -202,4 +206,4 @@ class JadwalSeleksiService {
     }
 }
 
-module.exports = JadwalSeleksiService;
+module.exports = PesertaService;

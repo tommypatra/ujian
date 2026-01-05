@@ -6,18 +6,19 @@ class PengawasSeleksiModel {
     static tableName = `pengawas_seleksis`;
     static tableAlias = `ps`;
     static selectFields = `
-    ps.id, ps.jadwal_id, ps.nama, ps.user_name, ps.created_at, ps.updated_at,
-    js.id, js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, 
-    js.status`;
+    ps.id, ps.jadwal_seleksi_id, ps.name, ps.user_name, ps.created_at, ps.updated_at,
+    js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, js.status,
+    s.nama as seleksi_nama, s.prefix_app, s.tahun, s.keterangan as seleksi_keterangan`;
     static joinTables = `
         LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+        LEFT JOIN seleksis s ON s.id = js.seleksi_id
     `;
-    static countColumns = `COUNT(js.id)`;
-    static orderBy = `ORDER BY js.seleksi_id ASC, js.sesi ASC, js.tanggal ASC, js.jam_mulai ASC, js.lokasi_ujian, ps.nama`;
+    static countColumns = `COUNT(ps.id)`;
+    static orderBy = `ORDER BY s.tahun DESC, s.waktu_mulai DESC, js.sesi ASC, js.tanggal ASC, js.jam_mulai ASC, js.lokasi_ujian, ps.name`;
 
     static columns = [
         'jadwal_seleksi_id',
-        'nama',
+        'name',
         'user_name',
         'password'
     ];
@@ -26,7 +27,7 @@ class PengawasSeleksiModel {
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['js.id','js.sesi'];
+        const allowedFields = ['ps.id','js.id','js.sesi'];
 
         if (!allowedFields.includes(field)) {
             throw new Error('Field tidak diizinkan');
@@ -45,14 +46,7 @@ class PengawasSeleksiModel {
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'js.id', id);
-    }
-
-    /**
-     * cari berdasarkan sesi
-     */
-    static async findBySesi(conn, sesi) {
-        return this.findByKey(conn, 'js.sesi', sesi);
+        return this.findByKey(conn, 'ps.id', id);
     }
 
     /**
@@ -67,6 +61,25 @@ class PengawasSeleksiModel {
         );
 
         return rows;
+    }
+
+    /**
+     * cari user terakhir dalam 1 seleksi
+     */
+
+    static async findLastUsername(conn, prefix) {
+        const [[row]] = await conn.query(
+            `
+            SELECT user_name
+            FROM ${this.tableName}
+            WHERE user_name LIKE ?
+            ORDER BY LENGTH(user_name) DESC, user_name DESC
+            LIMIT 1
+            `,
+            [`${prefix}%`]
+        );
+
+        return row ? row.user_name : null;
     }
 
     /**

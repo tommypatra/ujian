@@ -5,17 +5,18 @@ class SeleksiModel {
     //setup tabel
     static tableName = `seleksis`;
     static tableAlias = ``;
-    static selectFields = `id,nama, waktu_mulai, waktu_selesai, prefix_nomor_peserta, prefix_login, keterangan ,created_at,updated_at`;
+    static selectFields = `id,nama, waktu_mulai, waktu_selesai, prefix_app, tahun, urutan, keterangan ,created_at,updated_at`;
     static joinTables = ``;
     static countColumns = `COUNT(*)`;
-    static orderBy = `ORDER BY waktu_mulai DESC, nama ASC`;
+    static orderBy = `ORDER BY tahun DESC, waktu_mulai DESC, urutan ASC`;
 
     static columns = [
         'nama', 
         'waktu_mulai', 
         'waktu_selesai', 
-        'prefix_nomor_peserta', 
-        'prefix_login',
+        'prefix_app', 
+        'tahun',
+        'urutan',
         'keterangan'
     ];
 
@@ -36,6 +37,16 @@ class SeleksiModel {
         );
 
         return row || null;
+    }
+
+    static async findUrutan(conn,tahun) {
+        const [[row]] = await conn.query(
+            `SELECT MAX(urutan) AS last
+            FROM seleksis
+            WHERE tahun = ?`,
+            [tahun]
+        );
+        return (row.last || 0) + 1;
     }
 
     /**

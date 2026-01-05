@@ -1,4 +1,4 @@
-// requests/UserRequest.js
+// requests/JadwalSeleksiRequest.js
 const Joi = require('joi');
 
 class JadwalSeleksiRequest {

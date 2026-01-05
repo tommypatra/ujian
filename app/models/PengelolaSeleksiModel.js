@@ -20,7 +20,7 @@ class PengelolaSeleksiModel {
         LEFT JOIN seleksis s ON s.id = ps.seleksi_id
     `;
     static countColumns = `COUNT(DISTINCT ps.id)`;
-    static orderBy = `ORDER BY s.waktu_mulai DESC, ps.jabatan ASC, u.name ASC`;
+    static orderBy = `ORDER BY s.tahun DESC, s.waktu_mulai DESC, DESC, ps.jabatan ASC, u.name ASC`;
 
     static columns = [
         'user_id',

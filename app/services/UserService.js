@@ -72,7 +72,7 @@ class UserService {
             await conn.beginTransaction();
 
             const payload = pickFields(data,UserModel.columns);
-            // transform business logic
+            // enkrip password kalau ada
             if (payload.password) {
                 payload.password = await bcrypt.hash(payload.password, 10);
             }
@@ -107,7 +107,7 @@ class UserService {
             await conn.beginTransaction();
 
             const payload = pickFields(data,UserModel.columns);
-            // transform business logic
+            // enkrip password kalau ada
             if (payload.password) {
                 payload.password = await bcrypt.hash(payload.password, 10);
             }

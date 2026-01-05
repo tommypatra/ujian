@@ -79,8 +79,15 @@ class SeleksiService {
             
             const payload = pickFields(data,SeleksiModel.columns);
 
-            const SeleksiId = await SeleksiModel.insert(conn, payload);
+            //generate prefix_app
+            const urutan = await SeleksiModel.findUrutan(conn, data.tahun);
+            const format_tahun = String(data.tahun).slice(-3);
+            const prefix_app = `${format_tahun}${urutan}`;
 
+            payload.urutan = urutan;
+            payload.prefix_app = prefix_app;
+
+            const SeleksiId = await SeleksiModel.insert(conn, payload);
             await conn.commit();
 
             return await SeleksiModel.findById(conn, SeleksiId);

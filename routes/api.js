@@ -7,6 +7,10 @@ const UserRoleController = require('../app/controllers/UserRoleController');
 const SeleksiController = require('../app/controllers/SeleksiController');
 const PengelolaSeleksiController = require('../app/controllers/PengelolaSeleksiController');
 const JadwalSeleksiController = require('../app/controllers/JadwalSeleksiController');
+const PengawasSeleksiController = require('../app/controllers/PengawasSeleksiController');
+const PesertaController = require('../app/controllers/PesertaController');
+const PesertaSeleksiController = require('../app/controllers/PesertaSeleksiController');
+
 
 const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
 const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
@@ -66,6 +70,27 @@ router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSelek
 router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.show);
 router.put('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.update);
 router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.destroy);
+
+//route pengawas-seleksi sesuai :seleksi_id
+router.get('/pengawas/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.index);
+router.post('/pengawas/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.store);
+router.get('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.show);
+router.put('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.update);
+router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.destroy);
+
+//route peserta seleksi sesuai :seleksi_id
+router.get('/peserta/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.index);
+router.post('/peserta/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.store);
+router.get('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.show);
+router.put('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.update);
+router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.destroy);
+
+//route peserta seleksi jadwal sesuai :seleksi_id
+router.get('/peserta/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.index);
+router.post('/peserta/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.store);
+router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.show);
+router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.update);
+router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.destroy);
 
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
