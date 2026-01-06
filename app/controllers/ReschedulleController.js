@@ -55,7 +55,14 @@ class ReschedulleController {
      */
     static async store(req, res) {
         try {
-            const { error, value } = ReschedulleRequest.store(req.body);
+
+            const payload = {
+                ...req.body,
+                peserta_seleksi_id: req.params?.peserta_seleksi_id,
+                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
+            };
+
+            const { error, value } = ReschedulleRequest.store(payload);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -94,8 +101,13 @@ class ReschedulleController {
     static async update(req, res) {
         try {
             const { id } = req.params;
+            const payload = {
+                ...req.body,
+                peserta_seleksi_id: req.params?.peserta_seleksi_id,
+                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
+            };
 
-            const { error, value } = ReschedulleRequest.update(req.body);
+            const { error, value } = ReschedulleRequest.update(payload);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,

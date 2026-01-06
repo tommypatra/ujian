@@ -12,7 +12,7 @@ app.use('/api', apiRoutes);
 
 // test endpoint
 app.get('/', (req, res) => {
-    res.json({ message: 'Server ujian jalan 🚀' });
+    res.json({ message: 'Server ujian jalan' });
 });
 
 // 404 handler (WAJIB PALING BAWAH)

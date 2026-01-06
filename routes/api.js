@@ -2,8 +2,9 @@ const express = require('express')
 
 const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
 const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
-const RequirePengelolaSeleksi = require('../app/middlewares/RequirePengelolaSeleksi');
-const RequirePesertaSeleksi = require('../app/middlewares/RequirePesertaSeleksi');
+const PengelolaSeleksiMiddleware = require('../app/middlewares/PengelolaSeleksiMiddleware');
+const PesertaSeleksiMiddleware = require('../app/middlewares/PesertaSeleksiMiddleware');
+const UploadMiddleware = require('../app/middlewares/UploadMiddleware');
 
 //controller
 const AuthController = require('../app/controllers/AuthController');
@@ -59,60 +60,93 @@ router.delete('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), Se
 // ------------- AWAL ROUTE PENGELOLA SELEKSI --------------
 
 //route seleksi-jadwal untuk pengelola {index untuk getall dan update sesuai :seleksi_id}
-router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, SeleksiController.index);
-router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, SeleksiController.update);
+router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.index);
+router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.update);
 
 //route pengelola-seleksi sesuai :seleksi_id
-router.get('/pengelola/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.index);
-router.post('/pengelola/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.store);
-router.get('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.show);
-router.put('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.update);
-router.delete('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengelolaSeleksiController.destroy);
+router.get('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.index);
+router.post('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.store);
+router.get('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.show);
+router.put('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.update);
+router.delete('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.destroy);
 
 //route jadwal-seleksi sesuai :seleksi_id
-router.get('/jadwal/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.index);
-router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.store);
-router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.show);
-router.put('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.update);
-router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, JadwalSeleksiController.destroy);
+router.get('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.index);
+router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.store);
+router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.show);
+router.put('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.update);
+router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.destroy);
 
 //route pengawas-seleksi sesuai :seleksi_id
-router.get('/pengawas/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.index);
-router.post('/pengawas/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.store);
-router.get('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.show);
-router.put('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.update);
-router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PengawasSeleksiController.destroy);
+router.get('/pengawas/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.index);
+router.post('/pengawas/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.store);
+router.get('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.show);
+router.put('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.update);
+router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.destroy);
 
 //route peserta seleksi sesuai :seleksi_id
-router.get('/peserta/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.index);
-router.post('/peserta/:seleksi_id/seleksi', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.store);
-router.get('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.show);
-router.put('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.update);
-router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaController.destroy);
+router.get('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.index);
+router.post('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.store);
+router.get('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.show);
+router.put('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.update);
+router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.destroy);
 
 //route peserta seleksi jadwal sesuai :seleksi_id
-router.get('/peserta/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.index);
-router.post('/peserta/:seleksi_id/jadwal', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.store);
-router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.show);
-router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.update);
-router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, RequirePengelolaSeleksi, PesertaSeleksiController.destroy);
+router.get('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.index);
+router.post('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.store);
+router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.show);
+router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.update);
+router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.destroy);
 
 //route reschedulle seleksi sesuai :seleksi_id
 //melihat daftar reschedulle sesuai seleksi_id dan mengubah status reschedulle
-router.get('/reschedulle/:seleksi_id/peserta', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.index);
-router.get('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.show);
-router.put('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, RequirePengelolaSeleksi, ReschedulleSeleksiController.update);
+router.get('/reschedulle/:seleksi_id/peserta', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.index);
+router.get('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.show);
+router.put('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.update);
 
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
 // ------------- AWAL ROUTE PESERTA --------------
+
 // lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
 // kalau sudah finalisasi tidak bisa hapus atau ganti
-router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.index);
-router.post('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.store);
-router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.show);
-router.put('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.update);
-router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, RequirePesertaSeleksi, ReschedulleController.destroy);
+router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.index);
+router.post('/peserta/:peserta_seleksi_id/reschedulle', 
+    AuthMiddleware, 
+    PesertaSeleksiMiddleware, 
+    ...UploadMiddleware({
+        folder: () => {
+            const now = new Date();
+            const tahun = now.getFullYear();
+            const bulan = String(now.getMonth() + 1).padStart(2, '0');
+            return `storage/reschedulle/${tahun}/${bulan}`;
+        },
+        maxSize: 0.5 * 1024 * 1024,
+        // allowed: ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx'],
+        allowed: ['pdf'],
+        fieldName: 'dokumen_pendukung'
+    }),    
+    ReschedulleController.store
+);
+router.put('/peserta/:peserta_seleksi_id/reschedulle/:id', 
+    AuthMiddleware, 
+    PesertaSeleksiMiddleware,
+    ...UploadMiddleware({
+        folder: () => {
+            const now = new Date();
+            const tahun = now.getFullYear();
+            const bulan = String(now.getMonth() + 1).padStart(2, '0');
+            return `storage/reschedulle/${tahun}/${bulan}`;
+        },
+        maxSize: 1 * 1024 * 1024,
+        // allowed: ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx'],
+        allowed: ['pdf'],
+        fieldName: 'dokumen_pendukung'
+    }),
+    ReschedulleController.update);
+router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.show);
+router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.destroy);
+
 // ------------- AKHIR ROUTE PESERTA --------------
 
 

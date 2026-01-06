@@ -41,7 +41,7 @@ class ReschedulleModel {
     /**
      * helper internal pencarian berdasarkan field dan value
      */
-    static async findByKey(conn, field, value, user) {
+    static async findByKey(conn, field, value) {
         const allowedFields = ['rs.id'];
 
         if (!allowedFields.includes(field)) {
@@ -50,8 +50,8 @@ class ReschedulleModel {
 
         const [[row]] = await conn.query(
             `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ? AND p.id = ?`,
-            [value,user.id]
+            WHERE ${field} = ?`,
+            [value]
         );
 
         return row || null;

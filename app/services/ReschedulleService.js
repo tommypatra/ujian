@@ -82,10 +82,10 @@ class ReschedulleService {
         try {
             await conn.beginTransaction();
 
-            const peserta = await PesertaSeleksiModel.findById(conn, data.peserta_seleksi_id);
-            if (!peserta) {
-                throw new Error('Peserta seleksi tidak ditemukan');
-            }
+            // const peserta = await PesertaSeleksiModel.findById(conn, data.peserta_seleksi_id);
+            // if (!peserta) {
+            //     throw new Error('Peserta seleksi tidak ditemukan');
+            // }
 
             const payload = pickFields(data,ReschedulleModel.columns);
 
@@ -110,10 +110,10 @@ class ReschedulleService {
         try {
             await conn.beginTransaction();
 
-            const peserta = await PesertaSeleksiModel.findById(conn, data.peserta_seleksi_id);
-            if (!peserta) {
-                throw new Error('Peserta seleksi tidak ditemukan');
-            }
+            // const peserta = await PesertaSeleksiModel.findById(conn, data.peserta_seleksi_id);
+            // if (!peserta) {
+            //     throw new Error('Peserta seleksi tidak ditemukan');
+            // }
 
             const payload = pickFields(data,ReschedulleModel.columns);
 
