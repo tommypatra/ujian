@@ -1,20 +1,48 @@
 // app/models/PesertaModel.js
-const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
+const BaseModel = require('./BaseModel');
 
-class PesertaModel {
-    //setup tabel
-    static tableName = `pesertas`;
-    static tableAlias = `p`;
+class PesertaModel extends BaseModel {
+
+    /* =======================
+     * TABLE CONFIG
+     * ======================= */
+    static tableName = 'pesertas';
+    static tableAlias = 'p';
+
     static selectFields = `
-    p.id, p.seleksi_id, p.jenis_kelamin, p.hp, p.email, p.nama, p.nomor_peserta, p.foto, p.user_name,p.tanggal_lahir,
-    p.created_at,p.updated_at,
-    s.nama as seleksi_nama, s.waktu_mulai, s.waktu_selesai, s.prefix_app, s.tahun, s.keterangan 
+        p.id,
+        p.seleksi_id,
+        p.jenis_kelamin,
+        p.hp,
+        p.email,
+        p.nama,
+        p.nomor_peserta,
+        p.foto,
+        p.user_name,
+        p.tanggal_lahir,
+        p.created_at,
+        p.updated_at,
+        s.nama AS seleksi_nama,
+        s.waktu_mulai,
+        s.waktu_selesai,
+        s.prefix_app,
+        s.tahun,
+        s.keterangan
     `;
+
     static joinTables = `
         LEFT JOIN seleksis s ON s.id = p.seleksi_id
     `;
-    static countColumns = `COUNT(p.id)`;
-    static orderBy = `ORDER BY s.tahun DESC, s.waktu_mulai DESC, CAST(p.nomor_peserta AS UNSIGNED) ASC, p.nama ASC`;
+
+    static countColumns = 'COUNT(p.id)';
+
+    static orderBy = `
+        ORDER BY
+            s.tahun DESC,
+            s.waktu_mulai DESC,
+            CAST(p.nomor_peserta AS UNSIGNED) ASC,
+            p.nama ASC
+    `;
 
     static columns = [
         'nomor_peserta',
@@ -29,113 +57,73 @@ class PesertaModel {
         'foto'
     ];
 
+    static allowedFields = [
+        'p.id',
+        'p.user_name'
+    ];
+
+    /* =======================
+     * READ
+     * ======================= */
+
+    static async findById(conn, id) {
+        return super.findByKey(conn, 'p.id', id);
+    }
+
     /**
-     * helper internal pencarian berdasarkan field dan value
+     * Cari peserta berdasarkan username + seleksi
+     * (lebih aman daripada username saja)
      */
-    static async findByKey(conn, field, value) {
-        const allowedFields = ['p.id','p.user_name'];
-
-        if (!allowedFields.includes(field)) {
-            throw new Error('Field tidak diizinkan');
-        }
-
+    static async findByUserName(conn, user_name, seleksi_id) {
         const [[row]] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ?`,
-            [value]
+            `
+            SELECT ${this.selectFields},p.password
+            FROM ${this.tableName} ${this.tableAlias}
+            ${this.joinTables}
+            WHERE p.user_name = ?
+              AND p.seleksi_id = ?
+            LIMIT 1
+            `,
+            [user_name, seleksi_id]
         );
 
         return row || null;
     }
 
-    /**
-     * cari berdasarkan id
-     */
-    static async findById(conn, id) {
-        return this.findByKey(conn, 'p.id', id);
-    }
-
-    static async findByUserName(conn, user_name, seleksi_id) {
-        const [[row]] = await conn.query(
-            `SELECT * FROM pesertas WHERE user_name = ? AND seleksi_id = ?`,
-            [user_name,seleksi_id]
-        );
-        return row || null;    
-    }
-
-    /**
-     * Ambil data (paged)
-     */
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        const [rows] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            ${whereSql}
-            ${this.orderBy} LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
-        );
-
-        return rows;
+        return super.findAll(conn, whereSql, params, limit, offset);
     }
 
-    /**
-     * Hitung total (untuk pagination)
-     */
     static async countAll(conn, whereSql = '', params = []) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}
-            ${whereSql}`,
-            params
-        );
-
-        return row.total;
+        return super.countAll(conn, whereSql, params);
     }
 
-    /**
-     * Insert baru
-     */
+    /* =======================
+     * WRITE (AMAN)
+     * ======================= */
+
+    // INSERT (seleksi_id HARUS dari service / URL)
     static async insert(conn, data) {
-        const insert = buildInsert(data, this.columns);
-
-        const [result] = await conn.query(`
-            INSERT INTO ${this.tableName} (${insert.columns})
-            VALUES (${insert.placeholders})
-            `,
-            insert.values
-        );
-
-        return result.insertId;
+        return super.insert(conn, data);
     }
 
-    /**
-     * Update data
-     */
-    static async update(conn, id, data) {
-        const update = buildUpdate(data, this.columns);
-        if (!update) return 0;
-
-        update.values.push(id);
-
-        const [result] = await conn.query(`UPDATE ${this.tableName}
-            SET ${update.setClause} WHERE id = ?`,
-            update.values
+    // UPDATE by id + seleksi_id (ANTI SALAH SELEKSI)
+    static async updateByKeys(conn, fields, values, data) {
+        return super.updateByKeys(
+            conn,
+            fields,
+            values,
+            data
         );
-
-        return result.affectedRows;
     }
 
-    /**
-     * Delete data
-     */
-    static async deleteById(conn, id) {
-        const [result] = await conn.query(
-            `
-            DELETE FROM ${this.tableName}
-            WHERE id = ?
-            `,
-            [id]
+    // DELETE by id + seleksi_id (ANTI SALAH HAPUS)
+    static async deleteByKeys(conn, id, seleksi_id) {
+        return super.deleteByKeys(
+            conn,
+            ['id', 'seleksi_id'],
+            [id, seleksi_id]
         );
-
-        return result.affectedRows;
     }
 }
 

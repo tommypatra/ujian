@@ -56,6 +56,8 @@ class PesertaController {
     static async store(req, res) {
         try {
             const { error, value } = PesertaRequest.store(req.body);
+            const seleksi_id = parseInt(req.params.seleksi_id) || null;
+
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -63,14 +65,13 @@ class PesertaController {
                 });
             }
 
-            const data_exec = await PesertaService.store(value);
+            const data_exec = await PesertaService.store(value,seleksi_id);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
             });
         } catch (err) {
             console.error('PesertaController.store error:', err);
-            const isDev = process.env.APP_ENV === 'development';   
 
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({
@@ -92,7 +93,7 @@ class PesertaController {
      */
     static async update(req, res) {
         try {
-            const { id } = req.params;
+            const { id, seleksi_id } = req.params;
 
             const { error, value } = PesertaRequest.update(req.body);
             if (error) {
@@ -102,7 +103,8 @@ class PesertaController {
                 });
             }
 
-            const data_exec = await PesertaService.update(id, value);
+            const data_exec = await PesertaService.update(id,value,seleksi_id);
+
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
@@ -122,8 +124,8 @@ class PesertaController {
      */
     static async destroy(req, res) {
         try {
-            const { id } = req.params;
-            const data_exec = await PesertaService.destroy(id);
+            const { id, seleksi_id } = req.params;
+            const data_exec = await PesertaService.destroy(id,seleksi_id);
             return res.status(200).json({
                 message: 'Data berhasil dihapus',
                 data: data_exec
@@ -138,9 +140,9 @@ class PesertaController {
     }
 
     // login peserta
-    static async login(req, res) {
+    static async loginPeserta(req, res) {
         try {
-        const { error, value } = PesertaRequest.login(req.body);
+        const { error, value } = PesertaRequest.loginPeserta(req.body);
         if (error) {
             return res.status(422).json({
                 message: error.details[0].message,
@@ -148,7 +150,7 @@ class PesertaController {
             });
         }
 
-        const result = await PesertaService.login(value);
+        const result = await PesertaService.loginPeserta(value);
 
         return res.status(200).json({
             message: 'Login berhasil',

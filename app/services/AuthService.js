@@ -14,23 +14,23 @@ class AuthService {
         try {
             const { email, password } = data;
 
-            // 1️⃣ ambil user by email
+            // ambil user by email
             const user = await UserModel.findByEmail(conn, email);
             if (!user) {
                 throw new Error('User tidak ditemukan');
             }
 
-            // 2️⃣ cek password
+            // cek password
             const valid = await bcrypt.compare(password, user.password);
             if (!valid) {
                 throw new Error('Password salah');
             }
 
-            // 3️⃣ load roles user
+            // load roles user
             const roles = await UserRoleModel.findAllByUserId(conn, user.id);
             // contoh hasil: ['admin', 'pengguna']
 
-            // 4️⃣ generate JWT
+            // generate JWT
             const token = jwt.sign(
                 {
                     id: user.id,

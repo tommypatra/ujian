@@ -21,7 +21,7 @@ class SeleksiRequest {
             nama: Joi.string().min(3).required(),
             waktu_mulai: Joi.date().required(),
             waktu_selesai: Joi.date().greater(Joi.ref('waktu_mulai')).required(),            
-            tahun: Joi.number().integer().min(2000).max(2100).required(),
+            tahun: Joi.number().integer().min(2000).max(2100).optional(),
             keterangan: Joi.string().allow(null, '').optional(),
         }).validate(data, {
             abortEarly: false,

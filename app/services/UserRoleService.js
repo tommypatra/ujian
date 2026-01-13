@@ -21,7 +21,7 @@ class UserRoleService {
 
         // search umum
         if (query.search) {
-            where.push(`(u.nama LIKE ? OR u.email LIKE ?)`);
+            where.push(`(u.name LIKE ? OR u.email LIKE ?)`);
             params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }
@@ -84,16 +84,6 @@ class UserRoleService {
         try {
             await conn.beginTransaction();
 
-            const user = await UserModel.findById(conn, data.user_id);
-            if (!user) {
-                throw new Error('User tidak ditemukan');
-            }
-
-            const role = await RoleModel.findById(conn, data.role_id);
-            if (!role) {
-                throw new Error('Role tidak ditemukan');
-            }            
-
             const payload = pickFields(data,UserRoleModel.columns);
 
             const UserRoleId = await UserRoleModel.insert(conn, payload);
@@ -104,6 +94,17 @@ class UserRoleService {
 
         } catch (err) {
             await conn.rollback();
+
+            // FK constraint (referensi tidak ditemukan)
+            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+
+                // ambil nama foreign key
+                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
+                const field = match ? match[1] : 'referensi';
+
+                throw new Error(`Referensi ${field} tidak ditemukan`);
+            }
+
             throw err;
         } finally {
             conn.release();
@@ -117,15 +118,6 @@ class UserRoleService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const user = await UserModel.findById(conn, data.user_id);
-            if (!user) {
-                throw new Error('User tidak ditemukan');
-            }
-
-            const role = await RoleModel.findById(conn, data.role_id);
-            if (!role) {
-                throw new Error('Role tidak ditemukan');
-            }            
 
             const payload = pickFields(data,UserRoleModel.columns);
 
@@ -139,6 +131,17 @@ class UserRoleService {
 
         } catch (err) {
             await conn.rollback();
+
+                        // FK constraint (referensi tidak ditemukan)
+            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+
+                // ambil nama foreign key
+                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
+                const field = match ? match[1] : 'referensi';
+
+                throw new Error(`Referensi ${field} tidak ditemukan`);
+            }
+
             throw err;
         } finally {
             conn.release();

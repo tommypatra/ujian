@@ -31,12 +31,8 @@ class JadwalSeleksiService {
             params.push(`%${query.search}%`);
         }
 
-        // filter by seleksi_id
-        if(seleksi_id){
-            where.push(`(js.seleksi_id = ?)`);
-            params.push(`${seleksi_id}`);
-        }
-
+        where.push(`(js.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
 
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -95,35 +91,42 @@ class JadwalSeleksiService {
     /**
      * Simpan JadwalSeleksi baru + pengawas default
      */
-    static async store(data) {
+    static async store(data,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const seleksi = await SeleksiModel.findById(conn, data.seleksi_id);
-            if (!seleksi) {
-                throw new Error('Seleksi tidak ditemukan');
-            }
-
             const payload = pickFields(data,JadwalSeleksiModel.columns);
+            payload.seleksi_id=seleksi_id;
+
             const JadwalSeleksiId = await JadwalSeleksiModel.insert(conn,payload);
+
+            const seleksi = await SeleksiModel.findById(conn,seleksi_id);
 
             //generate pengawas
             const prefix = seleksi.prefix_app;
-            const lastUsername = await PengawasSeleksiModel.findLastUsername(conn, prefix);
+            const lastUsername = await PengawasSeleksiModel.findLastUsername(conn, seleksi_id);
+
             let urutan = 1;
             if (lastUsername) {
-                urutan = parseInt(lastUserName.slice(prefix.length), 10) + 1;
+                const regex = new RegExp(`^${prefix}(\\d+)$`);
+                const match = lastUsername.match(regex);
+                if (match) {
+                    urutan = parseInt(match[1], 10) + 1;
+                }
             }
+
             const userName = `${prefix}${String(urutan).padStart(3, '0')}`;            
             const plainPassword = generatePassword();
 
-            const PengawasJadwaliId = await PengawasSeleksiModel.insert(conn,{
+            const payloadPengawas = {
                 jadwal_seleksi_id:JadwalSeleksiId,
                 name:`Pengawas ${userName}`,
                 user_name:userName,
                 password: await bcrypt.hash(plainPassword, 10)
-            });
+            };
+
+            const PengawasJadwaliId = await PengawasSeleksiModel.insert(conn,payloadPengawas);
 
 
             await conn.commit();
@@ -148,19 +151,16 @@ class JadwalSeleksiService {
     /**
      * Update JadwalSeleksi
      */
-    static async update(id, data) {
+    static async update(id, data,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-
-            const seleksi = await SeleksiModel.findById(conn, data.seleksi_id);
-            if (!seleksi) {
-                throw new Error('Seleksi tidak ditemukan');
-            }
-
             const payload = pickFields(data,JadwalSeleksiModel.columns);
+            payload.seleksi_id=seleksi_id;
 
-            const affected = await JadwalSeleksiModel.update(conn, id, payload);
+            // const affected = await JadwalSeleksiModel.update(conn, id, payload);
+            const affected = await JadwalSeleksiModel.updateByKeys(conn, ['id','seleksi_id'],[id,seleksi_id], payload);
+
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
@@ -179,12 +179,12 @@ class JadwalSeleksiService {
     /**
      * Hapus JadwalSeleksi + relasi JadwalSeleksi
      */
-    static async destroy(id) {
+    static async destroy(id,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await JadwalSeleksiModel.deleteById(conn, id);
+            const affected = await JadwalSeleksiModel.deleteByKeys(conn, id,seleksi_id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');

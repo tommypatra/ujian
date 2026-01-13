@@ -15,12 +15,12 @@ class UserService {
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
 
- const where = [];
+        const where = [];
         const params = [];
 
         // search umum
         if (query.search) {
-            where.push(`(nama LIKE ? OR email LIKE ?)`);
+            where.push(`(name LIKE ? OR email LIKE ?)`);
             params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }

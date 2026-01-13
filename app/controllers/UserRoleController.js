@@ -71,14 +71,6 @@ class UserRoleController {
             });
         } catch (err) {
             console.error('UserRoleController.store error:', err);
-            const isDev = process.env.APP_ENV === 'development';   
-
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({
-                    message: 'Duplikat data entry',
-                    data: null
-                });
-            }
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',

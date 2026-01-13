@@ -71,7 +71,6 @@ class PengawasSeleksiController {
             });
         } catch (err) {
             console.error('PengawasSeleksiController.store error:', err);
-            const isDev = process.env.APP_ENV === 'development';   
 
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({

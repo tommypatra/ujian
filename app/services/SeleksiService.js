@@ -94,6 +94,17 @@ class SeleksiService {
 
         } catch (err) {
             await conn.rollback();
+
+            // FK constraint (referensi tidak ditemukan)
+            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+
+                // ambil nama foreign key
+                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
+                const field = match ? match[1] : 'referensi';
+
+                throw new Error(`Referensi ${field} tidak ditemukan`);
+            }
+
             throw err;
         } finally {
             conn.release();
@@ -120,6 +131,17 @@ class SeleksiService {
 
         } catch (err) {
             await conn.rollback();
+
+            // FK constraint (referensi tidak ditemukan)
+            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+
+                // ambil nama foreign key
+                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
+                const field = match ? match[1] : 'referensi';
+
+                throw new Error(`Referensi ${field} tidak ditemukan`);
+            }
+
             throw err;
         } finally {
             conn.release();
@@ -129,12 +151,12 @@ class SeleksiService {
     /**
      * Hapus Seleksi + relasi Seleksi
      */
-    static async destroy(id) {
+    static async destroy(id,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await SeleksiModel.deleteById(conn, id);
+            const affected = await SeleksiModel.deleteById(conn, id,seleksi_id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');

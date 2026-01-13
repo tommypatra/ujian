@@ -1,20 +1,48 @@
 // app/models/JadwalSeleksiModel.js
-const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
+const BaseModel = require('./BaseModel');
 
-class JadwalSeleksiModel {
-    //setup tabel
-    static tableName = `jadwal_seleksis`;
-    static tableAlias = `js`;
+class JadwalSeleksiModel extends BaseModel {
+
+    /* =======================
+     * TABLE CONFIG
+     * ======================= */
+    static tableName = 'jadwal_seleksis';
+    static tableAlias = 'js';
+
     static selectFields = `
-    js.id, js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, 
-    js.status ,js.created_at, js.updated_at,
-    s.nama, s.waktu_mulai, s.waktu_selesai, s.prefix_app, s.tahun, s.keterangan 
+        js.id,
+        js.seleksi_id,
+        js.sesi,
+        js.tanggal,
+        js.lokasi_ujian,
+        js.jam_mulai,
+        js.jam_selesai,
+        js.status,
+        js.created_at,
+        js.updated_at,
+        s.nama,
+        s.waktu_mulai,
+        s.waktu_selesai,
+        s.prefix_app,
+        s.tahun,
+        s.keterangan
     `;
+
     static joinTables = `
         LEFT JOIN seleksis s ON s.id = js.seleksi_id
     `;
-    static countColumns = `COUNT(js.id)`;
-    static orderBy = `ORDER BY s.tahun DESC, s.waktu_mulai DESC, js.sesi ASC, js.tanggal ASC, js.jam_mulai ASC, js.lokasi_ujian`;
+
+    static countColumns = 'COUNT(js.id)';
+
+    static orderBy = `
+        ORDER BY
+            s.tahun DESC,
+            s.waktu_mulai DESC,
+            js.sesi ASC,
+            js.tanggal ASC,
+            js.jam_mulai ASC,
+            js.lokasi_ujian
+    `;
 
     static columns = [
         'seleksi_id',
@@ -26,112 +54,57 @@ class JadwalSeleksiModel {
         'status'
     ];
 
-    /**
-     * helper internal pencarian berdasarkan field dan value
-     */
-    static async findByKey(conn, field, value) {
-        const allowedFields = ['js.id','js.sesi'];
+    static allowedFields = [
+        'js.id',
+        'js.sesi'
+    ];
 
-        if (!allowedFields.includes(field)) {
-            throw new Error('Field tidak diizinkan');
-        }
+    /* =======================
+     * READ
+     * ======================= */
 
-        const [[row]] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ?`,
-            [value]
-        );
-
-        return row || null;
-    }
-
-    /**
-     * cari berdasarkan id
-     */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'js.id', id);
+        return super.findByKey(conn, 'js.id', id);
     }
 
-    /**
-     * cari berdasarkan sesi
-     */
     static async findBySesi(conn, sesi) {
-        return this.findByKey(conn, 'js.sesi', sesi);
+        return super.findAllByKey(conn, 'js.sesi', [sesi]);
     }
 
-    /**
-     * Ambil data (paged)
-     */
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        const [rows] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            ${whereSql}
-            ${this.orderBy} LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
-        );
-
-        return rows;
+        return super.findAll(conn, whereSql, params, limit, offset);
     }
 
-    /**
-     * Hitung total (untuk pagination)
-     */
     static async countAll(conn, whereSql = '', params = []) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}
-            ${whereSql}`,
-            params
-        );
-
-        return row.total;
+        return super.countAll(conn, whereSql, params);
     }
 
-    /**
-     * Insert baru
-     */
+    /* =======================
+     * WRITE (AMAN)
+     * ======================= */
+
+    // INSERT (seleksi_id DIKUNCI dari service)
     static async insert(conn, data) {
-        const insert = buildInsert(data, this.columns);
-
-        const [result] = await conn.query(`
-            INSERT INTO ${this.tableName} (${insert.columns})
-            VALUES (${insert.placeholders})
-            `,
-            insert.values
-        );
-
-        return result.insertId;
+        return super.insert(conn, data);
     }
 
-    /**
-     * Update data
-     */
-    static async update(conn, id, data) {
-        const update = buildUpdate(data, this.columns);
-        if (!update) return 0;
-
-        update.values.push(id);
-
-        const [result] = await conn.query(`UPDATE ${this.tableName}
-            SET ${update.setClause} WHERE id = ?`,
-            update.values
+    // UPDATE by id + seleksi_id (ANTI IDOR)
+    static async updateByKeys(conn, id, seleksi_id, data) {
+        return super.updateByKeys(
+            conn,
+            ['id', 'seleksi_id'],
+            [id, seleksi_id],
+            data
         );
-
-        return result.affectedRows;
     }
 
-    /**
-     * Delete data
-     */
-    static async deleteById(conn, id) {
-        const [result] = await conn.query(
-            `
-            DELETE FROM ${this.tableName}
-            WHERE id = ?
-            `,
-            [id]
+    // DELETE by id + seleksi_id (ANTI IDOR)
+    static async deleteByKeys(conn, id, seleksi_id) {
+        return super.deleteByKeys(
+            conn,
+            ['id', 'seleksi_id'],
+            [id, seleksi_id]
         );
-
-        return result.affectedRows;
     }
 }
 

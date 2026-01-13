@@ -1,11 +1,7 @@
 // app/services/PesertaSeleksiService.js
 const db = require('../../config/database');
-const bcrypt = require('bcryptjs');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
-const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
-
-const {pickFields} = require('../helpers/payloadHelper');
-
+const { pickFields } = require('../helpers/payloadHelper');
 
 class PesertaSeleksiService {
 
@@ -23,26 +19,30 @@ class PesertaSeleksiService {
         const where = [];
         const params = [];
 
-        // search umum
         if (query.search) {
-            where.push(`(p.email LIKE ? OR p.nama LIKE ? OR p.nomor_peserta LIKE ? OR p.hp LIKE ?)`);
-            params.push(`%${query.search}%`);
-            params.push(`%${query.search}%`);
-            params.push(`%${query.search}%`);
-            params.push(`%${query.search}%`);
+            where.push(`
+                (
+                    p.email LIKE ?
+                    OR p.nama LIKE ?
+                    OR p.nomor_peserta LIKE ?
+                    OR p.hp LIKE ?
+                )
+            `);
+            params.push(
+                `%${query.search}%`,
+                `%${query.search}%`,
+                `%${query.search}%`,
+                `%${query.search}%`
+            );
         }
 
-        // search sesi
         if (query.sesi) {
-            where.push(`(js.sesi = ?)`);
-            params.push(`${query.sesi}`);
+            where.push(`js.sesi = ?`);
+            params.push(query.sesi);
         }
 
-        // filter by seleksi_id
-        if(seleksi_id){
-            where.push(`(p.seleksi_id = ?)`);
-            params.push(`${seleksi_id}`);
-        }
+        where.push(`p.seleksi_id = ?`);
+        params.push(seleksi_id);
 
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -55,11 +55,7 @@ class PesertaSeleksiService {
 
             return {
                 data,
-                meta: {
-                    page,
-                    limit,
-                    total
-                }
+                meta: { page, limit, total }
             };
         } finally {
             conn.release();
@@ -72,11 +68,11 @@ class PesertaSeleksiService {
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const PesertaSeleksi = await PesertaSeleksiModel.findById(conn, id);
-            if (!PesertaSeleksi) {
+            const row = await PesertaSeleksiModel.findById(conn, id);
+            if (!row) {
                 throw new Error('Data tidak ditemukan');
             }
-            return PesertaSeleksi;
+            return row;
         } finally {
             conn.release();
         }
@@ -85,26 +81,27 @@ class PesertaSeleksiService {
     /**
      * Simpan PesertaSeleksi baru
      */
-    static async store(data) {
+    static async store(data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const jadwalSeleksi = await JadwalSeleksiModel.findById(conn, data.jadwal_seleksi_id);
-            if (!jadwalSeleksi) {
-                throw new Error('jadwal tidak ditemukan');
+            const payload = pickFields(data, PesertaSeleksiModel.columns);
+            payload.seleksi_id = seleksi_id;
+
+            const isValidPesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
+            const isValidJadwalSeleksi = await PesertaSeleksiModel.isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
+
+            if(!isValidPesertaSeleksi){
+                throw new Error('Peserta tersebut tidak ditemukan dalam seleksi ini');
+            }else if(!isValidJadwalSeleksi){
+                throw new Error('Jadwal tersebut tidak ditemukan dalam seleksi ini');
             }
 
-            const pesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, data.peserta_id, jadwalSeleksi.seleksi_id);
-            if (!pesertaSeleksi) {
-                throw new Error('peserta tidak ditemukan dalam seleksi ini');
-            }
-            const payload = pickFields(data,PesertaSeleksiModel.columns);
+            const id = await PesertaSeleksiModel.insert(conn, payload);
 
-            const PesertaSeleksiId = await PesertaSeleksiModel.insert(conn,payload);
             await conn.commit();
-
-            return await PesertaSeleksiModel.findById(conn, PesertaSeleksiId);
+            return await PesertaSeleksiModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
@@ -115,34 +112,38 @@ class PesertaSeleksiService {
     }
 
     /**
-     * Update PesertaSeleksi
+     * Update PesertaSeleksi (AMAN)
      */
-    static async update(id, data) {
+    static async update(id, data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const jadwalSeleksi = await JadwalSeleksiModel.findById(conn, data.jadwal_seleksi_id);
-            if (!jadwalSeleksi) {
-                throw new Error('jadwal tidak ditemukan');
+            const payload = pickFields(data, PesertaSeleksiModel.columns);
+
+            const isValidPesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
+            const isValidJadwalSeleksi = await PesertaSeleksiModel.isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
+
+            if(!isValidPesertaSeleksi){
+                throw new Error('Peserta tersebut tidak ditemukan dalam seleksi ini');
+            }else if(!isValidJadwalSeleksi){
+                throw new Error('Jadwal tersebut tidak ditemukan dalam seleksi ini');
             }
 
-            const pesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, data.peserta_id, jadwalSeleksi.seleksi_id);
-            if (!pesertaSeleksi) {
-                throw new Error('peserta tidak ditemukan dalam seleksi ini');
-            }
+            const affected =
+                await PesertaSeleksiModel.update(
+                    conn,
+                    id,
+                    payload,
+                    seleksi_id
+                );
 
-            const payload = pickFields(data,PesertaSeleksiModel.columns);
-
-            const affected = await PesertaSeleksiModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-
             return await PesertaSeleksiModel.findById(conn, id);
-
 
         } catch (err) {
             await conn.rollback();
@@ -153,14 +154,19 @@ class PesertaSeleksiService {
     }
 
     /**
-     * Hapus PesertaSeleksi
+     * Hapus PesertaSeleksi (AMAN)
      */
-    static async destroy(id) {
+    static async destroy(id, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PesertaSeleksiModel.deleteById(conn, id);
+            const affected =
+                await PesertaSeleksiModel.delete(
+                    conn,
+                    id,
+                    seleksi_id
+                );
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');

@@ -34,9 +34,11 @@ function buildUpdate(data, allowedColumns = [], options = {}) {
     const sets = [];
     const values = [];
 
+    const alias = options.alias ? `${options.alias}.` : '';
+
     for (const col of allowedColumns) {
         if (data[col] !== undefined) {
-            sets.push(`${col} = ?`);
+            sets.push(`${alias}${col} = ?`);
             values.push(data[col]);
         }
     }
@@ -44,7 +46,7 @@ function buildUpdate(data, allowedColumns = [], options = {}) {
     if (sets.length === 0) return null;
 
     if (options.timestamps !== false) {
-        sets.push('updated_at = ?');
+        sets.push(`${alias}updated_at = ?`);
         values.push(new Date());
     }
 

@@ -1,20 +1,51 @@
 // app/models/PengawasSeleksiModel.js
-const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
+const BaseModel = require('./BaseModel');
 
-class PengawasSeleksiModel {
-    //setup tabel
-    static tableName = `pengawas_seleksis`;
-    static tableAlias = `ps`;
+class PengawasSeleksiModel extends BaseModel {
+
+    /* =======================
+     * TABLE CONFIG
+     * ======================= */
+    static tableName = 'pengawas_seleksis';
+    static tableAlias = 'ps';
+
     static selectFields = `
-    ps.id, ps.jadwal_seleksi_id, ps.name, ps.user_name, ps.created_at, ps.updated_at,
-    js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, js.status,
-    s.nama as seleksi_nama, s.prefix_app, s.tahun, s.keterangan as seleksi_keterangan`;
+        ps.id,
+        ps.jadwal_seleksi_id,
+        ps.name,
+        ps.user_name,
+        ps.created_at,
+        ps.updated_at,
+        js.seleksi_id,
+        js.sesi,
+        js.tanggal,
+        js.lokasi_ujian,
+        js.jam_mulai,
+        js.jam_selesai,
+        js.status,
+        s.nama AS seleksi_nama,
+        s.prefix_app,
+        s.tahun,
+        s.keterangan AS seleksi_keterangan
+    `;
+
     static joinTables = `
         LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
         LEFT JOIN seleksis s ON s.id = js.seleksi_id
     `;
-    static countColumns = `COUNT(ps.id)`;
-    static orderBy = `ORDER BY s.tahun DESC, s.waktu_mulai DESC, js.sesi ASC, js.tanggal ASC, js.jam_mulai ASC, js.lokasi_ujian, ps.name`;
+
+    static countColumns = 'COUNT(ps.id)';
+
+    static orderBy = `
+        ORDER BY
+            s.tahun DESC,
+            s.waktu_mulai DESC,
+            js.sesi ASC,
+            js.tanggal ASC,
+            js.jam_mulai ASC,
+            js.lokasi_ujian,
+            ps.name ASC
+    `;
 
     static columns = [
         'jadwal_seleksi_id',
@@ -23,124 +54,81 @@ class PengawasSeleksiModel {
         'password'
     ];
 
-    /**
-     * helper internal pencarian berdasarkan field dan value
-     */
-    static async findByKey(conn, field, value) {
-        const allowedFields = ['ps.id','js.id','js.sesi'];
+    static allowedFields = [
+        'ps.id',
+        'js.id',
+        'js.sesi'
+    ];
 
-        if (!allowedFields.includes(field)) {
-            throw new Error('Field tidak diizinkan');
-        }
+    /* =======================
+     * READ
+     * ======================= */
 
-        const [[row]] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ?`,
-            [value]
-        );
-
-        return row || null;
-    }
-
-    /**
-     * cari berdasarkan id
-     */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'ps.id', id);
+        return super.findByKey(conn, 'ps.id', id);
     }
 
-    /**
-     * Ambil data (paged)
-     */
+    static async findByJadwalId(conn, jadwalId) {
+        return super.findByKey(conn, 'js.id', jadwalId);
+    }
+
+    static async findBySesi(conn, sesi) {
+        return super.findByKey(conn, 'js.sesi', sesi);
+    }
+
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        const [rows] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            ${whereSql}
-            ${this.orderBy} LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
-        );
+        return super.findAll(conn, whereSql, params, limit, offset);
+    }
 
-        return rows;
+    static async countAll(conn, whereSql = '', params = []) {
+        return super.countAll(conn, whereSql, params);
     }
 
     /**
-     * cari user terakhir dalam 1 seleksi
+     * Cari username terakhir dalam satu jadwal seleksi
+     * (fungsi khusus, bukan generic CRUD)
      */
-
-    static async findLastUsername(conn, prefix) {
+    static async findLastUsername(conn, seleksi_id) {
         const [[row]] = await conn.query(
             `
-            SELECT user_name
-            FROM ${this.tableName}
-            WHERE user_name LIKE ?
-            ORDER BY LENGTH(user_name) DESC, user_name DESC
+            SELECT ps.user_name
+            FROM pengawas_seleksis ps
+            LEFT JOIN jadwal_seleksis js ON js.id=ps.jadwal_seleksi_id
+            WHERE js.seleksi_id = ?
+            ORDER BY LENGTH(ps.user_name) DESC, ps.user_name DESC
             LIMIT 1
             `,
-            [`${prefix}%`]
+            [seleksi_id]
         );
-
         return row ? row.user_name : null;
     }
 
-    /**
-     * Hitung total (untuk pagination)
-     */
-    static async countAll(conn, whereSql = '', params = []) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}
-            ${whereSql}`,
-            params
-        );
+    /* =======================
+     * WRITE (AMAN)
+     * ======================= */
 
-        return row.total;
-    }
-
-    /**
-     * Insert baru
-     */
+    // INSERT (jadwal_seleksi_id harus dari service / URL)
     static async insert(conn, data) {
-        const insert = buildInsert(data, this.columns);
-
-        const [result] = await conn.query(`
-            INSERT INTO ${this.tableName} (${insert.columns})
-            VALUES (${insert.placeholders})
-            `,
-            insert.values
-        );
-
-        return result.insertId;
+        return super.insert(conn, data);
     }
 
-    /**
-     * Update data
-     */
-    static async update(conn, id, data) {
-        const update = buildUpdate(data, this.columns);
-        if (!update) return 0;
-
-        update.values.push(id);
-
-        const [result] = await conn.query(`UPDATE ${this.tableName}
-            SET ${update.setClause} WHERE id = ?`,
-            update.values
+    // UPDATE by id + jadwal_seleksi_id (ANTI IDOR)
+    static async updateByIdAndJadwal(conn, id, jadwal_seleksi_id, data) {
+        return super.updateByKeys(
+            conn,
+            ['id', 'jadwal_seleksi_id'],
+            [id, jadwal_seleksi_id],
+            data
         );
-
-        return result.affectedRows;
     }
 
-    /**
-     * Delete data
-     */
-    static async deleteById(conn, id) {
-        const [result] = await conn.query(
-            `
-            DELETE FROM ${this.tableName}
-            WHERE id = ?
-            `,
-            [id]
+    // DELETE by id + jadwal_seleksi_id (ANTI IDOR)
+    static async deleteByIdAndJadwal(conn, id, jadwal_seleksi_id) {
+        return super.deleteByKeys(
+            conn,
+            ['id', 'jadwal_seleksi_id'],
+            [id, jadwal_seleksi_id]
         );
-
-        return result.affectedRows;
     }
 }
 

@@ -1,17 +1,17 @@
-// app/services/ReschedulleSeleksiService.js
+// app/services/ReschedullePanitiaService.js
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const ReschedulleSeleksiModel = require('../models/ReschedulleSeleksiModel');
-const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
-const UserModel = require('../models/UserModel');
+const ReschedullePanitiaModel = require('../models/ReschedullePanitiaModel');
+// const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
+// const UserModel = require('../models/UserModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
 
 
-class ReschedulleSeleksiService {
+class ReschedullePanitiaService {
 
     /**
-     * Ambil semua ReschedulleSeleksi (paging + search)
+     * Ambil semua ReschedullePanitia (paging + search)
      */
     static async getAll(dataWeb) {
         const query = dataWeb.query;
@@ -33,10 +33,17 @@ class ReschedulleSeleksiService {
             params.push(`%${query.search}%`);
         }
 
-        if(seleksi_id){
-            where.push(`(p.seleksi_id = ?)`);
-            params.push(`${seleksi_id}`);
+        where.push(`(p.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
+
+        // filter by status
+        if (query.status) {
+            where.push(`(rs.status = ?)`);
+            params.push(parseInt(query.status));
+        }else{
+            where.push(`(rs.status = 'pending')`);
         }
+
 
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -44,8 +51,8 @@ class ReschedulleSeleksiService {
 
         const conn = await db.getConnection();
         try {
-            const data  = await ReschedulleSeleksiModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await ReschedulleSeleksiModel.countAll(conn, whereSql, params);
+            const data  = await ReschedullePanitiaModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await ReschedullePanitiaModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -61,46 +68,43 @@ class ReschedulleSeleksiService {
     }
 
     /**
-     * Detail ReschedulleSeleksi
+     * Detail ReschedullePanitia
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const ReschedulleSeleksi = await ReschedulleSeleksiModel.findById(conn, id);
-            if (!ReschedulleSeleksi) {
+            const ReschedullePanitia = await ReschedullePanitiaModel.findById(conn, id);
+            if (!ReschedullePanitia) {
                 throw new Error('Data tidak ditemukan');
             }
-            return ReschedulleSeleksi;
+            return ReschedullePanitia;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Update ReschedulleSeleksi
+     * validasi ReschedullePeserta
      */
-    static async update(id, user, data) {
+    static async validasi(id, user, peserta_seleksi_id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const peserta = await PesertaSeleksiModel.findById(conn, data.peserta_seleksi_id);
-            if (!peserta) {
-                throw new Error('Peserta seleksi tidak ditemukan');
-            }
-
-            const payload = pickFields(data,ReschedulleSeleksiModel.columns);
+            const payload = pickFields(data,ReschedullePanitiaModel.columns);
+            
             payload.verified_user_id = user.id;
+            payload.peserta_seleksi_id=peserta_seleksi_id;
             payload.verified_at = new Date();
 
-            const affected = await ReschedulleSeleksiModel.update(conn, id, payload);
+            const affected = await ReschedullePanitiaModel.update(conn, id, peserta_seleksi_id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
 
-            return await ReschedulleSeleksiModel.findById(conn, id);
+            return await ReschedullePesertaModel.findById(conn, id);
 
 
         } catch (err) {
@@ -113,4 +117,4 @@ class ReschedulleSeleksiService {
 
 }
 
-module.exports = ReschedulleSeleksiService;
+module.exports = ReschedullePanitiaService;

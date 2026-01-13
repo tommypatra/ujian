@@ -1,39 +1,56 @@
 // app/models/UserModel.js
-const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
+const BaseModel = require('./BaseModel');
 
-class UserModel {
-    //setup tabel
-    static tableName = `users`;
-    static tableAlias = ``;
-    static selectFields = `id,name,email,created_at,updated_at`;    
-    static selectAuthFields = `id,name,email,password,created_at,updated_at`;    
-    static joinTables = ``;
-    static countColumns = `COUNT(*)`;
-    static orderBy = `ORDER BY name ASC`;
+class UserModel extends BaseModel {
+
+    /* =======================
+     * TABLE CONFIG
+     * ======================= */
+    static tableName = 'users';
+    static tableAlias = '';
+
+    static selectFields = `
+        id,
+        name,
+        email,
+        created_at,
+        updated_at
+    `;
+
+    static selectAuthFields = `
+        id,
+        name,
+        email,
+        password,
+        created_at,
+        updated_at
+    `;
+
+    static joinTables = '';
+    static countColumns = 'COUNT(*)';
+    static orderBy = 'ORDER BY name ASC';
 
     static columns = [
-        'name', 
-        'email', 
-        'password', 
+        'name',
+        'email',
+        'password'
     ];
+
+    static allowedFields = [
+        'id',
+        'name',
+        'email'
+    ];
+
+    /* =======================
+     * API LAMA (DIPERTAHANKAN)
+     * ======================= */
 
     /**
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['id','name','email'];
-
-        if (!allowedFields.includes(field)) {
-            throw new Error('Field tidak diizinkan');
-        }
-
-        const [[row]] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ?`,
-            [value]
-        );
-
-        return row || null;
+        return super.findByKey(conn, field, value);
     }
 
     /**
@@ -44,13 +61,18 @@ class UserModel {
     }
 
     /**
-     * cari berdasarkan email
+     * cari berdasarkan email (untuk auth)
+     * pakai selectAuthFields (password ikut)
      */
     static async findByEmail(conn, email) {
         const [[row]] = await conn.query(
-            `SELECT ${this.selectAuthFields} FROM ${this.tableName} WHERE email = ?`,
+            `SELECT ${this.selectAuthFields}
+             FROM ${this.tableName}
+             WHERE email = ?
+             LIMIT 1`,
             [email]
         );
+
         return row || null;
     }
 
@@ -58,75 +80,36 @@ class UserModel {
      * Ambil data (paged)
      */
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        const [rows] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            ${whereSql}
-            ${this.orderBy} LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
-        );
-
-        return rows;
+        return super.findAll(conn, whereSql, params, limit, offset);
     }
 
     /**
      * Hitung total (untuk pagination)
      */
     static async countAll(conn, whereSql = '', params = []) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}
-            ${whereSql}`,
-            params
-        );
-
-        return row.total;
+        return super.countAll(conn, whereSql, params);
     }
 
-/**
+    /**
      * Insert baru
      */
     static async insert(conn, data) {
-        const insert = buildInsert(data, this.columns);
-
-        const [result] = await conn.query(`
-            INSERT INTO ${this.tableName} (${insert.columns})
-            VALUES (${insert.placeholders})
-            `,
-            insert.values
-        );
-
-        return result.insertId;
+        return super.insert(conn, data);
     }
 
     /**
      * Update data
      */
     static async update(conn, id, data) {
-        const update = buildUpdate(data, this.columns);
-        if (!update) return 0;
-
-        update.values.push(id);
-
-        const [result] = await conn.query(`UPDATE ${this.tableName}
-            SET ${update.setClause} WHERE id = ?`,
-            update.values
-        );
-
-        return result.affectedRows;
+        // signature lama dipertahankan
+        return super.updateByKey(conn, 'id', id, data);
     }
 
     /**
      * Delete data
      */
     static async deleteById(conn, id) {
-        const [result] = await conn.query(
-            `
-            DELETE FROM ${this.tableName}
-            WHERE id = ?
-            `,
-            [id]
-        );
-
-        return result.affectedRows;
+        return super.deleteByKey(conn, 'id', id);
     }
 }
 

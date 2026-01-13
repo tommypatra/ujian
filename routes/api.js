@@ -4,6 +4,7 @@ const AuthMiddleware = require('../app/middlewares/AuthMiddleware');
 const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware');
 const PengelolaSeleksiMiddleware = require('../app/middlewares/PengelolaSeleksiMiddleware');
 const PesertaSeleksiMiddleware = require('../app/middlewares/PesertaSeleksiMiddleware');
+const PembuatSoalMiddleware = require('../app/middlewares/PembuatSoalMiddleware');
 const UploadMiddleware = require('../app/middlewares/UploadMiddleware');
 
 //controller
@@ -17,13 +18,14 @@ const JadwalSeleksiController = require('../app/controllers/JadwalSeleksiControl
 const PengawasSeleksiController = require('../app/controllers/PengawasSeleksiController');
 const PesertaController = require('../app/controllers/PesertaController');
 const PesertaSeleksiController = require('../app/controllers/PesertaSeleksiController');
-const ReschedulleController = require('../app/controllers/ReschedulleController');
-const ReschedulleSeleksiController = require('../app/controllers/ReschedulleSeleksiController');
+const ReschedullePesertaController = require('../app/controllers/ReschedullePesertaController');
+const ReschedullePanitiaController = require('../app/controllers/ReschedullePanitiaController');
+const BankSoalController = require('../app/controllers/BankSoalController');
 
 const router = express.Router()
 
 router.post('/login',  AuthController.login)
-router.post('/login-peserta',  PesertaController.login)
+router.post('/login-peserta',  PesertaController.loginPeserta)
 
 // ------------- AWAL ROUTE ADMIN --------------
 //route users
@@ -40,21 +42,24 @@ router.get('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleCont
 router.put('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleController.update);
 router.delete('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleController.destroy);
 
-//route roles
+//route user roles
 router.post('/user-role', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.store);
 router.get('/user-role', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.index);
 router.get('/user-role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.show);
 router.put('/user-role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.update);
 router.delete('/user-role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.destroy);
 
-//route seleksi
-router.post('/seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.store);
-router.get('/seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.index);
-router.get('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.show);
-router.put('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.update);
-router.delete('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin'), SeleksiController.destroy);
-
 // ------------- AKHIR ROUTE ADMIN --------------
+
+
+//
+//route seleksi
+router.post('/seleksi', AuthMiddleware, RequireRoleMiddleware('admin,pembuat-soal'), SeleksiController.store);
+router.get('/seleksi', AuthMiddleware, RequireRoleMiddleware('admin,pembuat-soal'), SeleksiController.index);
+router.get('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin,pembuat-soal'), SeleksiController.show);
+router.put('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin,pembuat-soal'), SeleksiController.update);
+router.delete('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin,pembuat-soal'), SeleksiController.destroy);
+
 
 
 // ------------- AWAL ROUTE PENGELOLA SELEKSI --------------
@@ -100,9 +105,18 @@ router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleks
 
 //route reschedulle seleksi sesuai :seleksi_id
 //melihat daftar reschedulle sesuai seleksi_id dan mengubah status reschedulle
-router.get('/reschedulle/:seleksi_id/peserta', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.index);
-router.get('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.show);
-router.put('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulleSeleksiController.update);
+router.get('/pengelola/:seleksi_id/reschedulle', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.index);
+router.get('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.show);
+router.put('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.update);
+
+//untuk pembuat soal
+//route peserta seleksi jadwal sesuai :seleksi_id
+router.get('/bank/:seleksi_id/soal', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.index);
+router.post('/bank/:seleksi_id/soal', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.store);
+router.get('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.show);
+router.put('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.update);
+router.delete('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.destroy);
+
 
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
@@ -110,7 +124,7 @@ router.put('/reschedulle/:seleksi_id/peserta/:id', AuthMiddleware, PengelolaSele
 
 // lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
 // kalau sudah finalisasi tidak bisa hapus atau ganti
-router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.index);
+router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.index);
 router.post('/peserta/:peserta_seleksi_id/reschedulle', 
     AuthMiddleware, 
     PesertaSeleksiMiddleware, 
@@ -126,7 +140,7 @@ router.post('/peserta/:peserta_seleksi_id/reschedulle',
         allowed: ['pdf'],
         fieldName: 'dokumen_pendukung'
     }),    
-    ReschedulleController.store
+    ReschedullePesertaController.store
 );
 router.put('/peserta/:peserta_seleksi_id/reschedulle/:id', 
     AuthMiddleware, 
@@ -143,9 +157,9 @@ router.put('/peserta/:peserta_seleksi_id/reschedulle/:id',
         allowed: ['pdf'],
         fieldName: 'dokumen_pendukung'
     }),
-    ReschedulleController.update);
-router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.show);
-router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulleController.destroy);
+    ReschedullePesertaController.update);
+router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.show);
+router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.destroy);
 
 // ------------- AKHIR ROUTE PESERTA --------------
 

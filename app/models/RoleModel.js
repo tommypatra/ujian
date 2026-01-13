@@ -1,125 +1,81 @@
 // app/models/RoleModel.js
-const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
+const BaseModel = require('./BaseModel');
 
-class RoleModel {
-    //setup tabel
-    static tableName = `roles`;
-    static tableAlias = ``;
-    static selectFields = `id,role,created_at,updated_at`;    
-    static joinTables = ``;
-    static countColumns = `COUNT(*)`;
-    static orderBy = `ORDER BY role ASC`;
+class RoleModel extends BaseModel {
+
+    /* =======================
+     * TABLE CONFIG
+     * ======================= */
+    static tableName = 'roles';
+    static tableAlias = '';
+
+    static selectFields = `
+        id,
+        role,
+        created_at,
+        updated_at
+    `;
+
+    static joinTables = '';
+    static countColumns = 'COUNT(*)';
+    static orderBy = 'ORDER BY role ASC';
 
     static columns = [
-        'role',
+        'role'
     ];
 
-    /**
-     * helper internal pencarian berdasarkan field dan value
-     */
-    static async findByKey(conn, field, value) {
-        const allowedFields = ['id','role'];
-
-        if (!allowedFields.includes(field)) {
-            throw new Error('Field tidak diizinkan');
-        }
-
-        const [[row]] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            WHERE ${field} = ?`,
-            [value]
-        );
-
-        return row || null;
-    }
+    static allowedFields = [
+        'id',
+        'role'
+    ];
 
     /**
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'id', id);
+        return super.findByKey(conn, 'id', id);
     }
 
     /**
      * cari berdasarkan role
      */
     static async findByRole(conn, role) {
-        return this.findByKey(conn, 'role', role);
+        return super.findByKey(conn, 'role', role);
     }
 
     /**
      * Ambil data (paged)
      */
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        const [rows] = await conn.query(
-            `SELECT ${this.selectFields} FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}            
-            ${whereSql}
-            ${this.orderBy} LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
-        );
-
-        return rows;
+        return super.findAll(conn, whereSql, params, limit, offset);
     }
 
     /**
      * Hitung total (untuk pagination)
      */
     static async countAll(conn, whereSql = '', params = []) {
-        const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total FROM ${this.tableName} ${this.tableAlias} ${this.joinTables}
-            ${whereSql}`,
-            params
-        );
-
-        return row.total;
+        return super.countAll(conn, whereSql, params);
     }
 
-/**
+    /**
      * Insert baru
      */
     static async insert(conn, data) {
-        const insert = buildInsert(data, this.columns);
-
-        const [result] = await conn.query(`
-            INSERT INTO ${this.tableName} (${insert.columns})
-            VALUES (${insert.placeholders})
-            `,
-            insert.values
-        );
-
-        return result.insertId;
+        return super.insert(conn, data);
     }
 
     /**
      * Update data
      */
     static async update(conn, id, data) {
-        const update = buildUpdate(data, this.columns);
-        if (!update) return 0;
-
-        update.values.push(id);
-
-        const [result] = await conn.query(`UPDATE ${this.tableName}
-            SET ${update.setClause} WHERE id = ?`,
-            update.values
-        );
-
-        return result.affectedRows;
+        return super.updateByKey(conn, 'id', id, data);
     }
 
     /**
      * Delete data
      */
     static async deleteById(conn, id) {
-        const [result] = await conn.query(
-            `
-            DELETE FROM ${this.tableName}
-            WHERE id = ?
-            `,
-            [id]
-        );
-
-        return result.affectedRows;
+        return super.deleteByKey(conn, 'id', id);
     }
 }
 

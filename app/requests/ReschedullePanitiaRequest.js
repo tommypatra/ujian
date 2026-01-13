@@ -6,10 +6,10 @@ class ReschedulleSeleksiRequest {
     static store(data) {
         return Joi.object({
             status: Joi.string()
-                .valid('approved', 'rejected')
+                .valid('diterima', 'ditolak')
                 .required(),
             catatan_verifikasi: Joi.when('status', {
-                is: 'rejected',
+                is: 'ditolak',
                 then: Joi.string().min(6).required(),
                 otherwise: Joi.string().optional()
             }),
@@ -23,10 +23,10 @@ class ReschedulleSeleksiRequest {
     static update(data) {
         return Joi.object({
             status: Joi.string()
-                .valid('approved', 'rejected')
+                .valid('diterima', 'ditolak')
                 .required(),
             catatan_verifikasi: Joi.when('status', {
-                is: 'rejected',
+                is: 'ditolak',
                 then: Joi.string().min(6).required(),
                 otherwise: Joi.string().optional()
             }),

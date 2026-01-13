@@ -1,24 +1,24 @@
-// app/controllers/ReschedulleController.js
-const ReschedulleService = require('../services/ReschedulleService');
-const ReschedulleRequest = require('../requests/ReschedulleRequest');
+// app/controllers/BankSoalController.js
+const BankSoalService = require('../services/BankSoalService');
+const BankSoalRequest = require('../requests/BankSoalRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
-class ReschedulleController {
+class BankSoalController {
 
     /**
-     * GET /Reschedulles
+     * GET /BankSoals
      * Ambil list (pagination, search, dll)
      */
     static async index(req, res) {
         try {
-            const data_exec = await ReschedulleService.getAll(req);
+            const data_exec = await BankSoalService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,
             });
         } catch (err) {
-            console.error('ReschedulleController.index error:', err);
+            console.error('BankSoalController.index error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -28,20 +28,20 @@ class ReschedulleController {
     }
 
     /**
-     * GET /Reschedulles/:id
+     * GET /BankSoals/:id
      * Ambil detail
      */
     static async show(req, res) {
         try {
             const { id } = req.params;
 
-            const data_exec = await ReschedulleService.findById(id);
+            const data_exec = await BankSoalService.findById(id);
             return res.status(200).json({
                 message: 'Data detail',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleController.show error:', err);
+            console.error('BankSoalController.show error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -50,19 +50,13 @@ class ReschedulleController {
     }
 
     /**
-     * POST /Reschedulles
+     * POST /BankSoals
      * Tambah baru
      */
     static async store(req, res) {
+        // console.log('BODY DI CONTROLLER:', req.body);
         try {
-
-            const payload = {
-                ...req.body,
-                peserta_seleksi_id: req.params?.peserta_seleksi_id,
-                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
-            };
-
-            const { error, value } = ReschedulleRequest.store(payload);
+            const { error, value } = BankSoalRequest.store(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -70,15 +64,13 @@ class ReschedulleController {
                 });
             }
 
-            const data_exec = await ReschedulleService.store(value);
+            const data_exec = await BankSoalService.store(value,req.user.id);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleController.store error:', err);
-            const isDev = process.env.APP_ENV === 'development';   
-
+            console.error('BankSoalController.store error:', err);
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({
                     message: 'Duplikat data entry',
@@ -93,21 +85,15 @@ class ReschedulleController {
         }
     }
 
-
     /**
-     * PUT /Reschedulles/:id
+     * PUT /BankSoals/:id
      * Update data
      */
     static async update(req, res) {
         try {
             const { id } = req.params;
-            const payload = {
-                ...req.body,
-                peserta_seleksi_id: req.params?.peserta_seleksi_id,
-                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
-            };
 
-            const { error, value } = ReschedulleRequest.update(payload);
+            const { error, value } = BankSoalRequest.update(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -115,13 +101,13 @@ class ReschedulleController {
                 });
             }
 
-            const data_exec = await ReschedulleService.update(id, value);
+            const data_exec = await BankSoalService.update(id, value,req.user.id);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleController.update error:', err);
+            console.error('BankSoalController.update error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -130,19 +116,19 @@ class ReschedulleController {
     }
 
     /**
-     * DELETE /Reschedulles/:id
+     * DELETE /BankSoals/:id
      * Hapus
      */
     static async destroy(req, res) {
         try {
             const { id } = req.params;
-            const data_exec = await ReschedulleService.destroy(id);
+            const data_exec = await BankSoalService.destroy(id);
             return res.status(200).json({
                 message: 'Data berhasil dihapus',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleController.destroy error:', err);
+            console.error('BankSoalController.destroy error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -152,4 +138,4 @@ class ReschedulleController {
 
 }
 
-module.exports = ReschedulleController;
+module.exports = BankSoalController;

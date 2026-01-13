@@ -1,20 +1,22 @@
-// app/services/PengelolaSeleksiService.js
+// app/services/ReschedullePesertaService.js
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const PengelolaSeleksiModel = require('../models/PengelolaSeleksiModel');
-const UserModel = require('../models/UserModel');
-const SeleksiModel = require('../models/SeleksiModel');
+const ReschedullePesertaModel = require('../models/ReschedullePesertaModel');
+// const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
+// const UserModel = require('../models/UserModel');
+
 const {pickFields} = require('../helpers/payloadHelper');
 
-class PengelolaSeleksiService {
+
+class ReschedullePesertaService {
 
     /**
-     * Ambil semua PengelolaSeleksi (paging + search)
+     * Ambil semua ReschedullePeserta (paging + search)
      */
     static async getAll(dataWeb) {
         const query = dataWeb.query;
-        const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
-
+        const peserta_seleksi_id = parseInt(dataWeb.params.peserta_seleksi_id) || null;
+        
         const page  = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
@@ -22,29 +24,26 @@ class PengelolaSeleksiService {
         const where = [];
         const params = [];
 
-        //untuk seleksi id
-        where.push(`s.id = ?`);
-        params.push(parseInt(seleksi_id));
-
-
         // search umum
         if (query.search) {
-            where.push(`(s.nama LIKE ? OR u.name LIKE ?)`);
-            params.push(
-                `%${query.search}%`,
-                `%${query.search}%`
-            );
+            where.push(`(p.email LIKE ? OR p.nama LIKE ? OR p.nomor_peserta LIKE ? OR p.hp LIKE ?)`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
+            params.push(`%${query.search}%`);
         }
 
-        
+        where.push(`(ps.id = ?)`);
+        params.push(`${peserta_seleksi_id}`);
+
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
             : '';
 
         const conn = await db.getConnection();
         try {
-            const data  = await PengelolaSeleksiModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await PengelolaSeleksiModel.countAll(conn, whereSql, params);
+            const data  = await ReschedullePesertaModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await ReschedullePesertaModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -60,41 +59,38 @@ class PengelolaSeleksiService {
     }
 
     /**
-     * Detail PengelolaSeleksi
+     * Detail ReschedullePeserta
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const exec_query = await PengelolaSeleksiModel.findById(conn, id);
-            if (!exec_query) {
+            const ReschedullePeserta = await ReschedullePesertaModel.findById(conn, id);
+            if (!ReschedullePeserta) {
                 throw new Error('Data tidak ditemukan');
             }
-            return exec_query;
+            return ReschedullePeserta;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Simpan PengelolaSeleksi baru + PengelolaSeleksi default
+     * Simpan ReschedullePeserta baru
      */
-    static async store(data, seleksi_id) {
+    static async store(data,peserta_seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,PengelolaSeleksiModel.columns);
-            payload.seleksi_id = seleksi_id;
-            
-            const PengelolaSeleksiId = await PengelolaSeleksiModel.insert(conn, payload);
+            const payload = pickFields(data,ReschedullePesertaModel.columns);
 
+            const ReschedullePesertaId = await ReschedullePesertaModel.insert(conn,payload);
             await conn.commit();
 
-            return await PengelolaSeleksiModel.findById(conn, PengelolaSeleksiId);
+            return await ReschedullePesertaModel.findById(conn, ReschedullePesertaId);
 
         } catch (err) {
             await conn.rollback();
-
             throw err;
         } finally {
             conn.release();
@@ -102,40 +98,44 @@ class PengelolaSeleksiService {
     }
 
     /**
-     * Update PengelolaSeleksi
+     * Update ReschedullePeserta
      */
-    static async update(id, data, seleksi_id) {
+    static async update(id, data, peserta_seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const payload = pickFields(data,PengelolaSeleksiModel.columns);
 
-            const affected = await PengelolaSeleksiModel.updateByKeys(conn, ['id','seleksi_id'],[id,seleksi_id], payload);
+            const payload = pickFields(data,ReschedullePesertaModel.columns);
+
+            const affected = await ReschedullePesertaModel.update(conn, id, peserta_seleksi_id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await PengelolaSeleksiModel.findById(conn, id);
+
+            return await ReschedullePesertaModel.findById(conn, id);
+
 
         } catch (err) {
             await conn.rollback();
-
             throw err;
         } finally {
             conn.release();
         }
     }
 
+
+
     /**
-     * Hapus PengelolaSeleksi + relasi PengelolaSeleksi
+     * Hapus ReschedullePeserta
      */
-    static async destroy(id,seleksi_id) {
+    static async destroy(id,peserta_seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PengelolaSeleksiModel.deleteById(conn, id, seleksi_id);
+            const affected = await ReschedullePesertaModel.delete(conn, id,peserta_seleksi_id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -153,4 +153,4 @@ class PengelolaSeleksiService {
     }
 }
 
-module.exports = PengelolaSeleksiService;
+module.exports = ReschedullePesertaService;

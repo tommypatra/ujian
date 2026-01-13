@@ -2,7 +2,6 @@
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const PengawasSeleksiModel = require('../models/PengawasSeleksiModel');
-const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
 class PengawasSeleksiService {
@@ -29,11 +28,8 @@ class PengawasSeleksiService {
             params.push(`%${query.search}%`);
         }
 
-        // filter by seleksi_id
-        if(seleksi_id){
-            where.push(`(js.seleksi_id = ?)`);
-            params.push(`${seleksi_id}`);
-        }
+        where.push(`(js.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
 
         // filter by sesi
         if (query.sesi) {
@@ -87,11 +83,6 @@ class PengawasSeleksiService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            //cari jadwal seleksi
-            const jadwalSeleksi = await JadwalSeleksiModel.findById(conn, data.jadwal_seleksi_id);
-            if (!jadwalSeleksi) {
-                throw new Error('jadwal seleksi tidak ditemukan');
-            }
             const payload = pickFields(data,PengawasSeleksiModel.columns);
 
             let plainPassword = this.generateNumericPassword(6);
@@ -126,11 +117,6 @@ class PengawasSeleksiService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-
-            const jadwalSeleksi = await JadwalSeleksiModel.findById(conn, data.jadwal_seleksi_id);
-            if (!jadwalSeleksi) {
-                throw new Error('jadwal seleksi tidak ditemukan');
-            }
 
             const payload = pickFields(data,PengawasSeleksiModel.columns);
             let plainPassword='';

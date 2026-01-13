@@ -5,13 +5,12 @@ class JadwalSeleksiRequest {
 
     static store(data) {
         return Joi.object({
-            seleksi_id: Joi.number().integer().positive().required(),
             sesi: Joi.number().integer().positive().required(),
             tanggal: Joi.date().required(),
             jam_mulai: Joi.string().required(),            
             jam_selesai: Joi.string().required(),            
             lokasi_ujian: Joi.string().min(3).required(),
-            status: Joi.string().min(3).required(),
+            status: Joi.string().min(3).optional(),
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,
@@ -20,13 +19,12 @@ class JadwalSeleksiRequest {
 
     static update(data) {
         return Joi.object({
-            seleksi_id: Joi.number().integer().positive().required(),
             sesi: Joi.number().integer().positive().required(),
             tanggal: Joi.date().required(),
-            jam_mulai: Joi.string().required(),            
-            jam_selesai: Joi.string().required(),            
-            lokasi_ujian: Joi.string().min(3).required(),
-            status: Joi.string().min(3).required(),
+            jam_mulai: Joi.string().optional(),            
+            jam_selesai: Joi.string().optional(),            
+            lokasi_ujian: Joi.string().min(3).optional(),
+            status: Joi.string().min(3).optional(),
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,

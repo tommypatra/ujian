@@ -37,10 +37,8 @@ class PesertaService {
         }
 
         // filter by seleksi_id
-        if(seleksi_id){
-            where.push(`(p.seleksi_id = ?)`);
-            params.push(`${seleksi_id}`);
-        }
+        where.push(`(p.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
 
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -99,20 +97,19 @@ class PesertaService {
     /**
      * Simpan Peserta baru
      */
-    static async store(data) {
+    static async store(data,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-
-            const seleksi = await SeleksiModel.findById(conn, data.seleksi_id);
+            
+            const seleksi = await SeleksiModel.findById(conn,seleksi_id);    
             if (!seleksi) {
-                throw new Error('Seleksi tidak ditemukan');
-            }
-            // console.log(seleksi);
+                throw new Error(`Maaf, seleksi id ${seleksi_id} tidak ditemukan`);
+            } 
             const prefix = seleksi.prefix_app;
 
             const payload = pickFields(data,PesertaModel.columns);
-
+            payload.seleksi_id = seleksi_id;
             payload.user_name = `${prefix}${data.nomor_peserta}`;
             const tanggal_lahir = dateToString(data.tanggal_lahir); 
             let plainPassword= tanggal_lahir;
@@ -143,24 +140,20 @@ class PesertaService {
     /**
      * Update Peserta
      */
-    static async update(id, data) {
+    static async update(id, data,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const seleksi = await SeleksiModel.findById(conn, data.seleksi_id);
-            if (!seleksi) {
-                throw new Error('Seleksi tidak ditemukan');
-            }
-
             const payload = pickFields(data,PesertaModel.columns);
+            payload.seleksi_id=seleksi_id;
             let plainPassword='';
             if (data.password && data.password.trim() !== '') {
                 plainPassword=data.password;
                 payload.password = await bcrypt.hash(plainPassword, 10);
             }
             
-            const affected = await PesertaModel.update(conn, id, payload);
+            const affected = await PesertaModel.updateByKeys(conn, ['id','seleksi_id'],[id,seleksi_id], payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
@@ -185,12 +178,12 @@ class PesertaService {
     /**
      * Hapus Peserta
      */
-    static async destroy(id) {
+    static async destroy(id,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PesertaModel.deleteById(conn, id);
+            const affected = await PesertaModel.deleteByKeys(conn, id, seleksi_id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -210,7 +203,7 @@ class PesertaService {
     /**
     * Login Peserta
     */
-    static async login(data) {
+    static async loginPeserta(data) {
         const conn = await db.getConnection();
         try {
             const { user_name, password, seleksi_id } = data;

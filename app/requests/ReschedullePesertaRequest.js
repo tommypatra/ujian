@@ -6,7 +6,7 @@ class ReschedulleRequest {
     static store(data) {
         return Joi.object({
             peserta_seleksi_id: Joi.number().integer().positive().required(),
-            alasan: Joi.string().min(6).optional(),
+            alasan: Joi.string().min(6).required(),
             dokumen_pendukung: Joi.string().min(6).required(),
         }).validate(data, {
             abortEarly: false,
@@ -16,10 +16,12 @@ class ReschedulleRequest {
 
     static update(data) {
         return Joi.object({
-            peserta_seleksi_id: Joi.number().integer().positive().required(),
+            peserta_seleksi_id: Joi.number().integer().positive().optional(),
             alasan: Joi.string().min(6).optional(),
             dokumen_pendukung: Joi.string().min(6).optional(),
-        }).validate(data, {
+        }).
+        min(1).
+        validate(data, {
             abortEarly: false,
             stripUnknown: true,
         });

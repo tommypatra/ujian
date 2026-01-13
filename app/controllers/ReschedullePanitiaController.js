@@ -1,24 +1,24 @@
-// app/controllers/ReschedulleSeleksiController.js
-const ReschedulleSeleksiService = require('../services/ReschedulleSeleksiService');
-const ReschedulleSeleksiRequest = require('../requests/ReschedulleSeleksiRequest');
+// app/controllers/ReschedullePanitiaController.js
+const ReschedullePanitiaService = require('../services/ReschedullePanitiaService');
+const ReschedullePanitiaRequest = require('../requests/ReschedullePanitiaRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
-class ReschedulleSeleksiController {
+class ReschedullePanitiaController {
 
     /**
-     * GET /ReschedulleSeleksis
+     * GET /ReschedullePanitias
      * Ambil list (pagination, search, dll)
      */
     static async index(req, res) {
         try {
-            const data_exec = await ReschedulleSeleksiService.getAll(req);
+            const data_exec = await ReschedullePanitiaService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,
             });
         } catch (err) {
-            console.error('ReschedulleSeleksiController.index error:', err);
+            console.error('ReschedullePanitiaController.index error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -28,20 +28,20 @@ class ReschedulleSeleksiController {
     }
 
     /**
-     * GET /ReschedulleSeleksis/:id
+     * GET /ReschedullePanitias/:id
      * Ambil detail
      */
     static async show(req, res) {
         try {
             const { id } = req.params;
 
-            const data_exec = await ReschedulleSeleksiService.findById(id);
+            const data_exec = await ReschedullePanitiaService.findById(id);
             return res.status(200).json({
                 message: 'Data detail',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleSeleksiController.show error:', err);
+            console.error('ReschedullePanitiaController.show error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -51,14 +51,14 @@ class ReschedulleSeleksiController {
 
 
     /**
-     * PUT /ReschedulleSeleksis/:id
+     * PUT /ReschedullePanitias/:id
      * Update data
      */
     static async update(req, res) {
         try {
             const { id } = req.params;
 
-            const { error, value } = ReschedulleSeleksiRequest.update(req.body);
+            const { error, value } = ReschedullePanitiaRequest.update(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -66,13 +66,13 @@ class ReschedulleSeleksiController {
                 });
             }
 
-            const data_exec = await ReschedulleSeleksiService.update(id, value);
+            const data_exec = await ReschedullePanitiaService.validasi(id, value);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedulleSeleksiController.update error:', err);
+            console.error('ReschedullePanitiaController.update error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -82,4 +82,4 @@ class ReschedulleSeleksiController {
 
 }
 
-module.exports = ReschedulleSeleksiController;
+module.exports = ReschedullePanitiaController;
