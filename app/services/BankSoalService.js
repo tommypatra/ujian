@@ -117,23 +117,25 @@ class BankSoalService {
     /**
      * Simpan BankSoal baru + BankSoal default
      */
-    static async store(data, user_id) {
+    static async store(data, user_id, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
             const payload = pickFields(data,BankSoalModel.columns);
             payload.pembuat_user_id=user_id;
+            payload.tahun = payload.tahun ? parseInt(payload.tahun) : new Date().getFullYear();
+
 
             const BankSoalId = await BankSoalModel.insert(conn, payload);
             const SoalSeleksiId = await SoalSeleksiModel.insert(conn, {
                 bank_soal_id:BankSoalId,
-                seleksi_id:data.seleksi_id
+                seleksi_id:seleksi_id
             });
 
             await conn.commit();
 
-            return await BankSoalModel.findById(conn, BankSoalId);
+            return await SoalSeleksiModel.findById(conn, SoalSeleksiId);
 
         } catch (err) {
             await conn.rollback();

@@ -5,6 +5,7 @@ const RequireRoleMiddleware = require('../app/middlewares/RequireRoleMiddleware'
 const PengelolaSeleksiMiddleware = require('../app/middlewares/PengelolaSeleksiMiddleware');
 const PesertaSeleksiMiddleware = require('../app/middlewares/PesertaSeleksiMiddleware');
 const PembuatSoalMiddleware = require('../app/middlewares/PembuatSoalMiddleware');
+const RolePesertaMiddleware = require('../app/middlewares/RolePesertaMiddleware');
 const UploadMiddleware = require('../app/middlewares/UploadMiddleware');
 
 //controller
@@ -65,6 +66,8 @@ router.delete('/seleksi/:id', AuthMiddleware, RequireRoleMiddleware('admin,pembu
 // ------------- AWAL ROUTE PENGELOLA SELEKSI --------------
 
 //route seleksi-jadwal untuk pengelola {index untuk getall dan update sesuai :seleksi_id}
+//route ini datanya di awali dengan insert terlebih dahulu di seleksi
+//route untuk pengelola seleksi, ketika ingin melihat seleksi dan mengubah seleksi (tidak bisa insert atau delete seleksi)
 router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.index);
 router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.update);
 
@@ -76,6 +79,8 @@ router.put('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleks
 router.delete('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.destroy);
 
 //route jadwal-seleksi sesuai :seleksi_id
+//saat store ini otomatis juga buat akun pengawas
+//jika password lupa maka dilakukan perubahan password manual pakai put pada endpoint pengawas
 router.get('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.index);
 router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.store);
 router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.show);
@@ -90,6 +95,7 @@ router.put('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksi
 router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.destroy);
 
 //route peserta seleksi sesuai :seleksi_id
+//bisa menyesuaikan data import
 router.get('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.index);
 router.post('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.store);
 router.get('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.show);
@@ -121,6 +127,9 @@ router.delete('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddlewar
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
 // ------------- AWAL ROUTE PESERTA --------------
+
+//untuk lihat jadwal yang dimiliki
+router.get('/jadwal-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.cariJadwal);
 
 // lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
 // kalau sudah finalisasi tidak bisa hapus atau ganti

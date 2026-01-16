@@ -29,8 +29,9 @@ class PengelolaSeleksiService {
 
         // search umum
         if (query.search) {
-            where.push(`(s.nama LIKE ? OR u.name LIKE ?)`);
+            where.push(`(ps.jabatan LIKE ? OR u.name LIKE ? OR u.email LIKE ?)`);
             params.push(
+                `%${query.search}%`,
                 `%${query.search}%`,
                 `%${query.search}%`
             );

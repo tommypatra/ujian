@@ -108,11 +108,11 @@ class PesertaModel extends BaseModel {
     }
 
     // UPDATE by id + seleksi_id (ANTI SALAH SELEKSI)
-    static async updateByKeys(conn, fields, values, data) {
+    static async updateByKeys(conn, id, seleksi_id, data) {
         return super.updateByKeys(
             conn,
-            fields,
-            values,
+            ['id', 'seleksi_id'],
+            [id, seleksi_id],
             data
         );
     }

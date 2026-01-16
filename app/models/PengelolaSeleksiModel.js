@@ -15,6 +15,7 @@ class PengelolaSeleksiModel extends BaseModel {
         ps.seleksi_id,
         u.name AS nama_user,
         s.nama AS nama_seleksi,
+        u.email,
         ps.jabatan,
         ps.created_at,
         ps.updated_at

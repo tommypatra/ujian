@@ -19,13 +19,15 @@ class JadwalSeleksiRequest {
 
     static update(data) {
         return Joi.object({
-            sesi: Joi.number().integer().positive().required(),
-            tanggal: Joi.date().required(),
+            sesi: Joi.number().integer().positive().optional(),
+            tanggal: Joi.date().optional(),
             jam_mulai: Joi.string().optional(),            
             jam_selesai: Joi.string().optional(),            
             lokasi_ujian: Joi.string().min(3).optional(),
             status: Joi.string().min(3).optional(),
-        }).validate(data, {
+        })
+        .min(1)
+        .validate(data, {
             abortEarly: false,
             stripUnknown: true,
         });

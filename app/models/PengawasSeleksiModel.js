@@ -1,5 +1,7 @@
 // app/models/PengawasSeleksiModel.js
 const BaseModel = require('./BaseModel');
+const { buildUpdate } = require('../helpers/sqlHelper');
+const { mapDbError } = require('../helpers/dbErrorHelper');
 
 class PengawasSeleksiModel extends BaseModel {
 
@@ -68,8 +70,12 @@ class PengawasSeleksiModel extends BaseModel {
         return super.findByKey(conn, 'ps.id', id);
     }
 
-    static async findByJadwalId(conn, jadwalId) {
-        return super.findByKey(conn, 'js.id', jadwalId);
+    // static async findByJadwalId(conn, jadwalId) {
+    //     return super.findByKey(conn, 'js.id', jadwalId);
+    // }
+
+    static async findByJadwalIds(conn, jadwalIds = []) {
+        return super.findAllByKey(conn, 'js.id', jadwalIds);
     }
 
     static async findBySesi(conn, sesi) {
@@ -113,22 +119,51 @@ class PengawasSeleksiModel extends BaseModel {
     }
 
     // UPDATE by id + jadwal_seleksi_id (ANTI IDOR)
-    static async updateByIdAndJadwal(conn, id, jadwal_seleksi_id, data) {
-        return super.updateByKeys(
-            conn,
-            ['id', 'jadwal_seleksi_id'],
-            [id, jadwal_seleksi_id],
-            data
-        );
+    static async update(conn, id, seleksi_id, data) {
+        const update = buildUpdate(data, this.columns, {
+            alias: 'ps'
+        });
+        if (!update) return 0;
+
+        try {
+            const [result] = await conn.query(
+                `
+                UPDATE pengawas_seleksis ps
+                INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+                SET ${update.setClause}
+                WHERE ps.id = ?
+                AND js.seleksi_id = ?
+                `,
+                [...update.values, id, seleksi_id]
+            );
+
+            return result.affectedRows;
+        } catch (err) {
+            throw mapDbError(err);
+        }
     }
 
     // DELETE by id + jadwal_seleksi_id (ANTI IDOR)
-    static async deleteByIdAndJadwal(conn, id, jadwal_seleksi_id) {
-        return super.deleteByKeys(
-            conn,
-            ['id', 'jadwal_seleksi_id'],
-            [id, jadwal_seleksi_id]
-        );
+    static async deleteByKey(conn, field, value) {
+        return super.deleteByKey(conn,field,value);
+    }
+
+    // DELETE by id + jadwal_seleksi_id (ANTI IDOR)
+    static async deleteById(conn, id, seleksi_id) {
+        try {
+            const [result] = await conn.query(
+                `DELETE ps
+                FROM pengawas_seleksis ps
+                INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+                WHERE ps.id = ?
+                AND js.seleksi_id = ?`,
+                [id,seleksi_id]
+            );
+
+            return result.affectedRows;
+        } catch (err) {
+            throw mapDbError(err);
+        }    
     }
 }
 

@@ -72,10 +72,7 @@ class UserService {
             await conn.beginTransaction();
 
             const payload = pickFields(data,UserModel.columns);
-            // enkrip password kalau ada
-            if (payload.password) {
-                payload.password = await bcrypt.hash(payload.password, 10);
-            }
+            payload.password = await bcrypt.hash(payload.password, 10);
 
             const userId = await UserModel.insert(conn, payload);
 

@@ -57,6 +57,8 @@ class BankSoalController {
         // console.log('BODY DI CONTROLLER:', req.body);
         try {
             const { error, value } = BankSoalRequest.store(req.body);
+            const seleksi_id = parseInt(req.params.seleksi_id) || null;
+            const user_id = parseInt(req.user.id) || null;
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -64,20 +66,13 @@ class BankSoalController {
                 });
             }
 
-            const data_exec = await BankSoalService.store(value,req.user.id);
+            const data_exec = await BankSoalService.store(value,user_id,seleksi_id);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
             });
         } catch (err) {
             console.error('BankSoalController.store error:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({
-                    message: 'Duplikat data entry',
-                    data: null
-                });
-            }
-
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null

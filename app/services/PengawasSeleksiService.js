@@ -3,6 +3,7 @@ const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const PengawasSeleksiModel = require('../models/PengawasSeleksiModel');
 const {pickFields} = require('../helpers/payloadHelper');
+const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 
 class PengawasSeleksiService {
 
@@ -79,15 +80,19 @@ class PengawasSeleksiService {
     /**
      * Simpan PengawasSeleksi baru
      */
-    static async store(data) {
+    static async store(data,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
             const payload = pickFields(data,PengawasSeleksiModel.columns);
 
-            let plainPassword = this.generateNumericPassword(6);
-            if (data.password && data.password.trim() !== '') {
-                plainPassword = data.password;
+            if(JadwalSeleksiModel._isValidJadwalSeleksi(conn,payload.jadwal_seleksi_id,seleksi_id)){
+                throw new Error('jadwal tidak ditemukan pada seleksi tersebut');
+            }
+
+            let plainPassword = payload.password;
+            if(!payload.password){
+                plainPassword = String(Math.floor(100000 + Math.random() * 900000));
             }
             payload.password = await bcrypt.hash(plainPassword, 10);
 
@@ -113,7 +118,7 @@ class PengawasSeleksiService {
     /**
      * Update PengawasSeleksi
      */
-    static async update(id, data) {
+    static async update(id, data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
@@ -125,8 +130,7 @@ class PengawasSeleksiService {
                 payload.password = await bcrypt.hash(plainPassword, 10);
             }
 
-
-            const affected = await PengawasSeleksiModel.update(conn, id, payload);
+            const affected = await PengawasSeleksiModel.update(conn, id, seleksi_id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
@@ -151,12 +155,12 @@ class PengawasSeleksiService {
     /**
      * Hapus PengawasSeleksi + relasi PengawasSeleksi
      */
-    static async destroy(id) {
+    static async destroy(id,seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PengawasSeleksiModel.deleteById(conn, id);
+            const affected = await PengawasSeleksiModel.deleteById(conn, id,seleksi_id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');

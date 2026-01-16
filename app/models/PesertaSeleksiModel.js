@@ -74,30 +74,15 @@ class PesertaSeleksiModel extends BaseModel {
     ];
 
     static allowedFields = [
-        'ps.id'
+        'ps.id','p.id'
     ];
 
-    /* =======================
-     * READ
-     * ======================= */
-
-    static async findById(conn, id) {
-        return super.findByKey(conn, 'ps.id', id);
-    }
-
-    static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        return super.findAll(conn, whereSql, params, limit, offset);
-    }
-
-    static async countAll(conn, whereSql = '', params = []) {
-        return super.countAll(conn, whereSql, params);
-    }
 
     /**
      * Validasi peserta milik seleksi tertentu
      * (fungsi spesifik, bukan CRUD generic)
      */
-    static async isValidPesertaSeleksi(conn, peserta_id, seleksi_id) {
+    static async _isValidPesertaSeleksi(conn, peserta_id, seleksi_id) {
         const [[row]] = await conn.query(
             `
             SELECT id
@@ -112,20 +97,28 @@ class PesertaSeleksiModel extends BaseModel {
         return !!row;
     }
 
-    static async isValidJadwalSeleksi(conn, jadwal_seleksi_id, seleksi_id) {
-        const [[row]] = await conn.query(
-            `
-            SELECT id
-            FROM jadwal_seleksis
-            WHERE id = ?
-              AND seleksi_id = ?
-            LIMIT 1
-            `,
-            [jadwal_seleksi_id, seleksi_id]
-        );
+    /* =======================
+     * READ
+     * ======================= */
 
-        return !!row;
+    
+
+    static async findById(conn, id) {
+        return super.findByKey(conn, 'ps.id', id);
     }
+
+    static async findAllByPesertaId(conn, peserta_id) {
+        return super.findAllByKey(conn, 'p.id', [peserta_id]);
+    }
+
+    static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
+        return super.findAll(conn, whereSql, params, limit, offset);
+    }
+
+    static async countAll(conn, whereSql = '', params = []) {
+        return super.countAll(conn, whereSql, params);
+    }
+
     /* =======================
      * WRITE (AMAN)
      * ======================= */

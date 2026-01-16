@@ -15,9 +15,11 @@ class PengelolaSeleksiRequest {
 
     static update(data) {
         return Joi.object({
-            user_id: Joi.number().integer().positive().required(),
+            user_id: Joi.number().integer().positive().optional(),
             jabatan: Joi.string().min(3).optional(),        
-        }).validate(data, {
+        })
+        .min(1)
+        .validate(data, {
             abortEarly: false,
             stripUnknown: true,
         });

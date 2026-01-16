@@ -5,6 +5,28 @@ const PesertaSeleksiRequest = require('../requests/PesertaSeleksiRequest');
 const isDev = process.env.APP_ENV === 'development';
 
 class PesertaSeleksiController {
+    /**
+     * GET /PesertaSeleksis
+     * Ambil jadwal peserta tertentu
+     */
+
+    static async cariJadwal(req, res) {
+        try {
+            const peserta_id = parseInt(req.user.id) || null;
+            const data_exec = await PesertaSeleksiService.findAllByPesertaId(peserta_id);
+            return res.status(200).json({
+                message: 'Data detail',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('PesertaSeleksiController.show error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
 
     /**
      * GET /PesertaSeleksis

@@ -9,8 +9,7 @@ class SoalSeleksiModel extends BaseModel {
     static selectFields = `
         ss.id,
         ss.seleksi_id,
-
-        b.id            AS bank_soal_id,
+        b.id AS bank_soal_id,
         b.jenis_soal_id,
         b.domain_soal_id,
         b.tahun,
@@ -63,6 +62,15 @@ class SoalSeleksiModel extends BaseModel {
     /**
      * shortcut domain-specific
      */
+    static async findById(conn, id) {
+        return this.findAll(
+            conn,
+            'WHERE ss.id = ?',
+            [id],
+            0 // tanpa paging
+        );
+    }
+
     static async findAllBySeleksiId(conn, seleksiId) {
         return this.findAll(
             conn,

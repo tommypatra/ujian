@@ -1,6 +1,8 @@
 // app/services/PesertaSeleksiService.js
 const db = require('../../config/database');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
+const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
+
 const { pickFields } = require('../helpers/payloadHelper');
 
 class PesertaSeleksiService {
@@ -78,6 +80,20 @@ class PesertaSeleksiService {
         }
     }
 
+    static async findAllByPesertaId(peserta_id) {
+        const conn = await db.getConnection();
+        try {
+            const row = await PesertaSeleksiModel.findAllByPesertaId(conn, peserta_id);
+            if (!row) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return row;
+        } finally {
+            conn.release();
+        }
+    }
+    
+
     /**
      * Simpan PesertaSeleksi baru
      */
@@ -89,8 +105,8 @@ class PesertaSeleksiService {
             const payload = pickFields(data, PesertaSeleksiModel.columns);
             payload.seleksi_id = seleksi_id;
 
-            const isValidPesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
-            const isValidJadwalSeleksi = await PesertaSeleksiModel.isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
+            const isValidPesertaSeleksi = await PesertaSeleksiModel._isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
+            const isValidJadwalSeleksi = await JadwalSeleksiModel._isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
 
             if(!isValidPesertaSeleksi){
                 throw new Error('Peserta tersebut tidak ditemukan dalam seleksi ini');

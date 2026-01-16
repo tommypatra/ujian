@@ -59,6 +59,21 @@ class JadwalSeleksiModel extends BaseModel {
         'js.sesi'
     ];
 
+
+    // untuk cek apakah jadwal seleksi tersebut memiliki seleksi_id tertentu untuk validasi
+    static async _isValidJadwalSeleksi(conn, id, seleksi_id) {
+        const [[result]] = await conn.query(
+            `SELECT id FROM jadwal_seleksis js
+            WHERE js.id = ?
+                AND js.seleksi_id = ? 
+            LIMIT 1`,
+            [id,seleksi_id]
+        );
+        return !!result;
+    }
+    
+
+
     /* =======================
      * READ
      * ======================= */

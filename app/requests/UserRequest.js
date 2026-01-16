@@ -16,11 +16,11 @@ class UserRequest {
 
     static update(data) {
         return Joi.object({
-            name: Joi.string().min(3).required(),
+            name: Joi.string().min(3).optional(),
             email: Joi.string().email().optional(),
             password: Joi.string().min(6).optional()
         })
-        // .min(1) // minimal 1 field harus ada
+        .min(1) // minimal 1 field harus ada
         .validate(data, {
             abortEarly: false,
             stripUnknown: true,
