@@ -6,6 +6,8 @@ const PengelolaSeleksiMiddleware = require('../app/middlewares/PengelolaSeleksiM
 const PesertaSeleksiMiddleware = require('../app/middlewares/PesertaSeleksiMiddleware');
 const PembuatSoalMiddleware = require('../app/middlewares/PembuatSoalMiddleware');
 const RolePesertaMiddleware = require('../app/middlewares/RolePesertaMiddleware');
+const PemilikSoalPGMiddleware = require('../app/middlewares/PemilikSoalPGMiddleware');
+
 const UploadMiddleware = require('../app/middlewares/UploadMiddleware');
 
 //controller
@@ -22,6 +24,8 @@ const PesertaSeleksiController = require('../app/controllers/PesertaSeleksiContr
 const ReschedullePesertaController = require('../app/controllers/ReschedullePesertaController');
 const ReschedullePanitiaController = require('../app/controllers/ReschedullePanitiaController');
 const BankSoalController = require('../app/controllers/BankSoalController');
+const BankSoalPilihanController = require('../app/controllers/BankSoalPilihanController');
+
 
 const router = express.Router()
 
@@ -122,6 +126,13 @@ router.post('/bank/:seleksi_id/soal', AuthMiddleware, PembuatSoalMiddleware, Ban
 router.get('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.show);
 router.put('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.update);
 router.delete('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.destroy);
+
+router.get('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.index);
+router.get('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.show);
+router.post('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.store);
+router.put('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.update);
+router.delete('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroy);
+router.delete('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroyBySoalId);
 
 
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------

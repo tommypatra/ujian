@@ -191,16 +191,6 @@ class BankSoalService {
 
         } catch (err) {
             await conn.rollback();
-
-            // FK constraint (referensi tidak ditemukan)
-            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-                // ambil nama foreign key
-                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
-                const field = match ? match[1] : 'referensi';
-
-                throw new Error(`Referensi ${field} tidak ditemukan`);
-            }
-
             throw err;
         } finally {
             conn.release();
