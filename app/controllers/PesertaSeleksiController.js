@@ -1,6 +1,7 @@
 // app/controllers/PesertaSeleksiController.js
 const PesertaSeleksiService = require('../services/PesertaSeleksiService');
 const PesertaSeleksiRequest = require('../requests/PesertaSeleksiRequest');
+const PesertaUjianRequest = require('../requests/PesertaUjianRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
@@ -150,6 +151,41 @@ class PesertaSeleksiController {
             });
         }
     }
+
+
+    /**
+     * POST /enterUjian/:jadwal_seleksi_id
+     * Update data peserta seleksi
+     */
+    static async enterUjian(req, res) {
+        try {
+            const { jadwal_seleksi_id } = req.params;
+            const peserta_id = req.user.id;
+
+            if (!req.uploadedFiles?.enter_foto) {
+                return res.status(422).json({
+                    message: 'Foto enter ujian wajib diupload',
+                    data: null
+                });
+            }
+
+            const enter_foto = req.uploadedFiles.enter_foto.relative_path;
+            const data_exec = await PesertaSeleksiService.enterUjian(peserta_id,jadwal_seleksi_id,{enter_foto});
+
+            return res.status(200).json({
+                message: 'Enter ujian berhasil dilakukan',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('PesertaSeleksiController.enterUjian error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+    
 
 }
 

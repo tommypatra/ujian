@@ -37,6 +37,18 @@ class UserRequest {
         });
     }
 
+    static loginSeleksi(data) {
+        return Joi.object({
+            user_name: Joi.string().min(3).required(),
+            password: Joi.string().min(3).required(),
+            login_sebagai: Joi.string().valid('peserta', 'pengawas').required(),
+            seleksi_id: Joi.number().integer().positive().required()
+        }).validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
+    }
+
     static resetPassword(data) {
         return Joi.object({
             password: Joi.string().min(4).required()

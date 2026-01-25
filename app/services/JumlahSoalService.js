@@ -1,14 +1,17 @@
-// app/services/UserRoleService.js
+// app/services/JumlahSoalService.js
 const db = require('../../config/database');
-const UserRoleModel = require('../models/UserRoleModel');
+const JumlahSoalModel = require('../models/JumlahSoalModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
-class UserRoleService {
+class JumlahSoalService {
 
     /**
-     * Ambil semua UserRole (paging + search)
+     * Ambil semua JumlahSoal (paging + search)
      */
-    static async getAll(query) {
+    static async getAll(dataWeb) {
+        const query = dataWeb.query;
+        const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
+
         const page  = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 10;
         const offset = (page - 1) * limit;
@@ -16,23 +19,20 @@ class UserRoleService {
         const where = [];
         const params = [];
 
+        where.push(`(js.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
+
         // search umum
         if (query.search) {
-            where.push(`(u.name LIKE ? OR u.email LIKE ?)`);
+            where.push(`(b.pertanyaan LIKE ? OR u.name LIKE ?)`);
             params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }
 
-        // filter by role_id
-        if (query.role_id) {
-            where.push(`(ur.role_id = ?)`);
-            params.push(parseInt(query.role_id));
-        }
-
-        // filter by role
-        if (query.role) {
-            where.push(`(r.role = ?)`);
-            params.push(query.role);
+        // filter by domain_soal_id
+        if (query.domain_soal_id) {
+            where.push(`(ds.domain_soal_id = ?)`);
+            params.push(query.domain_soal_id);
         }
 
         const whereSql = where.length
@@ -41,9 +41,8 @@ class UserRoleService {
 
         const conn = await db.getConnection();
         try {
-            const data  = await UserRoleModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await UserRoleModel.countAll(conn, whereSql, params);
-
+            const data  = await JumlahSoalModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await JumlahSoalModel.countAll(conn, whereSql, params);
             return {
                 data,
                 meta: {
@@ -58,12 +57,12 @@ class UserRoleService {
     }
 
     /**
-     * Detail UserRole
+     * Detail findById
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const exec_query = await UserRoleModel.findById(conn, id);
+            const exec_query = await JumlahSoalModel.findById(conn, id);
             if (!exec_query) {
                 throw new Error('Data tidak ditemukan');
             }
@@ -74,34 +73,27 @@ class UserRoleService {
     }
 
     /**
-     * Simpan UserRole baru + UserRole default
+     * Simpan JumlahSoal baru + JumlahSoal default
      */
-    static async store(data) {
+    static async store(data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,UserRoleModel.columns);
+            const payload = pickFields(data,JumlahSoalModel.columns);
 
-            const UserRoleId = await UserRoleModel.insert(conn, payload);
+            const JumlahSoalId = await JumlahSoalModel.insert(conn, {
+                domain_soal_id:payload.domain_soal_id,
+                seleksi_id:seleksi_id,
+                jumlah:payload.jumlah
+            });
 
             await conn.commit();
 
-            return await UserRoleModel.findById(conn, UserRoleId);
+            return await JumlahSoalModel.findById(conn, JumlahSoalId);
 
         } catch (err) {
             await conn.rollback();
-
-            // FK constraint (referensi tidak ditemukan)
-            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-
-                // ambil nama foreign key
-                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
-                const field = match ? match[1] : 'referensi';
-
-                throw new Error(`Referensi ${field} tidak ditemukan`);
-            }
-
             throw err;
         } finally {
             conn.release();
@@ -109,36 +101,25 @@ class UserRoleService {
     }
 
     /**
-     * Update UserRole
+     * Update JumlahSoal
      */
     static async update(id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,UserRoleModel.columns);
+            const payload = pickFields(data,JumlahSoalModel.columns);
 
-            const affected = await UserRoleModel.update(conn, id, payload);
+            const affected = await JumlahSoalModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await UserRoleModel.findById(conn, id);
+            return await JumlahSoalModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
-
-                        // FK constraint (referensi tidak ditemukan)
-            if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-
-                // ambil nama foreign key
-                const match = err.message.match(/FOREIGN KEY \(`(.+?)`\)/);
-                const field = match ? match[1] : 'referensi';
-
-                throw new Error(`Referensi ${field} tidak ditemukan`);
-            }
-
             throw err;
         } finally {
             conn.release();
@@ -146,14 +127,14 @@ class UserRoleService {
     }
 
     /**
-     * Hapus UserRole + relasi UserRole
+     * Hapus JumlahSoal + relasi JumlahSoal
      */
     static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await UserRoleModel.deleteById(conn, id);
+            const affected = await JumlahSoalModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -171,4 +152,4 @@ class UserRoleService {
     }
 }
 
-module.exports = UserRoleService;
+module.exports = JumlahSoalService;

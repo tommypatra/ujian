@@ -30,7 +30,7 @@ class BaseModel {
     /* =======================
      * FIND ONE
      * ======================= */
-    static async findByKey(conn, field, value) {
+    static async findByKey(conn, field, value, options = {}) {
         this._ensureAllowedFields();
         this._ensureConfig();
 
@@ -38,12 +38,16 @@ class BaseModel {
             throw new Error('Field tidak diizinkan');
         }
 
+        const selectFields = Array.isArray(options.select) && options.select.length > 0
+            ? options.select.join(', ')
+            : this.selectFields;
+
         const [[row]] = await conn.query(
-            `SELECT ${this.selectFields}
-             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
-             ${this.joinTables}
-             WHERE ${field} = ?
-             LIMIT 1`,
+            `SELECT ${selectFields}
+            FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
+            ${this.joinTables}
+            WHERE ${field} = ?
+            LIMIT 1`,
             [value]
         );
 
@@ -53,7 +57,7 @@ class BaseModel {
     /* =======================
      * FIND MANY BY KEY
      * ======================= */
-    static async findAllByKey(conn, field, values = []) {
+    static async findAllByKey(conn, field, values = [], options = {}) {
         this._ensureAllowedFields();
         this._ensureConfig();
 
@@ -64,13 +68,25 @@ class BaseModel {
         }
 
         const placeholders = values.map(() => '?').join(',');
+        // default order
+        let orderSql = this.orderBy;
+
+        // random order
+        if (options.random === true) {
+            orderSql = `ORDER BY RAND()`;
+        }
+
+        const selectFields = Array.isArray(options.select) && options.select.length > 0
+            ? options.select.join(', ')
+            : this.selectFields;
+
 
         const [rows] = await conn.query(
-            `SELECT ${this.selectFields}
-             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
-             ${this.joinTables}
-             WHERE ${field} IN (${placeholders})
-             ${this.orderBy}`,
+            `SELECT ${selectFields}
+            FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
+                ${this.joinTables}
+            WHERE ${field} IN (${placeholders})
+            ${orderSql}`,
             values
         );
 
@@ -85,12 +101,17 @@ class BaseModel {
         whereSql = '',
         params = [],
         limit = 10,
-        offset = 0
+        offset = 0,
+        options = {}
     ) {
         this._ensureConfig();
 
+        const selectFields = Array.isArray(options.select) && options.select.length > 0
+            ? options.select.join(', ')
+            : this.selectFields;
+
         let sql = `
-            SELECT ${this.selectFields}
+            SELECT ${selectFields}
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
             ${this.joinTables}
             ${whereSql}

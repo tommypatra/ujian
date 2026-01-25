@@ -57,7 +57,6 @@ class BankSoalController {
         // console.log('BODY DI CONTROLLER:', req.body);
         try {
             const { error, value } = BankSoalRequest.store(req.body);
-            const seleksi_id = parseInt(req.params.seleksi_id) || null;
             const user_id = parseInt(req.user.id) || null;
             if (error) {
                 return res.status(422).json({
@@ -66,7 +65,7 @@ class BankSoalController {
                 });
             }
 
-            const data_exec = await BankSoalService.store(value,user_id,seleksi_id);
+            const data_exec = await BankSoalService.store(value, user_id);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
@@ -96,7 +95,7 @@ class BankSoalController {
                 });
             }
 
-            const data_exec = await BankSoalService.update(id, value,req.user.id);
+            const data_exec = await BankSoalService.update(id, value, req.user.id);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
@@ -117,7 +116,7 @@ class BankSoalController {
     static async destroy(req, res) {
         try {
             const { id } = req.params;
-            const data_exec = await BankSoalService.destroy(id);
+            const data_exec = await BankSoalService.destroy(id,req.user.id);
             return res.status(200).json({
                 message: 'Data berhasil dihapus',
                 data: data_exec

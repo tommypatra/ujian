@@ -76,7 +76,7 @@ class SoalMediaPathModel {
         return this.findAllByKey(conn, 'sm.bank_soal_id', bank_soal_ids);
     }
     
-        /**
+    /**
      * cari berdasarkan media_path_id
      */
     static async findByMediaPathId(conn, media_path_id) {

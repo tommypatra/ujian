@@ -7,6 +7,8 @@ const PesertaSeleksiMiddleware = require('../app/middlewares/PesertaSeleksiMiddl
 const PembuatSoalMiddleware = require('../app/middlewares/PembuatSoalMiddleware');
 const RolePesertaMiddleware = require('../app/middlewares/RolePesertaMiddleware');
 const PemilikSoalPGMiddleware = require('../app/middlewares/PemilikSoalPGMiddleware');
+const PengawasUjianMiddleware = require('../app/middlewares/PengawasUjianMiddleware');
+const RolePengelolaMiddleware = require('../app/middlewares/RolePengelolaMiddleware');
 
 const UploadMiddleware = require('../app/middlewares/UploadMiddleware');
 
@@ -25,12 +27,17 @@ const ReschedullePesertaController = require('../app/controllers/ReschedullePese
 const ReschedullePanitiaController = require('../app/controllers/ReschedullePanitiaController');
 const BankSoalController = require('../app/controllers/BankSoalController');
 const BankSoalPilihanController = require('../app/controllers/BankSoalPilihanController');
+const PengawasUjianController = require('../app/controllers/PengawasUjianController');
+const SoalSeleksiController = require('../app/controllers/SoalSeleksiController');
+const JumlahSoalController = require('../app/controllers/JumlahSoalController');
 
 
 const router = express.Router()
 
-router.post('/login',  AuthController.login)
-router.post('/login-peserta',  PesertaController.loginPeserta)
+//wajib email, password
+router.post('/login',  AuthController.login);
+//wajib user_name, password, seleksi_id dan login_sebagai (peserta atau pengawas)
+router.post('/login-seleksi',  AuthController.loginSeleksi);
 
 // ------------- AWAL ROUTE ADMIN --------------
 //route users
@@ -119,28 +126,63 @@ router.get('/pengelola/:seleksi_id/reschedulle', AuthMiddleware, PengelolaSeleks
 router.get('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.show);
 router.put('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.update);
 
+//untuk jumlah domain soal tiap seleksi
+router.get('/jumlah/:seleksi_id/soal', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.index);
+router.post('/jumlah/:seleksi_id/soal', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.store);
+router.get('/jumlah/:seleksi_id/soal/:id', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.show);
+router.put('/jumlah/:seleksi_id/soal/:id', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.update);
+router.delete('/jumlah/:seleksi_id/soal/:id', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.destroy);
+
 //untuk pembuat soal
-//route peserta seleksi jadwal sesuai :seleksi_id
-router.get('/bank/:seleksi_id/soal', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.index);
-router.post('/bank/:seleksi_id/soal', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.store);
-router.get('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.show);
-router.put('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.update);
-router.delete('/bank/:seleksi_id/soal/:id', AuthMiddleware, PembuatSoalMiddleware, BankSoalController.destroy);
+router.get('/bank-soal', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.index);
+router.post('/bank-soal', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.store);
+router.get('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.show);
+router.put('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.update);
+router.delete('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.destroy);
 
-router.get('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.index);
-router.get('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.show);
-router.post('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.store);
-router.put('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.update);
-router.delete('/bank/:seleksi_id/soal/:bank_soal_id/pilihan/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroy);
-router.delete('/bank/:seleksi_id/soal/:bank_soal_id/pilihan', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroyBySoalId);
+//untuk pilihan ganda soal PG
+router.get('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.index);
+router.get('/bank-soal/:bank_soal_id/pg/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.show);
+router.post('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.store);
+router.put('/bank-soal/:bank_soal_id/pg/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.update);
+router.delete('/bank-soal/:bank_soal_id/pg/:id', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroy);
+router.delete('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.destroyBySoalId);
 
-
+//route soal seleksi jadwal sesuai :seleksi_id
+router.get('/soal/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.index);
+router.post('/soal/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.store);
+router.get('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.show);
+router.put('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.update);
+router.delete('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.destroy);
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
+
+// ------------- AWAL ROUTE PENGAWAS --------------
+router.get('/pengawas/:seleksi_id/peserta', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.index);
+router.get('/pengawas/:seleksi_id/detail', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.show);
+router.put('/pengawas/:seleksi_id/validasi-enter/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.validasiPeserta);
+router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.resetLogin);
+// ------------- AKHIR ROUTE PENGAWAS --------------
 
 // ------------- AWAL ROUTE PESERTA --------------
 
 //untuk lihat jadwal yang dimiliki
 router.get('/jadwal-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.cariJadwal);
+router.post('/enter-ujian/:jadwal_seleksi_id', 
+    AuthMiddleware, 
+    RolePesertaMiddleware, 
+    ...UploadMiddleware({
+        folder: () => {
+            const now = new Date();
+            const tahun = now.getFullYear();
+            const bulan = String(now.getMonth() + 1).padStart(2, '0');
+            return `storage/enter_foto/${tahun}/${bulan}`;
+        },
+        maxSize: 4 * 1024 * 1024,
+        allowed: ['jpg', 'jpeg', 'png'],
+        fieldName: 'enter_foto'
+    }),        
+    PesertaSeleksiController.enterUjian
+);
 
 // lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
 // kalau sudah finalisasi tidak bisa hapus atau ganti

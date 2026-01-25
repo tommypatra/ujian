@@ -49,6 +49,10 @@ class BankSoalPilihanService {
             const payload = pickFields(data,BankSoalPilihanModel.columns);
             payload.bank_soal_id=bank_soal_id;
 
+            if(payload.is_benar && await BankSoalPilihanModel.adaJawbanBenar(conn,bank_soal_id)){
+                throw new Error('Jawaban benar tidak boleh lebih dari 1');
+            }
+
             const BankSoalPilihanId = await BankSoalPilihanModel.insert(conn, payload);
 
             await conn.commit();
@@ -73,6 +77,10 @@ class BankSoalPilihanService {
 
             const payload = pickFields(data,BankSoalPilihanModel.columns);
             payload.bank_soal_id=bank_soal_id;            
+
+            if(payload.is_benar && await BankSoalPilihanModel.adaJawbanBenarSelainIni(conn,id,bank_soal_id)){
+                throw new Error('Jawaban benar tidak boleh lebih dari 1');
+            }
 
             const affected = await BankSoalPilihanModel.update(conn, id, user_id, bank_soal_id, payload);
             if (affected === 0) {

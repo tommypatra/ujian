@@ -1,5 +1,6 @@
 // app/models/BankSoalPilihanModel.js
 const BaseModel = require('./BaseModel');
+
 const { buildUpdate } = require('../helpers/sqlHelper');
 const { mapDbError } = require('../helpers/dbErrorHelper');
 
@@ -12,24 +13,14 @@ class BankSoalPilihanModel extends BaseModel {
     static tableAlias = 'bsp';
 
     static selectFields = `
-        bsp.id, bsp.bank_soal_id, bsp.pilihan, bsp.is_benar, bsp.created_at, bsp.updated_at,
-        b.pembuat_user_id,
-        b.pertanyaan, b.bobot, b.is_aktif, 
-        u.name, u.email,
-        ds.kode AS kode_domain, ds.domain,
-        js.kode AS kode_soal, js.jenis
+        bsp.id, bsp.bank_soal_id, bsp.pilihan, bsp.is_benar, bsp.created_at, bsp.updated_at
     `;
 
-    static joinTables = `
-        LEFT JOIN bank_soals b ON bsp.bank_soal_id = b.id
-        LEFT JOIN users u ON u.id = b.pembuat_user_id
-        LEFT JOIN jenis_soals js ON js.id = b.jenis_soal_id
-        LEFT JOIN domain_soals ds ON ds.id = b.domain_soal_id
-    `;
+    static joinTables = ``;
 
     static orderBy = `
         ORDER BY
-            b.pertanyaan DESC,
+            bsp.bank_soal_id DESC,
             bsp.pilihan ASC
     `;
 
@@ -46,8 +37,8 @@ class BankSoalPilihanModel extends BaseModel {
         'bsp.id',
     ];
 
-    static async findAllBySoalId(conn, bank_soal_id) {
-        return super.findAllByKey(conn, 'bsp.bank_soal_id', [bank_soal_id]);
+    static async findAllBySoalId(conn, bank_soal_id, options = {}) {
+        return super.findAllByKey(conn, 'bsp.bank_soal_id', [bank_soal_id], options);
     }
 
     static async findById(conn, id) {
@@ -57,6 +48,36 @@ class BankSoalPilihanModel extends BaseModel {
     static async insert(conn, data) {
         return super.insert(conn, data);
     }
+
+    static async adaJawbanBenar(conn, bank_soal_id) {
+        const [[row]] = await conn.query(
+            `
+            SELECT 1 AS exist 
+            FROM bank_soal_pilihans
+            WHERE 
+                bank_soal_id = ? AND 
+                is_benar = 1
+            LIMIT 1`,
+            [bank_soal_id]
+        );
+        return !!row;
+    }
+
+    static async adaJawbanBenarSelainIni(conn, id, bank_soal_id) {
+        const [[row]] = await conn.query(
+            `
+            SELECT 1 AS exist
+            FROM bank_soal_pilihans
+            WHERE bank_soal_id = ? AND is_benar = 1 AND id != ?
+            LIMIT 1
+            `,
+            [bank_soal_id, id]
+        );
+
+        return !!row;
+    }
+
+
 
     /**
      * UPDATE (ANTI IDOR)

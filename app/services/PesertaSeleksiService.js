@@ -1,5 +1,7 @@
 // app/services/PesertaSeleksiService.js
 const db = require('../../config/database');
+const fs = require('fs');
+const path = require('path');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 
@@ -198,6 +200,39 @@ class PesertaSeleksiService {
             conn.release();
         }
     }
+
+
+    static async enterUjian(peserta_id, jadwal_seleksi_id, data) {
+        const conn = await db.getConnection();
+        const uploadedPath = data?.enter_foto;
+
+        try {
+            if (!uploadedPath) {
+                throw new Error('Foto enter ujian wajib diupload');
+            }
+            await conn.beginTransaction();
+
+            const affected = await PesertaSeleksiModel.enterUjian(conn, peserta_id, jadwal_seleksi_id, data);
+            if (affected === 0) {
+                throw new Error('proses enter ujian gagal dilakukan');
+            }
+
+            await conn.commit();
+            return { success: true };
+        } catch (err) {
+            await conn.rollback();
+            if (uploadedPath) {
+                const filePath = path.join(process.cwd(), uploadedPath);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            }
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }    
+
 }
 
 module.exports = PesertaSeleksiService;

@@ -15,9 +15,9 @@ class PesertaSeleksiModel extends BaseModel {
         ps.id,
         ps.peserta_id,
         ps.jadwal_seleksi_id,
-        ps.is_login,
-        ps.login_foto,
-        ps.login_at,
+        ps.is_enter,
+        ps.enter_foto,
+        ps.enter_at,
         ps.is_done,
         ps.is_allow,
         ps.allow_at,
@@ -27,6 +27,7 @@ class PesertaSeleksiModel extends BaseModel {
         p.jenis_kelamin,
         p.hp,
         p.email,
+        p.is_login,
         p.nama,
         p.nomor_peserta,
         p.foto,
@@ -65,9 +66,9 @@ class PesertaSeleksiModel extends BaseModel {
     static columns = [
         'peserta_id',
         'jadwal_seleksi_id',
-        'is_login',
-        'login_foto',
-        'login_at',
+        'is_enter',
+        'enter_foto',
+        'enter_at',
         'is_allow',
         'is_done',
         'allow_at'
@@ -103,16 +104,16 @@ class PesertaSeleksiModel extends BaseModel {
 
     
 
-    static async findById(conn, id) {
-        return super.findByKey(conn, 'ps.id', id);
+    static async findById(conn, id, options = {}) {
+        return super.findByKey(conn, 'ps.id', id, options);
     }
 
-    static async findAllByPesertaId(conn, peserta_id) {
-        return super.findAllByKey(conn, 'p.id', [peserta_id]);
+    static async findAllByPesertaId(conn, peserta_id, options = {}) {
+        return super.findAllByKey(conn, 'p.id', [peserta_id], options);
     }
 
-    static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
-        return super.findAll(conn, whereSql, params, limit, offset);
+    static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0, options = {}) {
+        return super.findAll(conn, whereSql, params, limit, offset, options);
     }
 
     static async countAll(conn, whereSql = '', params = []) {
@@ -171,6 +172,35 @@ class PesertaSeleksiModel extends BaseModel {
             throw mapDbError(err);
         }
     }
+
+    // app/models/PesertaSeleksiModel.js
+    static async enterUjian(conn, peserta_id, jadwal_seleksi_id, data) {
+        try {
+            const [result] = await conn.query(
+                `
+                UPDATE peserta_seleksis ps
+                INNER JOIN pesertas p ON p.id = ps.peserta_id
+                SET 
+                    ps.is_enter = 1,
+                    ps.enter_foto = ?,
+                    ps.enter_at = NOW(),
+                    ps.is_allow = 0,
+                    ps.allow_at = NULL,
+                    ps.updated_at = NOW()
+                WHERE ps.peserta_id = ?
+                    AND ps.jadwal_seleksi_id = ?
+                    AND ps.is_done = 0
+                    AND ps.is_enter = 0
+                    AND p.is_login = 1
+                `,
+                [data.enter_foto, peserta_id, jadwal_seleksi_id]
+            );
+            return result.affectedRows;
+        } catch (err) {
+            throw mapDbError(err);
+        }
+    }
+
 }
 
 module.exports = PesertaSeleksiModel;

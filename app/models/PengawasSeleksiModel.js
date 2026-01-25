@@ -14,7 +14,9 @@ class PengawasSeleksiModel extends BaseModel {
     static selectFields = `
         ps.id,
         ps.jadwal_seleksi_id,
-        ps.name,
+        ps.name as nama, 
+        '' as email,
+        'pengawas' as role,
         ps.user_name,
         ps.created_at,
         ps.updated_at,
@@ -66,8 +68,8 @@ class PengawasSeleksiModel extends BaseModel {
      * READ
      * ======================= */
 
-    static async findById(conn, id) {
-        return super.findByKey(conn, 'ps.id', id);
+    static async findById(conn, id, options = {}) {
+        return super.findByKey(conn, 'ps.id', id, options);
     }
 
     // static async findByJadwalId(conn, jadwalId) {
@@ -89,6 +91,27 @@ class PengawasSeleksiModel extends BaseModel {
     static async countAll(conn, whereSql = '', params = []) {
         return super.countAll(conn, whereSql, params);
     }
+
+    /**
+     * Cari peserta berdasarkan username + seleksi
+     * (lebih aman daripada username saja)
+     */
+    static async findByUserName(conn, user_name, seleksi_id) {
+        const [[row]] = await conn.query(
+            `
+            SELECT ${this.selectFields},ps.password
+            FROM ${this.tableName} ${this.tableAlias}
+            ${this.joinTables}
+            WHERE ps.user_name = ?
+              AND js.seleksi_id = ?
+            LIMIT 1
+            `,
+            [user_name, seleksi_id]
+        );
+
+        return row || null;
+    }
+
 
     /**
      * Cari username terakhir dalam satu jadwal seleksi
@@ -117,6 +140,59 @@ class PengawasSeleksiModel extends BaseModel {
     static async insert(conn, data) {
         return super.insert(conn, data);
     }
+
+    
+    // UPDATE validasiPeserta (ANTI IDOR)
+    static async validasiPeserta(conn, peserta_seleksi_id, pengawas_id, data) {
+        try {
+            const [result] = await conn.query(
+                `
+                UPDATE peserta_seleksis ps
+                INNER JOIN pesertas p ON p.id = ps.peserta_id
+                INNER JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
+                SET ps.is_allow=? , ps.allow_at=NOW(), ps.updated_at=NOW()
+                WHERE 
+                    ps.id = ? AND 
+                    ss.id = ? AND 
+                    p.is_login=1 AND ps.is_enter=1 AND ps.is_done=0
+                `,
+                [data.is_allow, peserta_seleksi_id, pengawas_id]
+            );
+
+            return result.affectedRows;
+        } catch (err) {
+            throw mapDbError(err);
+        }
+    }
+
+    // UPDATE resetLogin (ANTI IDOR)
+    static async resetLogin(conn, peserta_seleksi_id, pengawas_id) {
+        try {
+            const [result] = await conn.query(
+                `
+                UPDATE pesertas p
+                INNER JOIN peserta_seleksis ps ON ps.peserta_id = p.id
+                INNER JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
+                SET 
+                    p.is_login = 0,
+                    p.login_at = NULL,
+                    p.updated_at = NOW(),
+                    ps.is_enter = 0,
+                    ps.enter_at = NULL,
+                    ps.enter_foto = NULL,
+                    ps.is_allow = 0,
+                    ps.allow_at = NULL,
+                    ps.updated_at = NOW()
+                WHERE ps.id = ? AND ss.id = ?
+                `,
+                [peserta_seleksi_id, pengawas_id]
+            );
+            return result.affectedRows;
+        } catch (err) {
+            throw mapDbError(err);
+        }
+    }
+
 
     // UPDATE by id + jadwal_seleksi_id (ANTI IDOR)
     static async update(conn, id, seleksi_id, data) {

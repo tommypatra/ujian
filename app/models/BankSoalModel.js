@@ -14,12 +14,10 @@ class BankSoalModel extends BaseModel {
         b.pertanyaan, b.bobot, b.is_aktif, b.created_at, b.updated_at,
         u.name, u.email,
         ds.kode AS kode_domain, ds.domain,
-        js.kode AS kode_soal, js.jenis,
-        ss.seleksi_id
+        js.kode AS kode_soal, js.jenis
     `;
 
     static joinTables = `
-        LEFT JOIN soal_seleksis ss ON ss.bank_soal_id = b.id
         LEFT JOIN users u ON u.id = b.pembuat_user_id
         LEFT JOIN jenis_soals js ON js.id = b.jenis_soal_id
         LEFT JOIN domain_soals ds ON ds.id = b.domain_soal_id
@@ -51,7 +49,6 @@ class BankSoalModel extends BaseModel {
         'b.domain_soal_id',
         'b.tahun',
         'b.pembuat_user_id',
-        'ss.seleksi_id'
     ];
 
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
@@ -70,16 +67,20 @@ class BankSoalModel extends BaseModel {
         return super.insert(conn, data);
     }
 
-    static async update(conn, id, data) {
-        return super.updateByKey(conn, 'id', id, data);
+    static async update(conn, id, pembuat_user_id,data) {
+        return super.updateByKeys(conn, ['id','pembuat_user_id'],[id,pembuat_user_id], data);
     }
 
-    static async deleteById(conn, id) {
-        return super.deleteByKey(conn, 'id', id);
+    static async deleteById(conn, id,pembuat_user_id) {
+        return super.deleteByKeys(
+            conn,
+            ['id', 'pembuat_user_id'],
+            [id, pembuat_user_id]
+        );
     }
 
-    static async deleteByUserId(conn, userId) {
-        return super.deleteByKey(conn, 'pembuat_user_id', userId);
+    static async deleteByUserId(conn, pembuat_user_id) {
+        return super.deleteByKey(conn, 'pembuat_user_id', pembuat_user_id);
     }
 }
 

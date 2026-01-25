@@ -1,19 +1,20 @@
-// app/services/BankSoalService.js
+// app/services/SoalSeleksiService.js
 const db = require('../../config/database');
-const BankSoalModel = require('../models/BankSoalModel');
 const SoalSeleksiModel = require('../models/SoalSeleksiModel');
 const SoalMediaPathModel = require('../models/SoalMediaPathModel');
 const BankSoalPilihanModel = require('../models/BankSoalPilihanModel');
+const BankSoalModel = require('../models/BankSoalModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
 
-class BankSoalService {
+class SoalSeleksiService {
 
     /**
-     * Ambil semua BankSoal dan pilihan ganda (paging + search)
+     * Ambil semua SoalSeleksi (paging + search)
      */
     static async getAll(dataWeb) {
         const query = dataWeb.query;
+        const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
 
         const page  = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 10;
@@ -21,6 +22,9 @@ class BankSoalService {
 
         const where = [];
         const params = [];
+
+        where.push(`(ss.seleksi_id = ?)`);
+        params.push(`${seleksi_id}`);
 
         // search umum
         if (query.search) {
@@ -53,8 +57,8 @@ class BankSoalService {
 
         const conn = await db.getConnection();
         try {
-            const data  = await BankSoalModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await BankSoalModel.countAll(conn, whereSql, params);
+            const data  = await SoalSeleksiModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await SoalSeleksiModel.countAll(conn, whereSql, params);
             let finalData = data;
 
             if (data.length) {
@@ -103,31 +107,16 @@ class BankSoalService {
     }
 
     /**
-     * Detail BankSoal
+     * Detail SoalSeleksi
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const soal = await BankSoalModel.findById(conn, id);
-            if (!soal) {
+            const exec_query = await SoalSeleksiModel.findById(conn, id);
+            if (!exec_query) {
                 throw new Error('Data tidak ditemukan');
             }
-
-            // 1) media
-            const mediaList = await SoalMediaPathModel.findAllByBankSoalId(conn, [soal.id]);
-            soal.media = mediaList.map(m => ({
-                id: m.id,
-                judul: m.judul,
-                path: m.path,
-                jenis: m.jenis,
-            }));
-
-            // 2) pilihan ganda (kalau PG)
-            soal.opsi_pilihan_ganda = [];
-            if (soal.kode_soal === 'PG') {
-                soal.opsi_pilihan_ganda = await BankSoalPilihanModel.findAllBySoalId(conn, soal.id);
-            }
-            return soal;
+            return exec_query;
         } finally {
             conn.release();
         }
@@ -136,7 +125,7 @@ class BankSoalService {
     /**
      * Simpan BankSoal baru + BankSoal default
      */
-    static async store(data, user_id) {
+    static async storeSoalSeleksi(data, user_id, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
@@ -147,10 +136,14 @@ class BankSoalService {
 
 
             const BankSoalId = await BankSoalModel.insert(conn, payload);
+            const SoalSeleksiId = await SoalSeleksiModel.insert(conn, {
+                bank_soal_id:BankSoalId,
+                seleksi_id:seleksi_id
+            });
 
             await conn.commit();
 
-            return await BankSoalModel.findById(conn, BankSoalId);
+            return await SoalSeleksiModel.findById(conn, SoalSeleksiId);
 
         } catch (err) {
             await conn.rollback();
@@ -161,22 +154,59 @@ class BankSoalService {
     }
 
     /**
-     * Update BankSoal
+     * Simpan SoalSeleksi baru + SoalSeleksi default
      */
-    static async update(id, data, user_id) {
+    static async store(data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,BankSoalModel.columns);
+            const payload = pickFields(data,SoalSeleksiModel.columns);
 
-            const affected = await BankSoalModel.update(conn, id, user_id, payload);
+            const cekDomainSoalId = await SoalSeleksiModel.cekDomainSoalId(conn,seleksi_id,payload.bank_soal_id);
+            if(!cekDomainSoalId){
+                throw new Error('Atur terlebih dahulu jumlah soal untuk domain soal ini');
+            }
+
+            const SoalSeleksiId = await SoalSeleksiModel.insert(conn, {
+                bank_soal_id:payload.bank_soal_id,
+                seleksi_id:seleksi_id
+            });
+
+            await conn.commit();
+
+            return await SoalSeleksiModel.findById(conn, SoalSeleksiId);
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Update SoalSeleksi
+     */
+    static async update(id, data) {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            const payload = pickFields(data,SoalSeleksiModel.columns);
+
+            const cekDomainSoalId = await SoalSeleksiModel.cekDomainSoalId(conn,seleksi_id,payload.bank_soal_id);
+            if(!cekDomainSoalId){
+                throw new Error('Atur terlebih dahulu jumlah soal untuk domain soal ini');
+            }
+
+            const affected = await SoalSeleksiModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await BankSoalModel.findById(conn, id);
+            return await SoalSeleksiModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
@@ -187,14 +217,14 @@ class BankSoalService {
     }
 
     /**
-     * Hapus BankSoal + relasi BankSoal
+     * Hapus SoalSeleksi + relasi SoalSeleksi
      */
-    static async destroy(id,user_id) {
+    static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await BankSoalModel.deleteById(conn, id,user_id);
+            const affected = await SoalSeleksiModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -212,4 +242,4 @@ class BankSoalService {
     }
 }
 
-module.exports = BankSoalService;
+module.exports = SoalSeleksiService;

@@ -15,9 +15,11 @@ class PesertaModel extends BaseModel {
         p.jenis_kelamin,
         p.hp,
         p.email,
+        'peserta' as role,
         p.nama,
         p.nomor_peserta,
         p.foto,
+        p.is_login,
         p.user_name,
         p.tanggal_lahir,
         p.created_at,
@@ -125,6 +127,27 @@ class PesertaModel extends BaseModel {
             [id, seleksi_id]
         );
     }
+
+    static async updateIsLogin(conn, peserta_id) {
+        const [result] = await conn.query(
+            `
+            UPDATE pesertas
+            SET is_login = 1,
+                login_at = NOW(),
+                updated_at = NOW()
+            WHERE id = ?
+            AND is_login = 0
+            `,
+            [peserta_id]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error('Akun sedang aktif. Reset akun anda terlebih dahulu pada pengawas ujian');
+        }
+
+        return result.affectedRows;
+    }
+
 }
 
 module.exports = PesertaModel;

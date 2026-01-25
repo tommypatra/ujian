@@ -59,6 +59,24 @@ class SoalSeleksiModel extends BaseModel {
         'b.id'
     ];
 
+    static async cekDomainSoalId(conn, seleksi_id, bank_soal_id) {
+        const [[row]] = await conn.query(
+            `
+            SELECT 1
+            FROM jumlah_soals js
+            INNER JOIN bank_soals bs ON bs.domain_soal_id = js.domain_soal_id
+            WHERE 
+            js.seleksi_id = ?
+            AND js.jumlah > 0 
+            AND bs.id = ?
+            LIMIT 1
+            `,
+            [seleksi_id, bank_soal_id]
+        );
+
+        return !!row; // true / false
+    }
+
     /**
      * shortcut domain-specific
      */
@@ -79,6 +97,28 @@ class SoalSeleksiModel extends BaseModel {
             0 // tanpa paging
         );
     }
+
+    /**
+     * Insert baru
+     */
+    static async insert(conn, data) {
+        return super.insert(conn, data);
+    }
+
+    /**
+     * Update data
+     */
+    static async update(conn, id, data) {
+        return super.updateByKey(conn, 'id', id, data);
+    }
+
+    /**
+     * Delete data
+     */
+    static async deleteById(conn, id) {
+        return super.deleteByKey(conn, 'id', id);
+    }
+
 }
 
 module.exports = SoalSeleksiModel;

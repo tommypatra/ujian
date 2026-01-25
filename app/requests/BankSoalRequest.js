@@ -11,7 +11,7 @@ class BankSoalRequest {
             jenis_soal_id: Joi.number().integer().positive().required(),
             domain_soal_id: Joi.number().integer().positive().required(),
             tahun: Joi.number().integer().positive().optional(),
-            bobot: Joi.number().integer().positive().optional(),
+            bobot: Joi.number().integer().min(0).optional(),
             is_aktif: Joi.number().integer().positive().optional(),
             pertanyaan: Joi.string().min(3).required(),
         }).validate(data, {
@@ -25,7 +25,7 @@ class BankSoalRequest {
             jenis_soal_id: Joi.number().integer().positive().optional(),
             domain_soal_id: Joi.number().integer().positive().optional(),
             tahun: Joi.number().integer().positive().optional(),
-            bobot: Joi.number().integer().positive().optional(),
+            bobot: Joi.number().integer().min(0).optional(),
             is_aktif: Joi.number().integer().positive().optional(),
             pertanyaan: Joi.string().min(3).optional(),
         })
