@@ -212,5 +212,3 @@ Upload:
 * Frontend: **Vue.js (Next step)**
 
 ---
-
-> 📌 Dokumentasi ini siap dipublish sebagai `README.md` di GitHub.
