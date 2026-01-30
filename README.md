@@ -209,6 +209,6 @@ Upload:
 
 * Backend: **Selesai & Stabil**
 * Architecture: **State-based, production-ready**
-* Frontend: **Vue.js (Next step)**
+* Frontend: **Vue.js**
 
 ---
