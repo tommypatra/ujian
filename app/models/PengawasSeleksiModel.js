@@ -143,21 +143,27 @@ class PengawasSeleksiModel extends BaseModel {
 
     
     // UPDATE validasiPeserta (ANTI IDOR)
-    static async validasiPeserta(conn, peserta_seleksi_id, pengawas_id, data) {
+    static async validasiPeserta(conn, peserta_seleksi_id, jadwal_seleksi_id, pengawas_id, data) {
         try {
-            const [result] = await conn.query(
-                `
+            // console.log(peserta_seleksi_id, pengawas_id, data);
+            const query = `
                 UPDATE peserta_seleksis ps
                 INNER JOIN pesertas p ON p.id = ps.peserta_id
                 INNER JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
-                SET ps.is_allow=? , ps.allow_at=NOW(), ps.updated_at=NOW()
+                SET ps.is_allow=?, ps.allow_at=NOW(), ps.updated_at=NOW()
                 WHERE 
                     ps.id = ? AND 
+                    ps.jadwal_seleksi_id = ? AND 
                     ss.id = ? AND 
-                    p.is_login=1 AND ps.is_enter=1 AND ps.is_done=0
-                `,
-                [data.is_allow, peserta_seleksi_id, pengawas_id]
-            );
+                    p.is_login = 1 AND ps.is_enter = 1 AND ps.is_done = 0
+            `;
+
+            const params = [data.is_allow, peserta_seleksi_id, jadwal_seleksi_id, pengawas_id];
+
+            // console.log('[SQL]', query);
+            // console.log('[PARAMS]', params);
+
+            const [result] = await conn.query(query, params);
 
             return result.affectedRows;
         } catch (err) {

@@ -77,6 +77,7 @@ class SoalSeleksiModel extends BaseModel {
         return !!row; // true / false
     }
 
+
     /**
      * shortcut domain-specific
      */
@@ -90,12 +91,7 @@ class SoalSeleksiModel extends BaseModel {
     }
 
     static async findAllBySeleksiId(conn, seleksiId) {
-        return this.findAll(
-            conn,
-            'WHERE ss.seleksi_id = ?',
-            [seleksiId],
-            0 // tanpa paging
-        );
+        return this.findAll(conn, 'WHERE ss.seleksi_id = ?', [seleksiId], 0);
     }
 
     /**

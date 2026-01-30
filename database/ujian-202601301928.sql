@@ -32,7 +32,7 @@ CREATE TABLE `bank_soal_pilihans` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `bank_soal_pilihans_unique` (`bank_soal_id`,`pilihan`),
   CONSTRAINT `bank_soal_pilihans_bank_soals_FK` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -105,6 +105,32 @@ CREATE TABLE `jadwal_seleksis` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `jawaban_pesertas`
+--
+
+DROP TABLE IF EXISTS `jawaban_pesertas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `jawaban_pesertas` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `peserta_seleksi_id` bigint unsigned NOT NULL,
+  `bank_soal_id` bigint unsigned NOT NULL,
+  `bank_soal_pilihan_id` bigint unsigned DEFAULT NULL,
+  `jawaban_text` text,
+  `nilai` int DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_jawaban` (`peserta_seleksi_id`,`bank_soal_id`),
+  KEY `bank_soal_id` (`bank_soal_id`),
+  KEY `bank_soal_pilihan_id` (`bank_soal_pilihan_id`),
+  CONSTRAINT `jawaban_pesertas_ibfk_1` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `jawaban_pesertas_ibfk_2` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `jawaban_pesertas_ibfk_3` FOREIGN KEY (`bank_soal_pilihan_id`) REFERENCES `bank_soal_pilihans` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `jenis_soals`
 --
 
@@ -141,6 +167,52 @@ CREATE TABLE `jumlah_soals` (
   CONSTRAINT `jumlah_soals_domain_soals_FK` FOREIGN KEY (`domain_soal_id`) REFERENCES `domain_soals` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `jumlah_soals_seleksis_FK` FOREIGN KEY (`seleksi_id`) REFERENCES `seleksis` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `maping_pilihan_pesertas`
+--
+
+DROP TABLE IF EXISTS `maping_pilihan_pesertas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `maping_pilihan_pesertas` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `peserta_seleksi_id` bigint unsigned NOT NULL,
+  `bank_soal_id` bigint unsigned NOT NULL,
+  `bank_soal_pilihan_id` bigint unsigned NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_maping` (`peserta_seleksi_id`,`bank_soal_id`,`bank_soal_pilihan_id`),
+  KEY `bank_soal_id` (`bank_soal_id`),
+  KEY `bank_soal_pilihan_id` (`bank_soal_pilihan_id`),
+  CONSTRAINT `maping_pilihan_pesertas_ibfk_1` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `maping_pilihan_pesertas_ibfk_2` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `maping_pilihan_pesertas_ibfk_3` FOREIGN KEY (`bank_soal_pilihan_id`) REFERENCES `bank_soal_pilihans` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=211 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `maping_soal_pesertas`
+--
+
+DROP TABLE IF EXISTS `maping_soal_pesertas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `maping_soal_pesertas` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bank_soal_id` bigint unsigned DEFAULT NULL,
+  `peserta_seleksi_id` bigint unsigned DEFAULT NULL,
+  `pilihan_order` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `soal_pesertas_unique` (`bank_soal_id`,`peserta_seleksi_id`),
+  KEY `soal_pesertas_peserta_seleksis_FK` (`peserta_seleksi_id`),
+  CONSTRAINT `soal_pesertas_bank_soals_FK` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `soal_pesertas_peserta_seleksis_FK` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -263,6 +335,19 @@ CREATE TABLE `pesertas` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `pilihan_soal_pesertas`
+--
+
+DROP TABLE IF EXISTS `pilihan_soal_pesertas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pilihan_soal_pesertas` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `reschedulles`
 --
 
@@ -366,7 +451,7 @@ CREATE TABLE `soal_seleksis` (
   KEY `soal_seleksis_seleksis_FK` (`seleksi_id`),
   CONSTRAINT `soal_seleksis_bank_soals_FK` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `soal_seleksis_seleksis_FK` FOREIGN KEY (`seleksi_id`) REFERENCES `seleksis` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -422,4 +507,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-01-25 22:12:23
+-- Dump completed on 2026-01-30 19:28:09

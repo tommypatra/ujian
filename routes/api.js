@@ -30,7 +30,7 @@ const BankSoalPilihanController = require('../app/controllers/BankSoalPilihanCon
 const PengawasUjianController = require('../app/controllers/PengawasUjianController');
 const SoalSeleksiController = require('../app/controllers/SoalSeleksiController');
 const JumlahSoalController = require('../app/controllers/JumlahSoalController');
-
+const UjianController = require('../app/controllers/UjianController');
 
 const router = express.Router()
 
@@ -159,7 +159,10 @@ router.delete('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddle
 // ------------- AWAL ROUTE PENGAWAS --------------
 router.get('/pengawas/:seleksi_id/peserta', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.index);
 router.get('/pengawas/:seleksi_id/detail', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.show);
-router.put('/pengawas/:seleksi_id/validasi-enter/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.validasiPeserta);
+
+router.post('/pengawas/:seleksi_id/akhiri-ujian/:jadwal_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.akhiriSesiUjian);
+
+router.put('/pengawas/:seleksi_id/validasi-enter/:jadwal_seleksi_id/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.validasiPeserta);
 router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.resetLogin);
 // ------------- AKHIR ROUTE PENGAWAS --------------
 
@@ -167,7 +170,7 @@ router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddlewa
 
 //untuk lihat jadwal yang dimiliki
 router.get('/jadwal-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.cariJadwal);
-router.post('/enter-ujian/:jadwal_seleksi_id', 
+router.post('/enter-ujian/:jadwal_seleksi_id',
     AuthMiddleware, 
     RolePesertaMiddleware, 
     ...UploadMiddleware({
@@ -222,6 +225,12 @@ router.put('/peserta/:peserta_seleksi_id/reschedulle/:id',
     ReschedullePesertaController.update);
 router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.show);
 router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.destroy);
+
+
+
+router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
+router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
+router.post('/ujian/:peserta_seleksi_id/selesai-ujian', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.selesaiUjian);
 
 // ------------- AKHIR ROUTE PESERTA --------------
 

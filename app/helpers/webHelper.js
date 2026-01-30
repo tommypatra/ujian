@@ -28,7 +28,6 @@ function formatDateYYMMDDHHmmss(date = new Date()) {
     return `${yy}${MM}${dd}${HH}${mm}${ss}`;
 }
 
-
 module.exports = {
     generatePassword,dateToString,formatDateYYMMDDHHmmss
 };

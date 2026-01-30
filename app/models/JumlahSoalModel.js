@@ -49,6 +49,13 @@ class JumlahSoalModel extends BaseModel {
     }
 
     /**
+     * shortcut domain-specific
+     */
+    static async findAllBySeleksiId(conn, seleksiId) {
+        return this.findAll(conn, 'WHERE js.seleksi_id = ?', [seleksiId], 0);
+    }
+
+    /**
      * Insert baru
      */
     static async insert(conn, data) {

@@ -77,7 +77,7 @@ class PengawasUjianController {
      */
     static async validasiPeserta(req, res) {
         try {
-            const { peserta_seleksi_id } = req.params;
+            const { seleksi_id, jadwal_seleksi_id, peserta_seleksi_id } = req.params;
 
             const { error, value } = PengawasUjianRequest.validasiPeserta(req.body);
             if (error) {
@@ -87,7 +87,7 @@ class PengawasUjianController {
                 });
             }
 
-            const data_exec = await PengawasUjianService.validasiPeserta(peserta_seleksi_id, value, req.user.id);
+            const data_exec = await PengawasUjianService.validasiPeserta(seleksi_id, jadwal_seleksi_id, peserta_seleksi_id, req.user.id, value);
             return res.status(200).json({
                 message: 'validasi berhasil',
                 data: data_exec
@@ -100,6 +100,31 @@ class PengawasUjianController {
             });
         }
     }
+
+    static async akhiriSesiUjian(req, res) {
+        try {
+            const pengawas_id = req.user.id;
+            const { jadwal_seleksi_id } = req.params;
+
+            const result = await PengawasUjianService.akhiriSesiUjian(
+                pengawas_id,
+                jadwal_seleksi_id
+            );
+
+            return res.status(200).json({
+                message: 'Sesi ujian berhasil diakhiri',
+                data: result
+            });
+
+        } catch (err) {
+            console.error('akhiriSesiUjian error:', err);
+            return res.status(400).json({
+                message: err.message,
+                data: null
+            });
+        }
+    }
+
     
 }
 

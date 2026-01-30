@@ -208,7 +208,7 @@ class PesertaSeleksiService {
 
         try {
             if (!uploadedPath) {
-                throw new Error('Foto enter ujian wajib diupload');
+                throw new Error('Foto enter ujian wajib ada');
             }
             await conn.beginTransaction();
 

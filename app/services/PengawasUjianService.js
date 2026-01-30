@@ -5,6 +5,10 @@ const path = require('path');
 
 const PengawasSeleksiModel = require('../models/PengawasSeleksiModel');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
+const JumlahSoalModel = require('../models/JumlahSoalModel');
+const MapingSoalPesertaModel = require('../models/MapingSoalPesertaModel');
+const UjianModel = require('../models/UjianModel');
+
 
 class PengawasUjianService {
 
@@ -54,6 +58,11 @@ class PengawasUjianService {
         if (query.sesi) {
             where.push(`js.sesi = ?`);
             params.push(query.sesi);
+        }
+
+        if (query.peserta_seleksi_id) {
+            where.push(`ps.id = ?`);
+            params.push(query.peserta_seleksi_id);
         }
 
         where.push(`js.id = ?`);
@@ -157,18 +166,81 @@ class PengawasUjianService {
     /**
      * Validasi peserta
      */
-    static async validasiPeserta(peserta_seleksi_id, data, pengawas_id) {
+    static async validasiPeserta(seleksi_id, jadwal_seleksi_id, peserta_seleksi_id, pengawas_seleksi_id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await PengawasSeleksiModel.validasiPeserta(conn, peserta_seleksi_id, pengawas_id, data);
+            const affected = await PengawasSeleksiModel.validasiPeserta(conn, peserta_seleksi_id, jadwal_seleksi_id, pengawas_seleksi_id, data);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
-            await conn.commit();
+            // 1. ambil pengaturan jumlah soal per domain 
+            const domains = await JumlahSoalModel.findAllBySeleksiId(conn, seleksi_id);
+            for (const d of domains) {
+                const soal_domain_id = d.domain_soal_id;
+                const required = d.jumlah;
 
+                // console.log(d);
+                // 2. hitung soal peserta yang sudah ada
+                const existing = await MapingSoalPesertaModel.countSoalPesertaByDomain(
+                    conn,
+                    peserta_seleksi_id,
+                    soal_domain_id
+                );
+
+                const need = required - existing;
+                // console.log(need, required, existing);
+                if (need <= 0) {
+                    // keluar dari loop domain soal id tertentu ke domain soal berikutnya atau keluar dari loop
+                    continue;
+                }
+
+                // 3. cari soal random sesuai kebutuhan
+                const soal_random = await MapingSoalPesertaModel.findRandomByDomain(
+                    conn,
+                    peserta_seleksi_id,
+                    seleksi_id,
+                    soal_domain_id,
+                    need
+                );
+
+                // console.log(soal_random);
+                for (const soal of soal_random) {                    
+                    // 4. insert mapping soal peserta
+                    await MapingSoalPesertaModel.insertIgnore(
+                        conn, 
+                        {
+                            peserta_seleksi_id:peserta_seleksi_id,
+                            bank_soal_id:soal.id
+                        }
+                    );
+
+                    // 5. jika pilihan ganda → generate pilihan
+                    // sesuaikan ID jenis soal PG
+                    // if (soal.kode_jenis === 'PG') {
+                    //     await MapingSoalPesertaModel.generatePilihanPeserta(conn, peserta_seleksi_id, soal.id);
+                    // }
+
+                    if (soal.kode_jenis === 'PG') {
+                        const pilihanOrder = await MapingSoalPesertaModel.generatePilihanOrder(
+                            conn,
+                            soal.id
+                        );
+                        
+                        await MapingSoalPesertaModel.updatePilihanOrder(
+                            conn,
+                            peserta_seleksi_id,
+                            soal.id,
+                            JSON.stringify(pilihanOrder)
+                        );
+        
+                    } 
+                    
+                }
+            }
+            await conn.commit();
             return await PesertaSeleksiModel.findById(conn, peserta_seleksi_id);
         } catch (err) {
             await conn.rollback();
@@ -177,6 +249,31 @@ class PengawasUjianService {
             conn.release();
         }
     }
+
+    static async akhiriSesiUjian(pengawas_id, jadwal_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            const result = await UjianModel.akhiriSesiUjian(
+                conn,
+                jadwal_seleksi_id
+            );
+
+            await conn.commit();
+
+            return {
+                total_berakhir: result.affectedRows
+            };
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
 
 }
 

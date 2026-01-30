@@ -109,8 +109,12 @@ class PesertaSeleksiModel extends BaseModel {
     }
 
     static async findAllByPesertaId(conn, peserta_id, options = {}) {
-        return super.findAllByKey(conn, 'p.id', [peserta_id], options);
+        return super.findByKey(conn, 'p.id', peserta_id, options);
     }
+
+    // static async findAllByPesertaId(conn, peserta_id, options = {}) {
+    //     return super.findAllByKey(conn, 'p.id', [peserta_id], options);
+    // }
 
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0, options = {}) {
         return super.findAll(conn, whereSql, params, limit, offset, options);
