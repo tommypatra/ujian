@@ -1,0 +1,69 @@
+# =========================
+# DEPENDENCIES (WAJIB)
+# =========================
+node_modules/
+
+# =========================
+# ENV FILES (RAHASIA)
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# BUILD RESULT
+# =========================
+dist/
+build/
+coverage/
+
+# =========================
+# STORAGE / RUNTIME DATA
+# =========================
+storage/*
+!storage/.gitkeep
+
+uploads/*
+!uploads/.gitkeep
+
+public/uploads/*
+!public/uploads/.gitkeep
+
+# =========================
+# LOGS
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# =========================
+# CACHE / TEMP
+# =========================
+tmp/
+temp/
+.cache/
+.vite/
+.eslintcache
+
+# =========================
+# OS / EDITOR
+# =========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# =========================
+# HOSTING / SERVER
+# =========================
+.htaccess
+nohup.out
+
+# =========================
+# PROCESS / PID (optional)
+# =========================
+pids/
+*.pid
