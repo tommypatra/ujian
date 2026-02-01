@@ -3,6 +3,25 @@ const UserRequest = require('../requests/UserRequest');
 
 class AuthController {
 
+    /**
+     * GET /cekToken
+     */
+    static async cekToken(req, res) {
+        try {
+            return res.status(200).json({
+                message: 'token valid',
+                data: null,
+            });
+        } catch (err) {
+            console.error('UserController.index error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+
     static async login(req, res) {
         try {
         const { error, value } = UserRequest.login(req.body);
@@ -21,7 +40,7 @@ class AuthController {
         });
 
         } catch (err) {
-            return res.status(401).json({
+            return res.status(422).json({
                 message: err.message,
                 data: null
             });
@@ -46,7 +65,7 @@ class AuthController {
         });
 
         } catch (err) {
-            return res.status(401).json({
+            return res.status(422).json({
                 message: err.message,
                 data: null
             });

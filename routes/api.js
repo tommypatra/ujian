@@ -39,6 +39,9 @@ router.post('/login',  AuthController.login);
 //wajib user_name, password, seleksi_id dan login_sebagai (peserta atau pengawas)
 router.post('/login-seleksi',  AuthController.loginSeleksi);
 
+// ------------- endpoint global cek token --------------
+router.get('/cek-token', AuthMiddleware, AuthController.cekToken);
+
 // ------------- AWAL ROUTE ADMIN --------------
 //route users
 router.post('/user', AuthMiddleware, RequireRoleMiddleware('admin'), UserController.store);

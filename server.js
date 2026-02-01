@@ -1,10 +1,18 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// === AKTIFKAN CORS ===
+app.use(cors({
+    origin: '*',          // sementara (dev)
+    methods: ['GET','POST','PUT','DELETE'],
+    allowedHeaders: ['Content-Type','Authorization','X-Form-Submit']
+}));
 
 // routes
 const apiRoutes = require('./routes/api');
