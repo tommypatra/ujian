@@ -20,7 +20,8 @@ app.use('/api', apiRoutes);
 
 // test endpoint
 app.get('/', (req, res) => {
-    res.json({ message: 'Server ujian jalan' });
+    // res.json({ message: 'Server ujian jalan' });
+    res.type('html').send('<h1>API Ujian Running</h1>');
 });
 
 // 404 handler (WAJIB PALING BAWAH)
@@ -31,7 +32,8 @@ app.use((req, res) => {
     });
 });
 
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.PORT || process.env.APP_PORT || 3000;
+
 app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:${PORT}`);
+    console.log(`Server berjalan di port ${PORT}`);
 });
