@@ -33,15 +33,35 @@ class UserService {
         try {
             const data  = await UserModel.findAll(conn, whereSql, params, limit, offset);
             const total = await UserModel.countAll(conn, whereSql, params);
+            let finalData = data;
+
+            if (data.length) {
+                const userIds = data.map(d => d.id);
+                const roleList = await UserRoleModel.findAllByUserIds(conn, userIds);
+                const roleMap = {};
+                for (const r of roleList) {
+                    if (!roleMap[r.user_id]) 
+                        roleMap[r.user_id] = [];
+
+                    roleMap[r.user_id].push({
+                        id: r.id,
+                        role: r.role_name,
+                        role_id: r.role_id,
+                        user_id: r.user_id,
+                    });
+                }
+
+                finalData = data.map(d => ({
+                    ...d,
+                    roles: roleMap[d.id] || []
+                }));
+
+            }
 
             return {
-                data,
-                meta: {
-                    page,
-                    limit,
-                    total
-                }
-            };
+                data: finalData,
+                meta: { page, limit, total }
+            };        
         } finally {
             conn.release();
         }

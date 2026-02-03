@@ -46,6 +46,13 @@ class UserRoleModel extends BaseModel {
         return super.findByKey(conn, 'ur.id', id);
     }
 
+    /**
+     * cari berdasarkan banyakuserid
+     */
+    static async findAllByUserIds(conn, user_ids) {
+        return this.findAllByKey(conn, 'ur.user_id', user_ids);
+    }    
+
     static async findAllByUserId(conn, user_id) {
         const rows = await super.findAllByKey(
             conn,
