@@ -6,8 +6,8 @@ class UserModel extends BaseModel {
     /* =======================
      * TABLE CONFIG
      * ======================= */
-    static tableName = 'users as u';
-    static tableAlias = '';
+    static tableName = 'users';
+    static tableAlias = 'u';
 
     static selectFields = `
         u.id,
@@ -37,9 +37,9 @@ class UserModel extends BaseModel {
     static groupBy = 'u.id';
 
     static columns = [
-        'u.name',
-        'u.email',
-        'u.password'
+        'name',
+        'email',
+        'password'
     ];
 
     static allowedFields = [
