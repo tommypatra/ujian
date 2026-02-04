@@ -37,9 +37,9 @@ class UserModel extends BaseModel {
     static groupBy = 'u.id';
 
     static columns = [
-        'name',
-        'email',
-        'password'
+        'u.name',
+        'u.email',
+        'u.password'
     ];
 
     static allowedFields = [
