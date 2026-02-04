@@ -31,6 +31,8 @@ const PengawasUjianController = require('../app/controllers/PengawasUjianControl
 const SoalSeleksiController = require('../app/controllers/SoalSeleksiController');
 const JumlahSoalController = require('../app/controllers/JumlahSoalController');
 const UjianController = require('../app/controllers/UjianController');
+const DomainController = require('../app/controllers/DomainController');
+const JenisSoalController = require('../app/controllers/JenisSoalController');
 
 const router = express.Router()
 
@@ -56,6 +58,21 @@ router.get('/role', AuthMiddleware, RequireRoleMiddleware('admin'), RoleControll
 router.get('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleController.show);
 router.put('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleController.update);
 router.delete('/role/:id', AuthMiddleware, RequireRoleMiddleware('admin'), RoleController.destroy);
+
+//route domain soal
+router.post('/domain-soal', AuthMiddleware, RequireRoleMiddleware('admin'), DomainController.store);
+router.get('/domain-soal', AuthMiddleware, RequireRoleMiddleware('admin'), DomainController.index);
+router.get('/domain-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), DomainController.show);
+router.put('/domain-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), DomainController.update);
+router.delete('/domain-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), DomainController.destroy);
+
+//route jenis soal
+router.post('/jenis-soal', AuthMiddleware, RequireRoleMiddleware('admin'), JenisSoalController.store);
+router.get('/jenis-soal', AuthMiddleware, RequireRoleMiddleware('admin'), JenisSoalController.index);
+router.get('/jenis-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), JenisSoalController.show);
+router.put('/jenis-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), JenisSoalController.update);
+router.delete('/jenis-soal/:id', AuthMiddleware, RequireRoleMiddleware('admin'), JenisSoalController.destroy);
+
 
 //route user roles
 router.post('/user-role', AuthMiddleware, RequireRoleMiddleware('admin'), UserRoleController.store);

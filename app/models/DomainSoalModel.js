@@ -11,7 +11,7 @@ class DomainSoalModel {
     static orderBy = `ORDER BY kode ASC, domain DESC`;
 
     static columns = [
-        'kode', 'jenis' 
+        'kode', 'domain' 
     ];
 
     /**

@@ -1,13 +1,12 @@
-// app/services/RoleService.js
+// app/services/DomainService.js
 const db = require('../../config/database');
-const bcrypt = require('bcryptjs');
-const RoleModel = require('../models/RoleModel');
+const DomainModel = require('../models/DomainSoalModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
-class RoleService {
+class DomainService {
 
     /**
-     * Ambil semua Role (paging + search)
+     * Ambil semua Domain (paging + search)
      */
     static async getAll(query) {
         const page  = parseInt(query.page) || 1;
@@ -19,7 +18,8 @@ class RoleService {
 
         // search umum
         if (query.search) {
-            where.push(`(role LIKE ?)`);
+            where.push(`(domain LIKE ? OR kode LIKE ?)`);
+            params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }
 
@@ -29,8 +29,8 @@ class RoleService {
             : '';
         const conn = await db.getConnection();
         try {
-            const data  = await RoleModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await RoleModel.countAll(conn, whereSql, params);
+            const data  = await DomainModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await DomainModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -46,35 +46,35 @@ class RoleService {
     }
 
     /**
-     * Detail Role
+     * Detail Domain
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const Role = await RoleModel.findById(conn, id);
-            if (!Role) {
+            const Domain = await DomainModel.findById(conn, id);
+            if (!Domain) {
                 throw new Error('Data tidak ditemukan');
             }
-            return Role;
+            return Domain;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Simpan Role baru + role default
+     * Simpan Domain baru + Domain default
      */
     static async store(data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const payload = pickFields(data,RoleModel.columns);
+            const payload = pickFields(data,DomainModel.columns);
 
-            const RoleId = await RoleModel.insert(conn, payload);
+            const DomainId = await DomainModel.insert(conn, payload);
 
             await conn.commit();
 
-            return await RoleModel.findById(conn, RoleId);
+            return await DomainModel.findById(conn, DomainId);
 
         } catch (err) {
             await conn.rollback();
@@ -85,22 +85,22 @@ class RoleService {
     }
 
     /**
-     * Update Role
+     * Update Domain
      */
     static async update(id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,RoleModel.columns);
+            const payload = pickFields(data,DomainModel.columns);
 
-            const affected = await RoleModel.update(conn, id, payload);
+            const affected = await DomainModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await RoleModel.findById(conn, id);
+            return await DomainModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
@@ -111,14 +111,14 @@ class RoleService {
     }
 
     /**
-     * Hapus Role + relasi role
+     * Hapus Domain + relasi Domain
      */
     static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await RoleModel.deleteById(conn, id);
+            const affected = await DomainModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -136,4 +136,4 @@ class RoleService {
     }
 }
 
-module.exports = RoleService;
+module.exports = DomainService;

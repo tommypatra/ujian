@@ -1,13 +1,12 @@
-// app/services/RoleService.js
+// app/services/JenisSoalService.js
 const db = require('../../config/database');
-const bcrypt = require('bcryptjs');
-const RoleModel = require('../models/RoleModel');
+const JenisSoalModel = require('../models/JenisSoalModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
-class RoleService {
+class JenisSoalService {
 
     /**
-     * Ambil semua Role (paging + search)
+     * Ambil semua JenisSoal (paging + search)
      */
     static async getAll(query) {
         const page  = parseInt(query.page) || 1;
@@ -19,7 +18,8 @@ class RoleService {
 
         // search umum
         if (query.search) {
-            where.push(`(role LIKE ?)`);
+            where.push(`(jenis LIKE ? OR kode LIKE ?)`);
+            params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
         }
 
@@ -29,8 +29,8 @@ class RoleService {
             : '';
         const conn = await db.getConnection();
         try {
-            const data  = await RoleModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await RoleModel.countAll(conn, whereSql, params);
+            const data  = await JenisSoalModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await JenisSoalModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -46,35 +46,35 @@ class RoleService {
     }
 
     /**
-     * Detail Role
+     * Detail JenisSoal
      */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const Role = await RoleModel.findById(conn, id);
-            if (!Role) {
+            const JenisSoal = await JenisSoalModel.findById(conn, id);
+            if (!JenisSoal) {
                 throw new Error('Data tidak ditemukan');
             }
-            return Role;
+            return JenisSoal;
         } finally {
             conn.release();
         }
     }
 
     /**
-     * Simpan Role baru + role default
+     * Simpan JenisSoal baru + JenisSoal default
      */
     static async store(data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-            const payload = pickFields(data,RoleModel.columns);
+            const payload = pickFields(data,JenisSoalModel.columns);
 
-            const RoleId = await RoleModel.insert(conn, payload);
+            const JenisSoalId = await JenisSoalModel.insert(conn, payload);
 
             await conn.commit();
 
-            return await RoleModel.findById(conn, RoleId);
+            return await JenisSoalModel.findById(conn, JenisSoalId);
 
         } catch (err) {
             await conn.rollback();
@@ -85,22 +85,22 @@ class RoleService {
     }
 
     /**
-     * Update Role
+     * Update JenisSoal
      */
     static async update(id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,RoleModel.columns);
+            const payload = pickFields(data,JenisSoalModel.columns);
 
-            const affected = await RoleModel.update(conn, id, payload);
+            const affected = await JenisSoalModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
-            return await RoleModel.findById(conn, id);
+            return await JenisSoalModel.findById(conn, id);
 
         } catch (err) {
             await conn.rollback();
@@ -111,14 +111,14 @@ class RoleService {
     }
 
     /**
-     * Hapus Role + relasi role
+     * Hapus JenisSoal + relasi JenisSoal
      */
     static async destroy(id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const affected = await RoleModel.deleteById(conn, id);
+            const affected = await JenisSoalModel.deleteById(conn, id);
 
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan');
@@ -136,4 +136,4 @@ class RoleService {
     }
 }
 
-module.exports = RoleService;
+module.exports = JenisSoalService;
