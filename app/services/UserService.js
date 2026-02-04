@@ -20,9 +20,14 @@ class UserService {
 
         // search umum
         if (query.search) {
-            where.push(`(name LIKE ? OR email LIKE ?)`);
+            where.push(`(u.name LIKE ? OR u.email LIKE ?)`);
             params.push(`%${query.search}%`);
             params.push(`%${query.search}%`);
+        }
+
+        if (query.role_id) {
+            where.push(`ur.role_id = ?`);
+            params.push(query.role_id);
         }
 
         const whereSql = where.length

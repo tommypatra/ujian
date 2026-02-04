@@ -23,6 +23,7 @@ class BaseModel {
         this.tableAlias   = this.tableAlias || '';
         this.joinTables   = this.joinTables || '';
         this.orderBy      = this.orderBy || '';
+        this.groupBy      = this.groupBy || '';
         this.selectFields = this.selectFields || '*';
         this.countColumns = this.countColumns || 'COUNT(*)';
     }
@@ -110,13 +111,19 @@ class BaseModel {
             ? options.select.join(', ')
             : this.selectFields;
 
+        const groupBy = this.groupBy
+            ? `GROUP BY ${this.groupBy}`
+            : '';            
+
         let sql = `
             SELECT ${selectFields}
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
             ${this.joinTables}
             ${whereSql}
+            ${groupBy}
             ${this.orderBy}
         `;
+
 
         const bindings = [...params];
 
@@ -124,6 +131,8 @@ class BaseModel {
             sql += ` LIMIT ? OFFSET ?`;
             bindings.push(limit, offset);
         }
+
+        console.log(sql);
 
         const [rows] = await conn.query(sql, bindings);
         return rows;

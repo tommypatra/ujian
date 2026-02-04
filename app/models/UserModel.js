@@ -6,29 +6,35 @@ class UserModel extends BaseModel {
     /* =======================
      * TABLE CONFIG
      * ======================= */
-    static tableName = 'users';
+    static tableName = 'users as u';
     static tableAlias = '';
 
     static selectFields = `
-        id,
-        name,
-        email,
-        created_at,
-        updated_at
+        u.id,
+        u.name,
+        u.email,
+        u.created_at,
+        u.updated_at
     `;
 
     static selectAuthFields = `
-        id,
-        name,
-        email,
-        password,
-        created_at,
-        updated_at
+        u.id,
+        u.name,
+        u.email,
+        u.password,
+        u.created_at,
+        u.updated_at
     `;
 
-    static joinTables = '';
-    static countColumns = 'COUNT(*)';
-    static orderBy = 'ORDER BY name ASC';
+    static joinTables = `
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+    `;
+
+    
+    
+    static countColumns = 'COUNT(DISTINCT u.id)';
+    static orderBy = 'ORDER BY u.name ASC';
+    static groupBy = 'u.id';
 
     static columns = [
         'name',
@@ -37,9 +43,9 @@ class UserModel extends BaseModel {
     ];
 
     static allowedFields = [
-        'id',
-        'name',
-        'email'
+        'u.id',
+        'u.name',
+        'u.email'
     ];
 
     /* =======================
