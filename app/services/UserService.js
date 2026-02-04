@@ -26,7 +26,7 @@ class UserService {
         }
 
         if (query.role_id) {
-            where.push(`ur.role_id = ?`);
+            where.push(`(ur.role_id = ?)`);
             params.push(query.role_id);
         }
 
