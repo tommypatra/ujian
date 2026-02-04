@@ -63,7 +63,7 @@ class UserModel extends BaseModel {
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'id', id);
+        return this.findByKey(conn, 'u.id', id);
     }
 
     /**
