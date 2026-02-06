@@ -47,7 +47,7 @@ Error Response
 
 Login Seleksi (Peserta / Pengawas)
 
-POST /api/auth/login-seleksi
+- POST /api/login-seleksi
 
 ```json
 Request
@@ -78,11 +78,12 @@ Error
 
 👤 USER
 Method Endpoint
-GET /api/users
-POST /api/users
-GET /api/users/:id
-PUT /api/users/:id
-DELETE /api/users/:id
+
+- GET /api/users
+- POST /api/users
+- GET /api/users/:id
+- PUT /api/users/:id
+- DELETE /api/users/:id
 
 ```json
 Request (POST)
@@ -100,10 +101,11 @@ Error (Duplicate)
 
 🏁 SELEKSI
 Method Endpoint
-GET /api/seleksi
-POST /api/seleksi
-PUT /api/seleksi/:id
-DELETE /api/seleksi/:id
+
+- GET /api/seleksi
+- POST /api/seleksi
+- PUT /api/seleksi/:id
+- DELETE /api/seleksi/:id
 
 ```json
 Request
@@ -123,10 +125,11 @@ Error
 
 🕒 JADWAL SELEKSI
 Method Endpoint
-GET /api/seleksi/:seleksi_id/jadwal
-POST /api/seleksi/:seleksi_id/jadwal
-PUT /api/seleksi/:seleksi_id/jadwal/:id
-DELETE /api/seleksi/:seleksi_id/jadwal/:id
+
+- GET /api/seleksi/:seleksi_id/jadwal
+- POST /api/seleksi/:seleksi_id/jadwal
+- PUT /api/seleksi/:seleksi_id/jadwal/:id
+- DELETE /api/seleksi/:seleksi_id/jadwal/:id
 
 ```json
 Request
@@ -149,23 +152,26 @@ Response Tambahan
 👨‍🎓 PESERTA
 Peserta
 Method Endpoint
-GET /api/seleksi/:seleksi_id/peserta
-POST /api/seleksi/:seleksi_id/peserta
-PUT /api/seleksi/:seleksi_id/peserta/:id
-DELETE /api/seleksi/:seleksi_id/peserta/:id
+
+- GET /api/seleksi/:seleksi_id/peserta
+- POST /api/seleksi/:seleksi_id/peserta
+- PUT /api/seleksi/:seleksi_id/peserta/:id
+- DELETE /api/seleksi/:seleksi_id/peserta/:id
 
 Catatan
-Username otomatis: prefix_app + nomor_peserta
-Password default: YYYYMMDD (tanggal lahir)
+
+- Username otomatis: prefix_app + nomor_peserta
+- Password default: YYYYMMDD (tanggal lahir)
 
 🧠 BANK SOAL
 Bank Soal
 Method Endpoint
-GET /api/bank-soal
-POST /api/bank-soal
-GET /api/bank-soal/:id
-PUT /api/bank-soal/:id
-DELETE /api/bank-soal/:id
+
+- GET /api/bank-soal
+- POST /api/bank-soal
+- GET /api/bank-soal/:id
+- PUT /api/bank-soal/:id
+- DELETE /api/bank-soal/:id
 
 ```json
 Response
@@ -179,9 +185,10 @@ Response
 
 Pilihan Ganda
 Method Endpoint
-POST /api/bank-soal/:id/pilihan
-PUT /api/bank-soal/:id/pilihan/:pilihan_id
-DELETE /api/bank-soal/:id/pilihan/:pilihan_id
+
+- POST /api/bank-soal/:id/pilihan
+- PUT /api/bank-soal/:id/pilihan/:pilihan_id
+- DELETE /api/bank-soal/:id/pilihan/:pilihan_id
 
 ```json
 Error
@@ -193,7 +200,7 @@ Error
 📝 UJIAN
 Ambil Soal (Lazy Load)
 
-GET /api/ujian/soal?start=1&limit=2
+- GET /api/ujian/soal?start=1&limit=2
 
 ```json
 {
@@ -206,7 +213,7 @@ GET /api/ujian/soal?start=1&limit=2
 
 Simpan Jawaban
 
-POST /api/ujian/jawaban
+- POST /api/ujian/jawaban
 
 ```json
 {
@@ -222,7 +229,7 @@ Error
 
 Selesai Ujian
 
-POST /api/ujian/selesai
+- POST /api/ujian/selesai
 
 ```json
 {
@@ -233,13 +240,15 @@ POST /api/ujian/selesai
 🔄 RESCHEDULLE
 Reschedulle Peserta
 Method Endpoint
-GET /api/reschedulle/peserta/:peserta_seleksi_id
-POST /api/reschedulle/peserta/:peserta_seleksi_id
-PUT /api/reschedulle/peserta/:peserta_seleksi_id/:id
-DELETE /api/reschedulle/peserta/:peserta_seleksi_id/:id
+
+- GET /api/reschedulle/peserta/:peserta_seleksi_id
+- POST /api/reschedulle/peserta/:peserta_seleksi_id
+- PUT /api/reschedulle/peserta/:peserta_seleksi_id/:id
+- DELETE /api/reschedulle/peserta/:peserta_seleksi_id/:id
+
 Validasi Panitia
 
-PUT /api/reschedulle/panitia/:id/validasi
+- PUT /api/reschedulle/panitia/:id/validasi
 
 ```json
 {
