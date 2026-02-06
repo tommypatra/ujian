@@ -11,6 +11,7 @@ Tech Stack:
 
 ---
 
+```json
 ## 🔐 AUTENTIKASI
 
 ### Login User (Admin / Panitia)
@@ -18,8 +19,6 @@ Tech Stack:
 **POST** `/api/auth/login`
 
 #### Request
-
-```json
 {
   "email": "admin@mail.com",
   "password": "secret"

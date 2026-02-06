@@ -132,7 +132,9 @@ class BaseModel {
             bindings.push(limit, offset);
         }
 
-        console.log(sql);
+        if (process.env.APP_ENV === 'development') {
+            console.log(sql);
+        }
 
         const [rows] = await conn.query(sql, bindings);
         return rows;
