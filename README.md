@@ -11,13 +11,13 @@ Tech Stack:
 
 ---
 
-```json
 ## 🔐 AUTENTIKASI
 
 ### Login User (Admin / Panitia)
 
-**POST** `/api/auth/login`
+**POST** `/api/login`
 
+```json
 #### Request
 {
   "email": "admin@mail.com",
@@ -43,11 +43,13 @@ Error Response
 {
   "message": "Password salah"
 }
+```
 
 Login Seleksi (Peserta / Pengawas)
 
 POST /api/auth/login-seleksi
 
+```json
 Request
 {
   "user_name": "24001001",
@@ -72,14 +74,17 @@ Error
 {
   "message": "Reset login akun anda terlebih dahulu pada pengawas ujian"
 }
+```
 
 👤 USER
-Method	Endpoint
-GET	/api/users
-POST	/api/users
-GET	/api/users/:id
-PUT	/api/users/:id
-DELETE	/api/users/:id
+Method Endpoint
+GET /api/users
+POST /api/users
+GET /api/users/:id
+PUT /api/users/:id
+DELETE /api/users/:id
+
+```json
 Request (POST)
 {
   "name": "User Baru",
@@ -91,13 +96,16 @@ Error (Duplicate)
 {
   "message": "Data sudah ada / duplikat"
 }
+```
 
 🏁 SELEKSI
-Method	Endpoint
-GET	/api/seleksi
-POST	/api/seleksi
-PUT	/api/seleksi/:id
-DELETE	/api/seleksi/:id
+Method Endpoint
+GET /api/seleksi
+POST /api/seleksi
+PUT /api/seleksi/:id
+DELETE /api/seleksi/:id
+
+```json
 Request
 {
   "nama": "Seleksi PMB 2026",
@@ -111,13 +119,16 @@ Error
 {
   "message": "Referensi data tidak valid / tidak ditemukan"
 }
+```
 
 🕒 JADWAL SELEKSI
-Method	Endpoint
-GET	/api/seleksi/:seleksi_id/jadwal
-POST	/api/seleksi/:seleksi_id/jadwal
-PUT	/api/seleksi/:seleksi_id/jadwal/:id
-DELETE	/api/seleksi/:seleksi_id/jadwal/:id
+Method Endpoint
+GET /api/seleksi/:seleksi_id/jadwal
+POST /api/seleksi/:seleksi_id/jadwal
+PUT /api/seleksi/:seleksi_id/jadwal/:id
+DELETE /api/seleksi/:seleksi_id/jadwal/:id
+
+```json
 Request
 {
   "sesi": 1,
@@ -133,28 +144,30 @@ Response Tambahan
   "pengawas": {...},
   "password_pengawas": "123456"
 }
+```
 
 👨‍🎓 PESERTA
 Peserta
-Method	Endpoint
-GET	/api/seleksi/:seleksi_id/peserta
-POST	/api/seleksi/:seleksi_id/peserta
-PUT	/api/seleksi/:seleksi_id/peserta/:id
-DELETE	/api/seleksi/:seleksi_id/peserta/:id
+Method Endpoint
+GET /api/seleksi/:seleksi_id/peserta
+POST /api/seleksi/:seleksi_id/peserta
+PUT /api/seleksi/:seleksi_id/peserta/:id
+DELETE /api/seleksi/:seleksi_id/peserta/:id
+
 Catatan
-
 Username otomatis: prefix_app + nomor_peserta
-
 Password default: YYYYMMDD (tanggal lahir)
 
 🧠 BANK SOAL
 Bank Soal
-Method	Endpoint
-GET	/api/bank-soal
-POST	/api/bank-soal
-GET	/api/bank-soal/:id
-PUT	/api/bank-soal/:id
-DELETE	/api/bank-soal/:id
+Method Endpoint
+GET /api/bank-soal
+POST /api/bank-soal
+GET /api/bank-soal/:id
+PUT /api/bank-soal/:id
+DELETE /api/bank-soal/:id
+
+```json
 Response
 {
   "id": 1,
@@ -162,33 +175,40 @@ Response
   "media": [],
   "opsi_pilihan_ganda": []
 }
+```
 
 Pilihan Ganda
-Method	Endpoint
-POST	/api/bank-soal/:id/pilihan
-PUT	/api/bank-soal/:id/pilihan/:pilihan_id
-DELETE	/api/bank-soal/:id/pilihan/:pilihan_id
+Method Endpoint
+POST /api/bank-soal/:id/pilihan
+PUT /api/bank-soal/:id/pilihan/:pilihan_id
+DELETE /api/bank-soal/:id/pilihan/:pilihan_id
+
+```json
 Error
 {
   "message": "Jawaban benar tidak boleh lebih dari 1"
 }
+```
 
 📝 UJIAN
 Ambil Soal (Lazy Load)
 
 GET /api/ujian/soal?start=1&limit=2
 
+```json
 {
   "start": 1,
   "limit": 2,
   "count": 2,
   "data": []
 }
+```
 
 Simpan Jawaban
 
 POST /api/ujian/jawaban
 
+```json
 {
   "bank_soal_id": 10,
   "bank_soal_pilihan_id": 5
@@ -198,32 +218,39 @@ Error
 {
   "message": "Pilihan jawaban tidak valid untuk soal ini"
 }
+```
 
 Selesai Ujian
 
 POST /api/ujian/selesai
 
+```json
 {
   "is_done": 1
 }
+```
 
 🔄 RESCHEDULLE
 Reschedulle Peserta
-Method	Endpoint
-GET	/api/reschedulle/peserta/:peserta_seleksi_id
-POST	/api/reschedulle/peserta/:peserta_seleksi_id
-PUT	/api/reschedulle/peserta/:peserta_seleksi_id/:id
-DELETE	/api/reschedulle/peserta/:peserta_seleksi_id/:id
+Method Endpoint
+GET /api/reschedulle/peserta/:peserta_seleksi_id
+POST /api/reschedulle/peserta/:peserta_seleksi_id
+PUT /api/reschedulle/peserta/:peserta_seleksi_id/:id
+DELETE /api/reschedulle/peserta/:peserta_seleksi_id/:id
 Validasi Panitia
 
 PUT /api/reschedulle/panitia/:id/validasi
 
+```json
 {
   "status": "ditolak",
   "catatan_verifikasi": "Dokumen tidak valid"
 }
+```
 
 ⚠️ FORMAT ERROR UMUM
+
+```json
 {
   "message": "Data tidak ditemukan"
 }
@@ -241,6 +268,7 @@ PUT /api/reschedulle/panitia/:id/validasi
     }
   ]
 }
+```
 
 🧩 CATATAN TEKNIS
 
@@ -253,4 +281,3 @@ Semua operasi tulis menggunakan transaction
 File upload akan dihapus otomatis saat rollback
 
 Random soal dilakukan per domain
-```
