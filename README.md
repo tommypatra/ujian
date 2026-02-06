@@ -101,6 +101,7 @@ Error (Duplicate)
 ```
 
 🏁 SELEKSI
+
 Method Endpoint
 
 - GET `/api/seleksi`
@@ -125,6 +126,7 @@ Error
 ```
 
 🕒 JADWAL SELEKSI
+
 Method Endpoint
 
 - GET `/api/seleksi/:seleksi_id/jadwal`
@@ -151,7 +153,7 @@ Response Tambahan
 ```
 
 👨‍🎓 PESERTA
-Peserta
+
 Method Endpoint
 
 - GET `/api/seleksi/:seleksi_id/peserta`
@@ -165,7 +167,7 @@ Catatan
 - Password default: YYYYMMDD (tanggal lahir)
 
 🧠 BANK SOAL
-Bank Soal
+
 Method Endpoint
 
 - GET `/api/bank-soal`
@@ -185,6 +187,7 @@ Response
 ```
 
 Pilihan Ganda
+
 Method Endpoint
 
 - POST `/api/bank-soal/:id/pilihan`
@@ -199,6 +202,7 @@ Error
 ```
 
 📝 UJIAN
+
 Ambil Soal (Lazy Load)
 
 - GET `/api/ujian/soal?start=1&limit=2`
@@ -239,7 +243,7 @@ Selesai Ujian
 ```
 
 🔄 RESCHEDULLE
-Reschedulle Peserta
+
 Method Endpoint
 
 - GET `/api/reschedulle/peserta/:peserta_seleksi_id`
