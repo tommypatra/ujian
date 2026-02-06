@@ -77,6 +77,7 @@ Error
 ```
 
 👤 USER
+
 Method Endpoint
 
 - GET `/api/users`
