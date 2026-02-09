@@ -18,12 +18,12 @@ class UserModel extends BaseModel {
     `;
 
     static selectAuthFields = `
-        u.id,
-        u.name,
-        u.email,
-        u.password,
-        u.created_at,
-        u.updated_at
+        id,
+        name,
+        email,
+        password,
+        created_at,
+        updated_at
     `;
 
     static joinTables = `

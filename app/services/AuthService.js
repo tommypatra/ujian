@@ -28,7 +28,6 @@ class AuthService {
             if (!valid) {
                 throw new Error('Password salah');
             }
-
             // load roles user
             const roles = await UserRoleModel.findAllByUserId(conn, user.id);
             // contoh hasil: ['admin', 'pengguna']

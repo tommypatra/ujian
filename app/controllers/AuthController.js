@@ -31,7 +31,6 @@ class AuthController {
                 data: null
             });
         }
-
         const result = await AuthService.login(value);
 
         return res.status(200).json({
