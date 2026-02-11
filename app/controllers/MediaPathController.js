@@ -80,7 +80,11 @@ class MediaPathController {
             const data_exec = await MediaPathService.store(value);
             return res.status(201).json({
                 message: 'Tambah data berhasil',
-                data: data_exec
+                data: {
+                    ...data_exec,
+                    base_url : process.env.APP_URL,
+                
+                }
             });
         } catch (err) {
             console.error('MediaPathController.store error:', err);
@@ -132,7 +136,11 @@ class MediaPathController {
             const data_exec = await MediaPathService.update(id, value);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
-                data: data_exec
+                data: {
+                    ...data_exec,
+                    base_url : process.env.APP_URL,
+                
+                }
             });
         } catch (err) {
             console.error('MediaPathController.update error:', err);
