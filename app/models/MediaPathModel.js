@@ -4,13 +4,13 @@ const { buildInsert, buildUpdate } = require('../helpers/sqlHelper');
 class MediaPathModel {
     //setup tabel
     static tableName = 'media_paths';
-    static tableAlias = 'mp';
+    static tableAlias = '';
     static selectFields = `
-        mp.id, mp.judul, mp.path, mp.jenis, mp.created_at, mp.updated_at,
+        id, judul, path, jenis, created_at, updated_at
     `;    
     static joinTables = ``;
-    static countColumns = `COUNT(DISTINCT mp.id)`;
-    static orderBy = `ORDER BY mp.jenis DESC, mp.judul DESC`;
+    static countColumns = `COUNT(DISTINCT id)`;
+    static orderBy = `ORDER BY jenis DESC, judul DESC`;
 
     static columns = [
         'judul', 'path' ,'jenis'
@@ -20,7 +20,7 @@ class MediaPathModel {
      * helper internal pencarian berdasarkan field dan value
      */
     static async findByKey(conn, field, value) {
-        const allowedFields = ['mp.id'];
+        const allowedFields = ['id'];
 
         if (!allowedFields.includes(field)) {
             throw new Error('Field tidak diizinkan');
@@ -39,7 +39,7 @@ class MediaPathModel {
      * helper internal pencarian berdasarkan field dan value
      */
     static async findAllByKey(conn, field, values) {
-        const allowedFields = ['mp.id'];
+        const allowedFields = ['id'];
         if (!values.length) return [];
 
         if (!allowedFields.includes(field)) {
@@ -62,7 +62,7 @@ class MediaPathModel {
      * cari berdasarkan id
      */
     static async findById(conn, id) {
-        return this.findByKey(conn, 'mp.id', id);
+        return this.findByKey(conn, 'id', id);
     }
 
 

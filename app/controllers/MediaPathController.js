@@ -1,4 +1,5 @@
 // app/controllers/MediaPathController.js
+const fs = require('fs').promises;
 const MediaPathService = require('../services/MediaPathService');
 const MediaPathRequest = require('../requests/MediaPathRequest');
 
@@ -55,9 +56,21 @@ class MediaPathController {
      */
     static async store(req, res) {
         // console.log('BODY DI CONTROLLER:', req.body);
+        const relativePath = req.uploadedFiles.path?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.path?.absolute_path;   // untuk fs.unlink
         try {
-            const { error, value } = MediaPathRequest.store(req.body);
+            const payload = {
+                ...req.body,
+                path:relativePath
+            };
+
+            const { error, value } = MediaPathRequest.store(payload);
             if (error) {
+
+                if (absolutePath) {
+                    await fs.unlink(absolutePath).catch(() => {});
+                }
+        
                 return res.status(422).json({
                     message: error.details[0].message,
                     data: null
@@ -71,6 +84,10 @@ class MediaPathController {
             });
         } catch (err) {
             console.error('MediaPathController.store error:', err);
+
+            if (absolutePath) {
+                await fs.unlink(absolutePath).catch(() => {});
+            }
 
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(409).json({
@@ -91,11 +108,21 @@ class MediaPathController {
      * Update data
      */
     static async update(req, res) {
+        const relativePath = req.uploadedFiles.path?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.path?.absolute_path;   // untuk fs.unlink
         try {
             const { id } = req.params;
+            const payload = {
+                ...req.body,
+                path:relativePath
+            };
 
-            const { error, value } = MediaPathRequest.update(req.body);
+            const { error, value } = MediaPathRequest.update(payload);
             if (error) {
+                if (absolutePath) {
+                    await fs.unlink(absolutePath).catch(() => {});
+                }                
+
                 return res.status(422).json({
                     message: error.details[0].message,
                     data: null
@@ -109,6 +136,10 @@ class MediaPathController {
             });
         } catch (err) {
             console.error('MediaPathController.update error:', err);
+            if (absolutePath) {
+                await fs.unlink(absolutePath).catch(() => {});
+            }                
+
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null

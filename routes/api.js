@@ -33,6 +33,7 @@ const JumlahSoalController = require('../app/controllers/JumlahSoalController');
 const UjianController = require('../app/controllers/UjianController');
 const DomainController = require('../app/controllers/DomainController');
 const JenisSoalController = require('../app/controllers/JenisSoalController');
+const MediaPathController = require('../app/controllers/MediaPathController');
 
 const router = express.Router()
 
@@ -159,6 +160,44 @@ router.post('/bank-soal', AuthMiddleware, RolePengelolaMiddleware, BankSoalContr
 router.get('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.show);
 router.put('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.update);
 router.delete('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoalController.destroy);
+
+
+router.get('/media-path', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.index);
+router.get('/media-path/:id', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.show);
+router.post('/media-path',
+    AuthMiddleware, 
+    RolePengelolaMiddleware, 
+    ...UploadMiddleware({
+        folder: () => {
+            const now = new Date();
+            const tahun = now.getFullYear();
+            const bulan = String(now.getMonth() + 1).padStart(2, '0');
+            return `storage/media_path/${tahun}/${bulan}`;
+        },
+        maxSize: 4 * 1024 * 1024,
+        allowed: ['jpg', 'jpeg', 'png','pdf'],
+        fieldName: 'path'
+    }),        
+    MediaPathController.store
+);
+router.put('/media-path/:id',
+    AuthMiddleware, 
+    RolePengelolaMiddleware, 
+    ...UploadMiddleware({
+        folder: () => {
+            const now = new Date();
+            const tahun = now.getFullYear();
+            const bulan = String(now.getMonth() + 1).padStart(2, '0');
+            return `storage/media_path/${tahun}/${bulan}`;
+        },
+        maxSize: 4 * 1024 * 1024,
+        allowed: ['jpg', 'jpeg', 'png','pdf'],
+        fieldName: 'path'
+    }),        
+    MediaPathController.update
+);
+router.delete('/media-path/:id', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.destroy);
+
 
 //untuk pilihan ganda soal PG
 router.get('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.index);

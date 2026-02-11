@@ -144,10 +144,13 @@ function UploadMiddleware({
 
         req.uploadedFiles[fieldName] = {
           filename: path.basename(finalPath),
+          // untuk database
           relative_path: relativePath,
+          // untuk fs.unlink
+          absolute_path: path.resolve(finalPath),
           ext: detected.ext,
           mime: detected.mime,
-          size: req.file.size
+          size: req.file.size        
         };
 
         next();

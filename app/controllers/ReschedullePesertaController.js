@@ -54,16 +54,24 @@ class ReschedullePesertaController {
      * Tambah baru
      */
     static async store(req, res) {
+
+        const relativePath = req.uploadedFiles.dokumen_pendukung?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.dokumen_pendukung?.absolute_path;   // untuk fs.unlink
+
         try {
 
             const payload = {
                 ...req.body,
                 peserta_seleksi_id: req.params?.peserta_seleksi_id,
-                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
+                dokumen_pendukung: relativePath
             };
             
             const { error, value } = ReschedullePesertaRequest.store(payload);
             if (error) {
+                if (absolutePath) {
+                    await fs.unlink(absolutePath).catch(() => {});
+                }                
+
                 return res.status(422).json({
                     message: error.details[0].message,
                     data: null
@@ -77,13 +85,9 @@ class ReschedullePesertaController {
             });
         } catch (err) {
             console.error('ReschedullePesertaController.store error:', err);
-
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({
-                    message: 'Duplikat data entry',
-                    data: null
-                });
-            }
+            if (absolutePath) {
+                await fs.unlink(absolutePath).catch(() => {});
+            }                
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -98,16 +102,24 @@ class ReschedullePesertaController {
      * Update data
      */
     static async update(req, res) {
+        const relativePath = req.uploadedFiles.dokumen_pendukung?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.dokumen_pendukung?.absolute_path;   // untuk fs.unlink
+
         try {
             const { id,peserta_seleksi_id } = req.params;
             const payload = {
                 ...req.body,
                 peserta_seleksi_id: peserta_seleksi_id,
-                dokumen_pendukung: req.uploadedFiles?.dokumen_pendukung?.relative_path
+                dokumen_pendukung: relativePath
             };
 
             const { error, value } = ReschedullePesertaRequest.update(payload);
             if (error) {
+
+                if (absolutePath) {
+                    await fs.unlink(absolutePath).catch(() => {});
+                }                
+
                 return res.status(422).json({
                     message: error.details[0].message,
                     data: null
@@ -121,6 +133,11 @@ class ReschedullePesertaController {
             });
         } catch (err) {
             console.error('ReschedullePesertaController.update error:', err);
+
+            if (absolutePath) {
+                await fs.unlink(absolutePath).catch(() => {});
+            }                
+
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null

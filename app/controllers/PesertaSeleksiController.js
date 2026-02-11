@@ -158,7 +158,10 @@ class PesertaSeleksiController {
      * Update data peserta seleksi
      */
     static async enterUjian(req, res) {
+        const relativePath = req.uploadedFiles.enter_foto?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.enter_foto?.absolute_path;   // untuk fs.unlink
         try {
+
             const { jadwal_seleksi_id } = req.params;
             const peserta_id = req.user.id;
 
@@ -169,7 +172,7 @@ class PesertaSeleksiController {
                 });
             }
 
-            const enter_foto = req.uploadedFiles.enter_foto.relative_path;
+            const enter_foto = relativePath;
             const data_exec = await PesertaSeleksiService.enterUjian(peserta_id,jadwal_seleksi_id,{enter_foto});
 
             return res.status(200).json({
@@ -178,6 +181,10 @@ class PesertaSeleksiController {
             });
         } catch (err) {
             console.error('PesertaSeleksiController.enterUjian error:', err);
+            if (absolutePath) {
+                await fs.unlink(absolutePath).catch(() => {});
+            }                
+
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
