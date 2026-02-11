@@ -78,10 +78,11 @@ class MediaPathController {
             }
 
             const data_exec = await MediaPathService.store(value);
+            const plain = JSON.parse(JSON.stringify(data_exec));
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: {
-                    ...data_exec,
+                    ...plain,
                     base_url : process.env.APP_URL,                
                 }
             });
@@ -133,10 +134,12 @@ class MediaPathController {
             }
 
             const data_exec = await MediaPathService.update(id, value);
+            const plain = JSON.parse(JSON.stringify(data_exec));
+
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: {
-                    ...data_exec,
+                    ...plain,
                     base_url : process.env.APP_URL,
                 
                 }
