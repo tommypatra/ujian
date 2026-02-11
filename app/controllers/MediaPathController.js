@@ -82,8 +82,7 @@ class MediaPathController {
                 message: 'Tambah data berhasil',
                 data: {
                     ...data_exec,
-                    base_url : process.env.APP_URL,
-                
+                    base_url : process.env.APP_URL,                
                 }
             });
         } catch (err) {
