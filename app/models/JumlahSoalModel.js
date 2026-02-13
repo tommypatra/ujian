@@ -34,7 +34,7 @@ class JumlahSoalModel extends BaseModel {
         'jumlah'
     ];
 
-    static allowedFields = [];
+    static allowedFields = ['js.id'];
 
     /**
      * shortcut domain-specific
