@@ -61,6 +61,58 @@ class PengelolaSeleksiService {
     }
 
     /**
+     * Ambil semua PengelolaSeleksi (paging + search)
+     */
+    static async getPengelolaSeleksi(dataWeb) {
+        const query = dataWeb.query;
+        const user = dataWeb.user;
+
+        const page  = parseInt(query.page) || 1;
+        const limit = parseInt(query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const where = [];
+        const params = [];
+
+        //untuk user id
+        where.push(`u.id = ?`);
+        params.push(user.id);
+
+
+        // search umum
+        if (query.search) {
+            where.push(`(ps.jabatan LIKE ? OR u.name LIKE ? OR u.email LIKE ?)`);
+            params.push(
+                `%${query.search}%`,
+                `%${query.search}%`,
+                `%${query.search}%`
+            );
+        }
+
+        
+        const whereSql = where.length
+            ? `WHERE ${where.join(' AND ')}`
+            : '';
+
+        const conn = await db.getConnection();
+        try {
+            const data  = await PengelolaSeleksiModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await PengelolaSeleksiModel.countAll(conn, whereSql, params);
+
+            return {
+                data,
+                meta: {
+                    page,
+                    limit,
+                    total
+                }
+            };
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
      * Detail PengelolaSeleksi
      */
     static async findById(id) {

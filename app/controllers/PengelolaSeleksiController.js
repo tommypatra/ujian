@@ -10,6 +10,24 @@ class PengelolaSeleksiController {
      * GET /PengelolaSeleksis
      * Ambil list (pagination, search, dll)
      */
+    
+    static async pengelolaSeleksi(req, res) {
+        try {
+            const data_exec = await PengelolaSeleksiService.getPengelolaSeleksi(req);
+            return res.status(200).json({
+                message: 'Data ditemukan',
+                data: data_exec,
+            });
+        } catch (err) {
+            console.error('PengelolaSeleksiController.index error:', err);
+
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
     static async index(req, res) {
         try {
             const data_exec = await PengelolaSeleksiService.getAll(req);

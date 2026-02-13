@@ -104,6 +104,7 @@ router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddle
 router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.update);
 
 //route pengelola-seleksi sesuai :seleksi_id
+router.get('/pengelola/seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.pengelolaSeleksi);
 router.get('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.index);
 router.post('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.store);
 router.get('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.show);
@@ -285,13 +286,9 @@ router.put('/peserta/:peserta_seleksi_id/reschedulle/:id',
 router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.show);
 router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.destroy);
 
-
-
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
 router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
 router.post('/ujian/:peserta_seleksi_id/selesai-ujian', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.selesaiUjian);
-
 // ------------- AKHIR ROUTE PESERTA --------------
-
 
 module.exports = router
