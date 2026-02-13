@@ -40,6 +40,7 @@ class JumlahSoalService {
             : '';
 
         const conn = await db.getConnection();
+        alert(limit);
         try {
             const data  = await JumlahSoalModel.findAll(conn, whereSql, params, limit, offset);
             const total = await JumlahSoalModel.countAll(conn, whereSql, params);
