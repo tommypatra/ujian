@@ -40,12 +40,7 @@ class JumlahSoalModel extends BaseModel {
      * shortcut domain-specific
      */
     static async findById(conn, id) {
-        return this.findAll(
-            conn,
-            'WHERE js.id = ?',
-            [id],
-            0 // tanpa paging
-        );
+        return super.findByKey(conn, 'js.id', id);
     }
 
     /**
