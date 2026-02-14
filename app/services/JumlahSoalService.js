@@ -24,9 +24,9 @@ class JumlahSoalService {
 
         // search umum
         if (query.search) {
-            where.push(`(b.pertanyaan LIKE ? OR u.name LIKE ?)`);
+            where.push(`(ds.domain LIKE ? OR js.jumlah = ?)`);
             params.push(`%${query.search}%`);
-            params.push(`%${query.search}%`);
+            params.push(`${query.search}`);
         }
 
         // filter by domain_soal_id
