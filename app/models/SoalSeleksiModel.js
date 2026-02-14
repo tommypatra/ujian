@@ -96,7 +96,7 @@ class SoalSeleksiModel extends BaseModel {
             FROM bank_soals b
             LEFT JOIN soal_seleksis ss ON ss.bank_soal_id = b.id AND ss.seleksi_id = ?
             LEFT JOIN users u ON u.id = b.pembuat_user_id
-            LEFT JOIN jenis_soals js ON js.id = b.bank_soal_id
+            LEFT JOIN jenis_soals js ON js.id = b.jenis_soal_id
             WHERE 
                 b.domain_soal_id = ?
                 AND ss.id IS NULL
