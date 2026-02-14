@@ -27,6 +27,40 @@ class SoalSeleksiController {
         }
     }
 
+    static async availableBankSoal(req, res) {
+        try {
+            const seleksi_id = parseInt(req.params.seleksi_id);
+            const domain_soal_id = parseInt(req.query.domain_soal_id);
+
+            if (!domain_soal_id) {
+                return res.status(422).json({
+                    message: 'domain_soal_id wajib diisi',
+                    data: null
+                });
+            }
+
+            const data_exec = await SoalSeleksiService.getAvailableBankSoal(
+                seleksi_id,
+                domain_soal_id,
+                req.query
+            );
+
+            return res.status(200).json({
+                message: 'Data bank soal tersedia',
+                data: data_exec
+            });
+
+        } catch (err) {
+            console.error('availableBankSoal error:', err);
+            return res.status(500).json({
+                message: process.env.APP_ENV === 'development'
+                    ? err.message
+                    : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
     /**
      * GET /SoalSeleksis/:id
      * Ambil detail

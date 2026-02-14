@@ -59,6 +59,42 @@ class SoalSeleksiModel extends BaseModel {
         'b.id'
     ];
 
+    static async findBankSoalAvailable(conn, seleksi_id, domain_soal_id, limit = 0, offset = 0) {
+        let sql = `
+            SELECT 
+                b.id,
+                b.jenis_soal_id,
+                b.domain_soal_id,
+                b.tahun,
+                b.pembuat_user_id,
+                b.pertanyaan,
+                b.bobot,
+                b.is_aktif,
+                b.created_at,
+                b.updated_at
+            FROM bank_soals b
+            LEFT JOIN soal_seleksis ss 
+                ON ss.bank_soal_id = b.id
+                AND ss.seleksi_id = ?
+            WHERE 
+                b.domain_soal_id = ?
+                AND ss.id IS NULL
+                AND b.is_aktif = 1
+            ORDER BY b.tahun DESC, b.created_at DESC
+        `;
+
+        const params = [seleksi_id, domain_soal_id];
+
+        if (limit > 0) {
+            sql += ` LIMIT ? OFFSET ?`;
+            params.push(limit, offset);
+        }
+
+        const [rows] = await conn.query(sql, params);
+        return rows;
+    }
+
+
     static async cekDomainSoalId(conn, seleksi_id, bank_soal_id) {
         const [[row]] = await conn.query(
             `

@@ -106,6 +106,33 @@ class SoalSeleksiService {
         }
     }
 
+    static async getAvailableBankSoal(seleksi_id, domain_soal_id, query = {}) {
+        const page  = parseInt(query.page) || 1;
+        const limit = parseInt(query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const conn = await db.getConnection();
+        try {
+
+            const data = await SoalSeleksiModel.findBankSoalAvailable(
+                conn,
+                seleksi_id,
+                domain_soal_id,
+                limit,
+                offset
+            );
+
+            return {
+                data,
+                meta: { page, limit }
+            };
+
+        } finally {
+            conn.release();
+        }
+    }
+
+
     /**
      * Detail SoalSeleksi
      */
