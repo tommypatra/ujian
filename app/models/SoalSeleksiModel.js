@@ -59,6 +59,24 @@ class SoalSeleksiModel extends BaseModel {
         'b.id'
     ];
 
+    static async countBankSoalAvailable(conn, seleksi_id, domain_soal_id) {
+        const sql = `
+            SELECT COUNT(*) as total
+            FROM bank_soals b
+            LEFT JOIN soal_seleksis ss 
+                ON ss.bank_soal_id = b.id
+                AND ss.seleksi_id = ?
+            WHERE 
+                b.domain_soal_id = ?
+                AND ss.id IS NULL
+                AND b.is_aktif = 1
+        `;
+
+        const [[row]] = await conn.query(sql, [seleksi_id, domain_soal_id]);
+        return row.total;
+    }
+
+
     static async findBankSoalAvailable(conn, seleksi_id, domain_soal_id, limit = 0, offset = 0) {
         let sql = `
             SELECT 

@@ -122,9 +122,14 @@ class SoalSeleksiService {
                 offset
             );
 
+            const total = await SoalSeleksiModel.countBankSoalAvailable(
+                conn,
+                seleksi_id,
+                domain_soal_id
+            );
             return {
                 data,
-                meta: { page, limit }
+                meta: { page, limit, total }
             };
 
         } finally {
