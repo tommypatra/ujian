@@ -13,14 +13,22 @@ class JumlahSoalModel extends BaseModel {
         js.seleksi_id,
         ds.kode AS kode_domain,
         ds.domain,
-        s.nama as nama_seleksi, s.tahun
+        s.nama as nama_seleksi, s.tahun,
+        COUNT(ss.id) as jumlah_soal_terpilih
     `;
 
     static joinTables = `
-        LEFT JOIN domain_soals ds ON ds.id = js.domain_soal_id
-        LEFT JOIN seleksis s ON s.id = js.seleksi_id
+        LEFT JOIN bank_soals b 
+            ON b.domain_soal_id = js.domain_soal_id
+        LEFT JOIN soal_seleksis ss 
+            ON ss.bank_soal_id = b.id 
+            AND ss.seleksi_id = js.seleksi_id
+        LEFT JOIN domain_soals ds 
+            ON ds.id = js.domain_soal_id
+        LEFT JOIN seleksis s 
+            ON s.id = js.seleksi_id
     `;
-
+    static groupBy = `js.id`;
     static countColumns = 'COUNT(DISTINCT js.id)';
 
     static orderBy = `
