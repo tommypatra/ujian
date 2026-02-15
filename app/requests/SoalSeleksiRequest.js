@@ -12,6 +12,23 @@ class SoalSeleksiRequest {
         });
     }
 
+    static storeBulkInsert(data) {
+        return Joi.object({
+            bank_soal_id: Joi.array()
+                .items(
+                    Joi.number()
+                        .integer()
+                        .positive()
+                        .required()
+                )
+                .min(1)
+                .required(),
+        }).validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
+    }
+
     static update(data) {
         return Joi.object({
             bank_soal_id: Joi.number().integer().positive().required(),

@@ -204,6 +204,46 @@ class BaseModel {
         }
     }
 
+
+    /* =======================
+    * BULK INSERT
+    * ======================= */
+    static async bulkInsert(conn, rows = [], options = {}) {
+        this._ensureConfig();
+
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return 0;
+        }
+
+        const { ignore = false } = options;
+
+        const columns = this.columns;
+
+        const placeholders = rows.map(() =>
+            `(${columns.map(() => '?').join(',')})`
+        ).join(',');
+
+        const values = [];
+
+        for (const row of rows) {
+            for (const col of columns) {
+                values.push(row[col] ?? null);
+            }
+        }
+
+        const insertType = ignore ? 'INSERT IGNORE' : 'INSERT';
+
+        const [result] = await conn.query(
+            `${insertType} INTO ${this.tableName}
+            (${columns.join(',')})
+            VALUES ${placeholders}`,
+            values
+        );
+
+        return result.affectedRows;
+    }
+
+
     /* =======================
     * UPDATE BY MULTIPLE KEYS
     * ======================= */

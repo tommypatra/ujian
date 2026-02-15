@@ -210,7 +210,8 @@ router.delete('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddle
 
 //route soal seleksi jadwal sesuai :seleksi_id
 router.get('/soal/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.index);
-router.get('/soal-available/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.availableBankSoal);
+router.get('/soal/:seleksi_id/seleksi/available', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.availableBankSoal);
+router.post('/soal/:seleksi_id/seleksi/bulk', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.bulkInsert);
 router.post('/soal/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.store);
 router.get('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.show);
 router.put('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.update);

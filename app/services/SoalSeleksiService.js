@@ -154,6 +154,33 @@ class SoalSeleksiService {
         }
     }
 
+    static async bulkInsert(seleksi_id, payload) {
+        const conn = await db.getConnection();
+        const bank_soal_ids = payload.bank_soal_id;
+
+        try {
+            await conn.beginTransaction();
+
+            const rows = bank_soal_ids.map(id => ({
+                bank_soal_id: id,
+                seleksi_id,
+                created_at: new Date(),
+                updated_at: new Date()
+            }));
+
+            await SoalSeleksiModel.bulkInsert(conn, rows, { ignore: true });
+
+            await conn.commit();
+            return true;
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
     /**
      * Simpan BankSoal baru + BankSoal default
      */
