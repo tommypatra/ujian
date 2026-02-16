@@ -98,9 +98,7 @@ class SoalSeleksiModel extends BaseModel {
             LEFT JOIN users u ON u.id = b.pembuat_user_id
             LEFT JOIN jenis_soals js ON js.id = b.jenis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     _soal_id
             WHERE 
-                b.domain_soal_id = ?
-                AND ss.id IS NULL
-                AND b.is_aktif = 1
+                b.domain_soal_id = ? AND ss.id IS NULL AND b.is_aktif = 1
             ORDER BY b.tahun DESC, b.created_at DESC
         `;
 
@@ -110,7 +108,7 @@ class SoalSeleksiModel extends BaseModel {
             sql += ` LIMIT ? OFFSET ?`;
             params.push(limit, offset);
         }
-
+        
         const [rows] = await conn.query(sql, params);
         return rows;
     }
