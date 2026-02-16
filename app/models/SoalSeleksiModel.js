@@ -120,39 +120,6 @@ class SoalSeleksiModel extends BaseModel {
         return rows;
     }
 
-    static async bulkInsert(seleksi_id, bank_soal_ids) {
-        const conn = await db.getConnection();
-
-        try {
-            await conn.beginTransaction();
-
-            const [rows] = await conn.query(
-                `SELECT id, domain_soal_id 
-                FROM bank_soals 
-                WHERE id IN (?)`,
-                [bank_soal_ids]
-            );
-
-            const values = bank_soal_ids.map(id => [id, seleksi_id]);
-
-            await conn.query(
-                `INSERT INTO soal_seleksis 
-                (bank_soal_id, seleksi_id, created_at)
-                VALUES ?`,
-                [values.map(v => [...v, new Date()])]
-            );
-
-            await conn.commit();
-            return true;
-
-        } catch (err) {
-            await conn.rollback();
-            throw err;
-        } finally {
-            conn.release();
-        }
-    }
-
     /**
      * Bulk delete by seleksi_id + array id
      */
