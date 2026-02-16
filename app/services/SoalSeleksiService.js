@@ -154,21 +154,27 @@ class SoalSeleksiService {
         }
     }
 
-    static async bulkInsert(seleksi_id, bank_soal_ids) {
+    static async bulkInsert(seleksi_id, payload) {
         const conn = await db.getConnection();
 
         try {
             await conn.beginTransaction();
 
-            const payload = bank_soal_ids.map(id => ({
+            const bank_soal_ids = payload.bank_soal_id; // jadikan dulu array
+
+            const rows = bank_soal_ids.map(id => ({
                 bank_soal_id: id,
                 seleksi_id,
             }));
 
-            await SoalSeleksiModel.bulkInsert(conn, payload, { ignore: true });
+            const affected = await SoalSeleksiModel.bulkInsert(
+                conn,
+                rows,
+                { ignore: true }
+            );
 
             await conn.commit();
-            return true;
+            return { inserted: affected };
 
         } catch (err) {
             await conn.rollback();
