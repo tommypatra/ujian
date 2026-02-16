@@ -29,6 +29,25 @@ class SoalSeleksiRequest {
         });
     }
 
+    static bulkDelete(data) {
+        return Joi.object({
+            soal_seleksi_id: Joi.array()
+                .items(
+                    Joi.number()
+                        .integer()
+                        .positive()
+                        .required()
+                )
+                .min(1)
+                .unique()
+                .required(),
+        }).validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
+    }
+    
+
     static update(data) {
         return Joi.object({
             bank_soal_id: Joi.number().integer().positive().required(),

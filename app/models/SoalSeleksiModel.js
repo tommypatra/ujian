@@ -96,7 +96,7 @@ class SoalSeleksiModel extends BaseModel {
             FROM bank_soals b
             LEFT JOIN soal_seleksis ss ON ss.bank_soal_id = b.id AND ss.seleksi_id = ?
             LEFT JOIN users u ON u.id = b.pembuat_user_id
-            LEFT JOIN jenis_soals js ON js.id = b.jenis_soal_id
+            LEFT JOIN jenis_soals js ON js.id = b.jenis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     _soal_id
             WHERE 
                 b.domain_soal_id = ?
                 AND ss.id IS NULL
@@ -113,6 +113,61 @@ class SoalSeleksiModel extends BaseModel {
 
         const [rows] = await conn.query(sql, params);
         return rows;
+    }
+
+    static async bulkInsert(seleksi_id, bank_soal_ids) {
+        const conn = await db.getConnection();
+
+        try {
+            await conn.beginTransaction();
+
+            const [rows] = await conn.query(
+                `SELECT id, domain_soal_id 
+                FROM bank_soals 
+                WHERE id IN (?)`,
+                [bank_soal_ids]
+            );
+
+            const values = bank_soal_ids.map(id => [id, seleksi_id]);
+
+            await conn.query(
+                `INSERT INTO soal_seleksis 
+                (bank_soal_id, seleksi_id, created_at)
+                VALUES ?`,
+                [values.map(v => [...v, new Date()])]
+            );
+
+            await conn.commit();
+            return true;
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Bulk delete by seleksi_id + array id
+     */
+    static async bulkDeleteBySeleksi(conn, seleksi_id, ids = []) {
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return 0;
+        }
+
+        const placeholders = ids.map(() => '?').join(',');
+
+        const [result] = await conn.query(
+            `
+            DELETE FROM ${this.tableName}
+            WHERE seleksi_id = ?
+            AND id IN (${placeholders})
+            `,
+            [seleksi_id, ...ids]
+        );
+
+        return result.affectedRows;
     }
 
 

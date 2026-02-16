@@ -82,6 +82,7 @@ class SoalSeleksiController {
             });
         }
     }
+
     /**
      * POST /bulkInsert
      * Tambah baru bulkInsert
@@ -194,6 +195,38 @@ class SoalSeleksiController {
         }
     }
 
+    static async bulkDelete(req, res) {
+        try {
+            const { error, value } = SoalSeleksiRequest.bulkDelete(req.body);
+            const seleksi_id = parseInt(req.params.seleksi_id);
+
+            if (error) {
+                return res.status(422).json({
+                    message: error.details[0].message,
+                    data: null
+                });
+            }
+
+            const result = await SoalSeleksiService.bulkDelete(
+                seleksi_id,
+                value
+            );
+
+            return res.status(200).json({
+                message: 'Soal berhasil dihapus',
+                data: result
+            });
+
+        } catch (err) {
+            console.error('Bulk delete error:', err);
+            return res.status(500).json({
+                message: err.message,
+                data: null
+            });
+        }
+    }
+
+    
 }
 
 module.exports = SoalSeleksiController;

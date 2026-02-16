@@ -299,6 +299,32 @@ class SoalSeleksiService {
             conn.release();
         }
     }
+
+    static async bulkDelete(seleksi_id, payload) {
+        const conn = await db.getConnection();
+        const ids = payload.soal_seleksi_id;
+
+        try {
+            await conn.beginTransaction();
+
+            const deleted = await SoalSeleksiModel.bulkDeleteBySeleksi(
+                conn,
+                seleksi_id,
+                ids
+            );
+
+            await conn.commit();
+
+            return { deleted };
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
 }
 
 module.exports = SoalSeleksiService;

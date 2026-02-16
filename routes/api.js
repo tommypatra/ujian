@@ -216,6 +216,7 @@ router.post('/soal/:seleksi_id/seleksi', AuthMiddleware, PembuatSoalMiddleware, 
 router.get('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.show);
 router.put('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.update);
 router.delete('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.destroy);
+router.delete('/soal/:seleksi_id/seleksi/bulk', AuthMiddleware, PembuatSoalMiddleware, SoalSeleksiController.bulkDelete);
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
 // ------------- AWAL ROUTE PENGAWAS --------------
