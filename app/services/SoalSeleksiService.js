@@ -305,7 +305,7 @@ class SoalSeleksiService {
 
     static async bulkDelete(seleksi_id, payload) {
         const conn = await db.getConnection();
-        const ids = payload.soal_seleksi_id;
+        const ids = payload.soal_seleksi_id; // jadikan dulu array
 
         try {
             await conn.beginTransaction();
