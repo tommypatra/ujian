@@ -98,6 +98,7 @@ class SoalSeleksiController {
                     data: null
                 });
             }
+            // console.log(seleksi_id,value);
 
             const data_exec = await SoalSeleksiService.bulkInsert(seleksi_id, value);
             return res.status(201).json({

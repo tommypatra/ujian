@@ -305,15 +305,14 @@ class SoalSeleksiService {
 
     static async bulkDelete(seleksi_id, payload) {
         const conn = await db.getConnection();
-        const ids = payload.soal_seleksi_id; // jadikan dulu array
+        const soal_seleksi_ids = payload.soal_seleksi_id; // jadikan dulu array
 
         try {
             await conn.beginTransaction();
-
             const deleted = await SoalSeleksiModel.bulkDeleteBySeleksi(
                 conn,
                 seleksi_id,
-                ids
+                soal_seleksi_ids
             );
 
             await conn.commit();

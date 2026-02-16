@@ -123,12 +123,12 @@ class SoalSeleksiModel extends BaseModel {
     /**
      * Bulk delete by seleksi_id + array id
      */
-    static async bulkDeleteBySeleksi(conn, seleksi_id, ids = []) {
-        if (!Array.isArray(ids) || ids.length === 0) {
+    static async bulkDeleteBySeleksi(conn, seleksi_id, soal_seleksi_ids = []) {
+        if (!Array.isArray(soal_seleksi_ids) || soal_seleksi_ids.length === 0) {
             return 0;
         }
 
-        const placeholders = ids.map(() => '?').join(',');
+        const placeholders = soal_seleksi_ids.map(() => '?').join(',');
 
         const [result] = await conn.query(
             `
@@ -136,7 +136,7 @@ class SoalSeleksiModel extends BaseModel {
             WHERE seleksi_id = ?
             AND id IN (${placeholders})
             `,
-            [seleksi_id, ...ids]
+            [seleksi_id, ...soal_seleksi_ids]
         );
 
         return result.affectedRows;
