@@ -102,6 +102,7 @@ class PesertaSeleksiController {
         }
     }
 
+
     /**
      * PUT /PesertaSeleksis/:id
      * Update data

@@ -61,13 +61,12 @@ class JadwalSeleksiModel extends BaseModel {
 
 
     // untuk cek apakah jadwal seleksi tersebut memiliki seleksi_id tertentu untuk validasi
-    static async _isValidJadwalSeleksi(conn, id, seleksi_id) {
+    static async _isValidJadwalSeleksi(conn, jadwal_seleksi_id, seleksi_id) {
         const [[result]] = await conn.query(
-            `SELECT id FROM jadwal_seleksis js
-            WHERE js.id = ?
-                AND js.seleksi_id = ? 
+            `SELECT id FROM jadwal_seleksis
+            WHERE id = ? AND seleksi_id = ? 
             LIMIT 1`,
-            [id,seleksi_id]
+            [jadwal_seleksi_id, seleksi_id]
         );
         return !!result;
     }
@@ -121,6 +120,34 @@ class JadwalSeleksiModel extends BaseModel {
             [id, seleksi_id]
         );
     }
+
+
+    /**
+     * Cari id jadwal berdasarkan seleksi_id dan array sesi
+     */
+    static async cariIdJadwal(conn, seleksi_id, sesiList = []) {
+        if (!sesiList.length) return [];
+        const [rows] = await conn.query(
+            `SELECT id, sesi 
+            FROM jadwal_seleksis 
+            WHERE seleksi_id = ? 
+            AND sesi IN (?)`,
+            [seleksi_id, sesiList]
+        );
+        return rows;
+    }
+
+    static async jumlahJadwal(conn, seleksi_id) {
+        const [[row]] = await conn.query(
+            `SELECT COUNT(*) AS total
+            FROM jadwal_seleksis
+            WHERE seleksi_id = ?`,
+            [seleksi_id]
+        );
+
+        return row.total;
+    }
+    
 }
 
 module.exports = JadwalSeleksiModel;

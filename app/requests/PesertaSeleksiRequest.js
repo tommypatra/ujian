@@ -19,6 +19,7 @@ class PesertaSeleksiRequest {
         });
     }
 
+    
     static update(data) {
         return Joi.object({
             peserta_id: Joi.number().integer().positive().optional(),

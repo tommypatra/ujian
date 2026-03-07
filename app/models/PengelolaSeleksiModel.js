@@ -126,6 +126,7 @@ class PengelolaSeleksiModel extends BaseModel {
     static async deleteBySeleksiId(conn, seleksi_id) {
         return super.deleteByKey(conn, 'seleksi_id', seleksi_id);
     }
+
 }
 
 module.exports = PengelolaSeleksiModel;

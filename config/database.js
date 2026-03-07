@@ -10,7 +10,8 @@ const db = mysql.createPool({
 
     waitForConnections: true,
     connectionLimit: 20,
-    queueLimit: 0
+    queueLimit: 0,
+    dateStrings: true
 })
 
 module.exports = db

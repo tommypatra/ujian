@@ -56,7 +56,7 @@ class PengawasUjianController {
         try {
             const user_id = req.user.id;
             const { peserta_seleksi_id } = req.params;
-
+            // console.log('user id ',req.user.id)
             const data_exec = await PengawasUjianService.resetLogin(peserta_seleksi_id,req.user.id);
             return res.status(200).json({
                 message: 'reset login berhasil',

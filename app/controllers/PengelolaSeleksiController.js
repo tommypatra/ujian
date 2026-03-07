@@ -13,7 +13,7 @@ class PengelolaSeleksiController {
     
     static async pengelolaSeleksi(req, res) {
         try {
-            const data_exec = await PengelolaSeleksiService.getPengelolaSeleksi(req);
+            const data_exec = await PengelolaSeleksiService.getPengelolaBySeleksi(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,

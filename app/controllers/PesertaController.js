@@ -87,6 +87,65 @@ class PesertaController {
         }
     }
 
+    static async storeJadwalSeleksi(req, res) {
+        try {
+            const { error, value } = PesertaRequest.storeJadwalSeleksi(req.body);
+            const seleksi_id = parseInt(req.params.seleksi_id) || null;
+
+            if (error) {
+                return res.status(422).json({
+                    message: error.details[0].message,
+                    data: null
+                });
+            }
+
+            const data_exec = await PesertaService.storeJadwalSeleksi(value, seleksi_id, value.jadwal_seleksi_id);
+            return res.status(201).json({
+                message: 'Tambah data berhasil',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('PesertaSeleksiController.store error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+
+    /**
+     * POST /peserta
+     * import multi value baru
+     */
+    static async import(req, res) {
+        try {
+
+            const seleksi_id = parseInt(req.params.seleksi_id) || null
+            const rows = req.body.data || []
+
+            if (!Array.isArray(rows) || rows.length === 0) {
+                return res.status(422).json({
+                    message: 'Data import kosong',
+                    data: null
+                })
+            }
+
+            const result = await PesertaService.importBatch(rows, seleksi_id)
+
+            return res.status(200).json(result)
+
+        } catch (err) {
+            console.error('JadwalSeleksiController.import error:', err)
+
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            })
+        }
+    }
+
+    
     /**
      * PUT /Pesertas/:id
      * Update data

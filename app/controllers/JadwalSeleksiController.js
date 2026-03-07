@@ -82,6 +82,38 @@ class JadwalSeleksiController {
     }
 
     /**
+     * POST /JadwalSeleksis
+     * import multivalue baru
+     */
+    static async import(req, res) {
+        try {
+
+            const seleksi_id = parseInt(req.params.seleksi_id) || null
+            const rows = req.body.data || []
+
+            if (!Array.isArray(rows) || rows.length === 0) {
+                return res.status(422).json({
+                    message: 'Data import kosong',
+                    data: null
+                })
+            }
+
+            const result = await JadwalSeleksiService.importBatch(rows, seleksi_id)
+
+            return res.status(200).json(result)
+
+        } catch (err) {
+            console.error('JadwalSeleksiController.import error:', err)
+
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            })
+        }
+    }
+
+
+    /**
      * PUT /JadwalSeleksis/:id
      * Update data
      */

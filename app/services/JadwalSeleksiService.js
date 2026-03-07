@@ -3,7 +3,6 @@ const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
 const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 const PengawasSeleksiModel = require('../models/PengawasSeleksiModel');
-const SeleksiModel = require('../models/SeleksiModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
 const {generatePassword} = require('../helpers/webHelper');
@@ -61,7 +60,7 @@ class JadwalSeleksiService {
         const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
 
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];
@@ -139,54 +138,44 @@ class JadwalSeleksiService {
     /**
      * Simpan JadwalSeleksi baru + pengawas default
      */
-    static async store(data,seleksi_id) {
+
+    static async store(data, seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,JadwalSeleksiModel.columns);
-            payload.seleksi_id=seleksi_id;
+            const payload = pickFields(data, JadwalSeleksiModel.columns);
+            payload.seleksi_id = seleksi_id;
 
-            const JadwalSeleksiId = await JadwalSeleksiModel.insert(conn,payload);
-
-            const seleksi = await SeleksiModel.findById(conn,seleksi_id);
-
-            //generate pengawas
-            const prefix = seleksi.prefix_app;
-            const lastUsername = await PengawasSeleksiModel.findLastUsername(conn, seleksi_id);
-
-            let urutan = 1;
-            if (lastUsername) {
-                const regex = new RegExp(`^${prefix}(\\d+)$`);
-                const match = lastUsername.match(regex);
-                if (match) {
-                    urutan = parseInt(match[1], 10) + 1;
-                }
+            const jumlahPengawas = await PengawasSeleksiModel.countPengawas(conn, seleksi_id);
+            if (jumlahPengawas === 0) {
+                throw new Error('Tidak bisa membuat jadwal. Pengawas belum tersedia.');
             }
+            const jadwalId = await JadwalSeleksiModel.insert(conn, payload);
 
-            const userName = `${prefix}${String(urutan).padStart(3, '0')}`;            
-            const plainPassword = generatePassword();
+            const listPengawas = await PengawasSeleksiModel.findPengawasBySeleksi(conn, seleksi_id);
+            // console.log(listPengawas);
 
-            const payloadPengawas = {
-                jadwal_seleksi_id:JadwalSeleksiId,
-                name:`Pengawas ${userName}`,
-                user_name:userName,
-                password: await bcrypt.hash(plainPassword, 10)
-            };
+            //  HITUNG JUMLAH JADWAL SEBELUMNYA
+            const rowCount = await JadwalSeleksiModel.jumlahJadwal(conn,seleksi_id);
 
-            const PengawasJadwaliId = await PengawasSeleksiModel.insert(conn,payloadPengawas);
+            const totalJadwal = rowCount - 1; 
+            // -1 karena jadwal baru sudah masuk
 
+            const indexPengawas = totalJadwal % listPengawas.length;
+
+            const selectedPengawas = listPengawas[indexPengawas];
+            // console.log(rowCount,totalJadwal,indexPengawas,selectedPengawas);
+
+            // INSERT KE pengawas_seleksis
+            await PengawasSeleksiModel.insert(conn, {
+                jadwal_seleksi_id: jadwalId,
+                user_id: selectedPengawas.user_id
+            });
 
             await conn.commit();
 
-            const dataJadwal = await JadwalSeleksiModel.findById(conn, JadwalSeleksiId);
-            const dataPengawas = await PengawasSeleksiModel.findById(conn, PengawasJadwaliId);
-
-            return {
-                jadwal : dataJadwal,
-                pengawas : dataPengawas,
-                password_pengawas: plainPassword
-            };            
+            return await this.findById(jadwalId);
 
         } catch (err) {
             await conn.rollback();
@@ -195,6 +184,72 @@ class JadwalSeleksiService {
             conn.release();
         }
     }
+
+    // static async store(data,seleksi_id) {
+    //     const conn = await db.getConnection();
+    //     try {
+    //         await conn.beginTransaction();
+
+    //         const payload = pickFields(data,JadwalSeleksiModel.columns);
+    //         const pengawas = pickFields(data,['user_name','password']);
+    //         payload.seleksi_id=seleksi_id;
+
+    //         const JadwalSeleksiId = await JadwalSeleksiModel.insert(conn,payload);
+
+    //         const seleksi = await SeleksiModel.findById(conn,seleksi_id);
+
+    //         //generate pengawas
+    //         const prefix = seleksi.prefix_app;
+    //         const lastUsername = await PengawasSeleksiModel.findLastUsername(conn, seleksi_id);
+
+    //         let userName = '';            
+    //         let plainPassword = '';            
+
+    //         if(!pengawas.user_name){
+    //             let urutan = 1;
+    //             if (lastUsername) {
+    //                 const regex = new RegExp(`^${prefix}(\\d+)$`);
+    //                 const match = lastUsername.match(regex);
+    //                 if (match) {
+    //                     urutan = parseInt(match[1], 10) + 1;
+    //                 }
+    //             }
+    //             userName = `${prefix}${String(urutan).padStart(3, '0')}`;            
+    //             plainPassword = generatePassword();
+    //         }else{
+    //             userName = pengawas.user_name;
+    //             plainPassword = pengawas.password;
+    //         }
+
+
+    //         const payloadPengawas = {
+    //             jadwal_seleksi_id:JadwalSeleksiId,
+    //             name:`Pengawas ${userName}`,
+    //             user_name:userName,
+    //             password: await bcrypt.hash(plainPassword, 10)
+    //         };
+
+    //         const PengawasJadwaliId = await PengawasSeleksiModel.insert(conn,payloadPengawas);
+
+
+    //         await conn.commit();
+
+    //         const dataJadwal = await JadwalSeleksiModel.findById(conn, JadwalSeleksiId);
+    //         const dataPengawas = await PengawasSeleksiModel.findById(conn, PengawasJadwaliId);
+
+    //         return {
+    //             jadwal : dataJadwal,
+    //             pengawas : dataPengawas,
+    //             password_pengawas: plainPassword
+    //         };            
+
+    //     } catch (err) {
+    //         await conn.rollback();
+    //         throw err;
+    //     } finally {
+    //         conn.release();
+    //     }
+    // }
 
     /**
      * Update JadwalSeleksi
@@ -221,6 +276,48 @@ class JadwalSeleksiService {
             throw err;
         } finally {
             conn.release();
+        }
+    }
+
+    static async importBatch(rows = [], seleksi_id) {
+        const conn = await db.getConnection()
+        const errors = []
+        let inserted = 0
+        try {
+            for (let i = 0; i < rows.length; i++) {
+                const { error, value } = require('../requests/JadwalSeleksiRequest').store(rows[i])
+
+                // console.log(value);
+
+                if (error) {
+                    errors.push({
+                        sesi: value.sesi,
+                        tanggal: value.tanggal,
+                        message: error.details[0].message
+                    })
+                    continue
+                }
+
+                try {
+                    await this.store(value, seleksi_id)
+                    inserted++
+                } catch (err) {
+                    errors.push({
+                        sesi: value.sesi,
+                        tanggal: value.tanggal,
+                        message: err.message
+                    })
+                }
+            }
+
+            return {
+                success: true,
+                inserted,
+                errors
+            }
+
+        } finally {
+            conn.release()
         }
     }
 

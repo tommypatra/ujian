@@ -14,10 +14,10 @@ class PengawasSeleksiModel extends BaseModel {
     static selectFields = `
         ps.id,
         ps.jadwal_seleksi_id,
-        ps.name as nama, 
-        '' as email,
+        u.name as nama, 
+        u.email,
         'pengawas' as role,
-        ps.user_name,
+        u.email as user_name,
         ps.created_at,
         ps.updated_at,
         js.seleksi_id,
@@ -36,6 +36,7 @@ class PengawasSeleksiModel extends BaseModel {
     static joinTables = `
         LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
         LEFT JOIN seleksis s ON s.id = js.seleksi_id
+        LEFT JOIN users u ON u.id = ps.user_id
     `;
 
     static countColumns = 'COUNT(ps.id)';
@@ -48,14 +49,12 @@ class PengawasSeleksiModel extends BaseModel {
             js.tanggal ASC,
             js.jam_mulai ASC,
             js.lokasi_ujian,
-            ps.name ASC
+            u.name ASC
     `;
 
     static columns = [
         'jadwal_seleksi_id',
-        'name',
-        'user_name',
-        'password'
+        'user_id',
     ];
 
     static allowedFields = [
@@ -172,7 +171,7 @@ class PengawasSeleksiModel extends BaseModel {
     }
 
     // UPDATE resetLogin (ANTI IDOR)
-    static async resetLogin(conn, peserta_seleksi_id, pengawas_id) {
+    static async resetLogin(conn, peserta_seleksi_id, user_id) {
         try {
             const [result] = await conn.query(
                 `
@@ -189,9 +188,9 @@ class PengawasSeleksiModel extends BaseModel {
                     ps.is_allow = 0,
                     ps.allow_at = NULL,
                     ps.updated_at = NOW()
-                WHERE ps.id = ? AND ss.id = ?
+                WHERE ps.id = ? AND ss.user_id = ?
                 `,
-                [peserta_seleksi_id, pengawas_id]
+                [peserta_seleksi_id, user_id]
             );
             return result.affectedRows;
         } catch (err) {
@@ -247,6 +246,30 @@ class PengawasSeleksiModel extends BaseModel {
             throw mapDbError(err);
         }    
     }
+
+
+    static async findPengawasBySeleksi(conn, seleksi_id) {
+        const [rows] = await conn.query(
+            `SELECT ps.id, ps.user_id
+             FROM pengelola_seleksis ps
+             WHERE ps.seleksi_id = ?
+             AND ps.jabatan = 'pengawas'
+             ORDER BY ps.id ASC`,
+            [seleksi_id]
+        );
+        return rows;
+    }
+
+    static async countPengawas(conn, seleksi_id) {
+        const [[row]] = await conn.query(
+            `SELECT COUNT(*) AS total
+             FROM pengelola_seleksis
+             WHERE seleksi_id = ?
+             AND jabatan = 'pengawas'`,
+            [seleksi_id]
+        );
+        return row.total;
+    }    
 }
 
 module.exports = PengawasSeleksiModel;

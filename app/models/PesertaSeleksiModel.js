@@ -98,6 +98,26 @@ class PesertaSeleksiModel extends BaseModel {
         return !!row;
     }
 
+
+    /**
+     * cari pengawas
+     */
+    static async cariPesertaPengawas(conn, peserta_id, user_id) {
+        const [rows] = await conn.query(
+            `
+            SELECT ps.id, ps.enter_foto, pw.id as pengawas_seleksi_id 
+            FROM peserta_seleksis ps 
+            INNER JOIN pengawas_seleksis pw ON pw.jadwal_seleksi_id = ps.jadwal_seleksi_id AND pw.user_id = ?
+            WHERE ps.id = ?
+            LIMIT 1
+            `,
+            [user_id, peserta_id]
+        );
+
+        return rows.length ? rows[0] : null;
+    }
+
+
     /* =======================
      * READ
      * ======================= */

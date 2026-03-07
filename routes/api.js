@@ -104,7 +104,7 @@ router.get('/seleksi/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddle
 router.put('/seleksi/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, SeleksiController.update);
 
 //route pengelola-seleksi sesuai :seleksi_id
-router.get('/pengelola/seleksi', AuthMiddleware, RequireRoleMiddleware('admin'), PengelolaSeleksiController.pengelolaSeleksi);
+router.get('/pengelola/seleksi', AuthMiddleware, RequireRoleMiddleware('pengguna'), PengelolaSeleksiController.pengelolaSeleksi);
 router.get('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.index);
 router.post('/pengelola/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.store);
 router.get('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengelolaSeleksiController.show);
@@ -116,6 +116,7 @@ router.delete('/pengelola/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSel
 //jika password lupa maka dilakukan perubahan password manual pakai put pada endpoint pengawas
 router.get('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.index);
 router.post('/jadwal/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.store);
+router.post('/jadwal/:seleksi_id/seleksi/import', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.import);
 router.get('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.show);
 router.put('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.update);
 router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, JadwalSeleksiController.destroy);
@@ -123,6 +124,7 @@ router.delete('/jadwal/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleks
 //route pengawas-seleksi sesuai :seleksi_id
 router.get('/pengawas/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.index);
 router.post('/pengawas/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.store);
+router.post('/pengawas/:seleksi_id/reset-password/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.resetPassword);
 router.get('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.show);
 router.put('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.update);
 router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PengawasSeleksiController.destroy);
@@ -131,6 +133,7 @@ router.delete('/pengawas/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSele
 //bisa menyesuaikan data import
 router.get('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.index);
 router.post('/peserta/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.store);
+router.post('/peserta/:seleksi_id/seleksi/import', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.import);
 router.get('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.show);
 router.put('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.update);
 router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.destroy);
@@ -138,6 +141,7 @@ router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSelek
 //route peserta seleksi jadwal sesuai :seleksi_id
 router.get('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.index);
 router.post('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.store);
+router.post('/peserta/:seleksi_id/jadwal-seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.storeJadwalSeleksi);
 router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.show);
 router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.update);
 router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.destroy);
@@ -164,6 +168,7 @@ router.delete('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoa
 
 
 router.get('/media-path', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.index);
+router.get('/media-path/file/:id', MediaPathController.getPath);
 router.get('/media-path/:id', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.show);
 router.post('/media-path',
     AuthMiddleware, 
@@ -198,7 +203,6 @@ router.put('/media-path/:id',
     MediaPathController.update
 );
 router.delete('/media-path/:id', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.destroy);
-
 
 //untuk pilihan ganda soal PG
 router.get('/bank-soal/:bank_soal_id/pg', AuthMiddleware, PemilikSoalPGMiddleware, BankSoalPilihanController.index);

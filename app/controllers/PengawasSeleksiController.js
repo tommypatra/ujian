@@ -81,6 +81,36 @@ class PengawasSeleksiController {
     }
 
     /**
+     * POST /resetPassword
+     * reset password
+     */
+    static async resetPassword(req, res) {
+        // console.log('BODY DI CONTROLLER:', req.body);
+        try {
+            const { id,seleksi_id } = req.params;
+            if (!id || !seleksi_id) {
+                return res.status(422).json({
+                    message: 'reset password gagal dilakukan',
+                    data: null
+                });
+            }
+
+
+            const data_exec = await PengawasSeleksiService.resetPassword(id,seleksi_id);
+            return res.status(201).json({
+                message: 'reset password berhasil',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('PengawasSeleksiController.resetPassword error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    } 
+
+    /**
      * PUT /PengawasSeleksis/:id
      * Update data
      */

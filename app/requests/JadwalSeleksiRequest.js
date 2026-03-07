@@ -11,6 +11,21 @@ class JadwalSeleksiRequest {
             jam_selesai: Joi.string().required(),            
             lokasi_ujian: Joi.string().min(3).required(),
             status: Joi.string().min(3).optional(),
+            // user_name: Joi.string()
+            //     .trim()
+            //     .empty('')
+            //     .min(3)
+            //     .optional(),
+
+            // password: Joi.string()
+            //     .trim()
+            //     .empty('')
+            //     .min(6)
+            //     .when('user_name', {
+            //         is: Joi.exist(),
+            //         then: Joi.required(),
+            //         otherwise: Joi.optional()
+            //     }),        
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,

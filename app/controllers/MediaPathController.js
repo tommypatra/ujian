@@ -1,5 +1,6 @@
 // app/controllers/MediaPathController.js
 const fs = require('fs').promises;
+const path = require('path');
 const MediaPathService = require('../services/MediaPathService');
 const MediaPathRequest = require('../requests/MediaPathRequest');
 
@@ -50,6 +51,22 @@ class MediaPathController {
         }
     }
 
+
+    /**
+     * GET /MediaPaths/:id
+     * Ambil detail
+     */
+    static async getPath(req, res) {
+        try {
+            const media = await MediaPathService.findById(req.params.id);
+            const filePath = path.resolve(media.path);
+            res.sendFile(filePath);
+        } catch (err) {
+            res.status(404).json({
+                message: err.message
+            });
+        }
+    }
     /**
      * POST /MediaPaths
      * Tambah baru

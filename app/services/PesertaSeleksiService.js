@@ -17,7 +17,7 @@ class PesertaSeleksiService {
         const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
 
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];
@@ -129,6 +129,7 @@ class PesertaSeleksiService {
         }
     }
 
+    
     /**
      * Update PesertaSeleksi (AMAN)
      */
@@ -139,8 +140,8 @@ class PesertaSeleksiService {
 
             const payload = pickFields(data, PesertaSeleksiModel.columns);
 
-            const isValidPesertaSeleksi = await PesertaSeleksiModel.isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
-            const isValidJadwalSeleksi = await PesertaSeleksiModel.isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
+            const isValidPesertaSeleksi = await PesertaSeleksiModel._isValidPesertaSeleksi(conn, payload.peserta_id, seleksi_id)
+            const isValidJadwalSeleksi = await JadwalSeleksiModel._isValidJadwalSeleksi(conn, payload.jadwal_seleksi_id, seleksi_id)
 
             if(!isValidPesertaSeleksi){
                 throw new Error('Peserta tersebut tidak ditemukan dalam seleksi ini');

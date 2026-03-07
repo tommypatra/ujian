@@ -29,7 +29,7 @@ class PengawasUjianService {
         const query = dataWeb.query;
 
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];
@@ -128,20 +128,19 @@ class PengawasUjianService {
     /**
      * reset login
      */
-    static async resetLogin(peserta_seleksi_id, pengawas_id) {
+    static async resetLogin(peserta_seleksi_id, user_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
             //cari dulu apakah peserta ini ada atau tidak
-            const peserta = await PesertaSeleksiModel.findById(conn, peserta_seleksi_id, {
-                select: ['ps.id', 'ps.enter_foto']
-            });
+            console.log('cari peserta pengawas',peserta_seleksi_id, user_id);
+            const peserta = await PesertaSeleksiModel.cariPesertaPengawas(conn, peserta_seleksi_id, user_id);
             if (!peserta) {
                 throw new Error('Data tidak ditemukan');
             }
 
-            const affected = await PengawasSeleksiModel.resetLogin(conn, peserta_seleksi_id, pengawas_id);
+            const affected = await PengawasSeleksiModel.resetLogin(conn, peserta_seleksi_id, user_id);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }

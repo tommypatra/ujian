@@ -18,7 +18,7 @@ class ReschedullePanitiaService {
         const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
         
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];

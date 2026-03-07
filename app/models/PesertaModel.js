@@ -92,6 +92,26 @@ class PesertaModel extends BaseModel {
         return row || null;
     }
 
+    /**
+     * Cari peserta berdasarkan username + seleksi
+     * (lebih aman daripada username saja)
+     */
+    static async findUserPeserta(conn, user_name) {
+        const [[row]] = await conn.query(
+            `
+            SELECT ${this.selectFields},p.password
+            FROM ${this.tableName} ${this.tableAlias}
+            ${this.joinTables}
+            WHERE p.user_name = ?
+            LIMIT 1
+            `,
+            [user_name]
+        );
+
+        return row || null;
+    }
+
+
     static async findAll(conn, whereSql = '', params = [], limit = 10, offset = 0) {
         return super.findAll(conn, whereSql, params, limit, offset);
     }

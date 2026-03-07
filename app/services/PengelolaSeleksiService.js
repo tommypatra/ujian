@@ -16,7 +16,7 @@ class PengelolaSeleksiService {
         const seleksi_id = parseInt(dataWeb.params.seleksi_id) || null;
 
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];
@@ -26,10 +26,10 @@ class PengelolaSeleksiService {
         where.push(`s.id = ?`);
         params.push(parseInt(seleksi_id));
 
-
+        
         // search umum
         if (query.search) {
-            where.push(`(ps.jabatan LIKE ? OR u.name LIKE ? OR u.email LIKE ?)`);
+            where.push(`(u.name LIKE ? OR u.email LIKE ?)`);
             params.push(
                 `%${query.search}%`,
                 `%${query.search}%`,
@@ -37,6 +37,11 @@ class PengelolaSeleksiService {
             );
         }
 
+
+        if (query.jabatan) {
+            where.push(`(ps.jabatan = ?)`);
+            params.push(query.jabatan);
+        }
         
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
@@ -60,15 +65,12 @@ class PengelolaSeleksiService {
         }
     }
 
-    /**
-     * Ambil semua PengelolaSeleksi (paging + search)
-     */
-    static async getPengelolaSeleksi(dataWeb) {
+    static async getPengelolaBySeleksi(dataWeb) {
         const query = dataWeb.query;
-        const user = dataWeb.user;
+        const user_id = dataWeb.user.id;
 
         const page  = parseInt(query.page) || 1;
-        const limit = parseInt(query.limit) || 10;
+        const limit = query.limit != null ? parseInt(query.limit) : 10;
         const offset = (page - 1) * limit;
 
         const where = [];
@@ -76,8 +78,7 @@ class PengelolaSeleksiService {
 
         //untuk user id
         where.push(`u.id = ?`);
-        params.push(user.id);
-
+        params.push(parseInt(user_id));
 
         // search umum
         if (query.search) {
