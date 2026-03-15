@@ -53,6 +53,20 @@ class SeleksiService {
         }
     }
 
+
+    static async findSeleksiTerbuka() {
+        const conn = await db.getConnection();
+        try {
+            const Seleksi = await SeleksiModel.findSeleksiTerbuka(conn);
+            if (!Seleksi) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return Seleksi;
+        } finally {
+            conn.release();
+        }
+    }
+
     /**
      * Detail Seleksi
      */

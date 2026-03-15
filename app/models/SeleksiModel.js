@@ -103,6 +103,16 @@ class SeleksiModel extends BaseModel {
 
         return (row.last || 0) + 1;
     }
+
+    static async findSeleksiTerbuka(conn) {
+        const [rows] = await conn.query(
+            `SELECT *
+            FROM seleksis s
+            WHERE CURDATE() BETWEEN s.waktu_mulai AND s.waktu_selesai            
+            ORDER BY s.waktu_mulai ASC`
+        );
+        return rows;
+    }    
 }
 
 module.exports = SeleksiModel;

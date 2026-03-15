@@ -42,8 +42,12 @@ router.post('/login',  AuthController.login);
 //wajib user_name, password, seleksi_id dan login_sebagai (peserta atau pengawas)
 router.post('/login-seleksi',  AuthController.loginSeleksi);
 
+router.get('/seleksi-terbuka', SeleksiController.findSeleksiTerbuka);
+
 // ------------- endpoint global cek token --------------
 router.get('/cek-token', AuthMiddleware, AuthController.cekToken);
+
+
 
 // ------------- AWAL ROUTE ADMIN --------------
 //route users
@@ -224,10 +228,18 @@ router.delete('/soal/:seleksi_id/seleksi/:id', AuthMiddleware, PembuatSoalMiddle
 // ------------- AKHIR ROUTE PENGELOLA SELEKSI --------------
 
 // ------------- AWAL ROUTE PENGAWAS --------------
-router.get('/pengawas/:seleksi_id/peserta', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.index);
+router.get('/pengawas/:seleksi_id/daftar-jadwal', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.findJadwalPengawas);
+router.get('/pengawas/:jadwal_seleksi_id/detail', AuthMiddleware, PengawasUjianController.getPengawasDetail);
+
 router.get('/pengawas/:seleksi_id/detail', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.show);
 
-router.post('/pengawas/:seleksi_id/akhiri-ujian/:jadwal_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.akhiriSesiUjian);
+router.get('/pengawas/:seleksi_id/:jadwal_seleksi_id/peserta', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.index);
+
+router.post('/pengelola/:seleksi_id/akhiri-peserta-ujian/:jadwal_seleksi_id', AuthMiddleware, PengawasUjianController.akhiriPesertaSesiUjian);
+
+router.put('/pengawas/:seleksi_id/mulai-jadwal-ujian/:jadwal_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.mulaiJadwalUjian);
+router.put('/pengawas/:seleksi_id/selesai-jadwal-ujian/:jadwal_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.selesaiJadwalUjian);
+
 
 router.put('/pengawas/:seleksi_id/validasi-enter/:jadwal_seleksi_id/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.validasiPeserta);
 router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddleware, PengawasUjianMiddleware, PengawasUjianController.resetLogin);
@@ -236,6 +248,7 @@ router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddlewa
 // ------------- AWAL ROUTE PESERTA --------------
 
 //untuk lihat jadwal yang dimiliki
+router.get('/data-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.dataPeserta);
 router.get('/jadwal-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.cariJadwal);
 router.post('/enter-ujian/:jadwal_seleksi_id',
     AuthMiddleware, 
@@ -292,6 +305,9 @@ router.put('/peserta/:peserta_seleksi_id/reschedulle/:id',
     ReschedullePesertaController.update);
 router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.show);
 router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.destroy);
+
+
+router.put('/reset-peserta', AuthMiddleware, RequireRoleMiddleware('peserta'), AuthController.resetPeserta);
 
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
 router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);

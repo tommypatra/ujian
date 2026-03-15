@@ -27,6 +27,47 @@ class PengawasUjianController {
         }
     }
 
+    /**
+     * GET /findJadwalPengawas
+     * Ambil detail dari pengawas id yang login
+     */
+    static async findJadwalPengawas(req, res) {
+        try {
+            const data = await PengawasUjianService.findJadwalPengawas(req);
+            return res.status(200).json({
+                message: 'Data detail',
+                data
+            });
+        } catch (err) {
+            console.error('PengawasUjianController.findJadwalPengawas error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+    /**
+     * GET /findJadwalPengawas
+     * Ambil detail dari pengawas id yang login
+     */
+    static async getPengawasDetail(req, res) {
+        try {
+            const jadwal_seleksi_id = req.params.seleksi_id;
+    
+            const data = await PengawasUjianService.getPengawasDetail(jadwal_seleksi_id);
+            return res.status(200).json({
+                message: 'Data detail',
+                data
+            });
+        } catch (err) {
+            console.error('PengawasUjianController.findJadwalPengawas error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
 
     /**
      * GET /PengawasUjians
@@ -101,12 +142,35 @@ class PengawasUjianController {
         }
     }
 
-    static async akhiriSesiUjian(req, res) {
+    static async akhiriPesertaSesiUjian(req, res) {
         try {
             const pengawas_id = req.user.id;
             const { jadwal_seleksi_id } = req.params;
 
-            const result = await PengawasUjianService.akhiriSesiUjian(
+            const result = await PengawasUjianService.akhiriPesertaSesiUjian(
+                jadwal_seleksi_id
+            );
+
+            return res.status(200).json({
+                message: 'Sesi ujian berhasil diakhiri',
+                data: result
+            });
+
+        } catch (err) {
+            console.error('akhiriSesiUjian error:', err);
+            return res.status(400).json({
+                message: err.message,
+                data: null
+            });
+        }
+    }
+
+    static async mulaiJadwalUjian(req, res) {
+        try {
+            const pengawas_id = req.user.id;
+            const { jadwal_seleksi_id } = req.params;
+
+            const result = await PengawasUjianService.mulaiJadwalUjian(
                 pengawas_id,
                 jadwal_seleksi_id
             );
@@ -125,6 +189,29 @@ class PengawasUjianController {
         }
     }
 
+    static async selesaiJadwalUjian(req, res) {
+        try {
+            const pengawas_id = req.user.id;
+            const { jadwal_seleksi_id } = req.params;
+
+            const result = await PengawasUjianService.selesaiJadwalUjian(
+                pengawas_id,
+                jadwal_seleksi_id
+            );
+
+            return res.status(200).json({
+                message: 'Sesi ujian berhasil diakhiri',
+                data: result
+            });
+
+        } catch (err) {
+            console.error('akhiriSesiUjian error:', err);
+            return res.status(400).json({
+                message: err.message,
+                data: null
+            });
+        }
+    }
     
 }
 

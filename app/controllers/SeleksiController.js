@@ -27,6 +27,27 @@ class SeleksiController {
         }
     }
 
+
+    /**
+     * GET findSeleksiTerbuka
+     */
+    static async findSeleksiTerbuka(req, res) {
+        try {
+            const { id } = req.params;
+            const data_exec = await SeleksiService.findSeleksiTerbuka();
+            return res.status(200).json({
+                message: 'Data detail',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('SeleksiController.show error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
     /**
      * GET /Seleksis/:id
      * Ambil detail

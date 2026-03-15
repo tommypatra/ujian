@@ -72,6 +72,29 @@ class AuthController {
     }
 
 
+    /**
+     * PUT /Domains/:id
+     * Update data
+     */
+    static async resetPeserta(req, res) {
+        try {
+            const user_id = req.user.id; 
+            // console.log('user id ',user_id);
+            const data_exec = await AuthService.resetPeserta(user_id);
+            return res.status(200).json({
+                message: 'logout reset peserta berhasil',
+                data: 1
+            });
+        } catch (err) {
+            console.error('DomainController.update error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+
 }
 
 module.exports = AuthController;

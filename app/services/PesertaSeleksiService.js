@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
+const MediaPathModel = require('../models/MediaPathModel');
+
 
 const { pickFields } = require('../helpers/payloadHelper');
 
@@ -73,6 +75,20 @@ class PesertaSeleksiService {
         const conn = await db.getConnection();
         try {
             const row = await PesertaSeleksiModel.findById(conn, id);
+            if (!row) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return row;
+        } finally {
+            conn.release();
+        }
+    }
+
+
+    static async dataPeserta(peserta_id) {
+        const conn = await db.getConnection();
+        try {
+            const row = await PesertaSeleksiModel.dataPeserta(conn, peserta_id);
             if (!row) {
                 throw new Error('Data tidak ditemukan');
             }
@@ -213,7 +229,13 @@ class PesertaSeleksiService {
             }
             await conn.beginTransaction();
 
-            const affected = await PesertaSeleksiModel.enterUjian(conn, peserta_id, jadwal_seleksi_id, data);
+            const media_path_id = await MediaPathModel.insert(conn, {
+                judul:'Foto Enter Ujian',
+                path: uploadedPath,
+                jenis:'gambar'
+            });
+
+            const affected = await PesertaSeleksiModel.enterUjian(conn, peserta_id, jadwal_seleksi_id, media_path_id);
             if (affected === 0) {
                 throw new Error('proses enter ujian gagal dilakukan');
             }

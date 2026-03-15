@@ -13,6 +13,7 @@ class PesertaModel extends BaseModel {
         p.id,
         p.seleksi_id,
         p.jenis_kelamin,
+        p.device_id,
         p.hp,
         p.email,
         'peserta' as role,
@@ -148,23 +149,36 @@ class PesertaModel extends BaseModel {
         );
     }
 
-    static async updateIsLogin(conn, peserta_id) {
+    static async updateIsLogin(conn, peserta_id, token_login, device_id) {
+        // console.log('updateIsLogin', peserta_id, token_login);
         const [result] = await conn.query(
             `
             UPDATE pesertas
-            SET is_login = 1,
+            SET is_login = 1, token_login = ?, device_id = ?,
                 login_at = NOW(),
                 updated_at = NOW()
             WHERE id = ?
-            AND is_login = 0
+            AND (is_login = 0 OR is_login IS NULL)
             `,
-            [peserta_id]
+            [token_login, device_id, peserta_id]
         );
 
         if (result.affectedRows === 0) {
             throw new Error('Akun sedang aktif. Reset akun anda terlebih dahulu pada pengawas ujian');
         }
 
+        return result.affectedRows;
+    }
+
+    static async resetPeserta(conn, id) {
+        const [result] = await conn.query(
+            `
+            UPDATE pesertas
+            SET is_login = 0, token_login = null
+            WHERE id = ?
+            `,
+            [id]
+        );
         return result.affectedRows;
     }
 

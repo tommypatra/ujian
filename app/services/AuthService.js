@@ -61,19 +61,45 @@ class AuthService {
     }
 
     /**
+     * Update peserta
+     */
+    static async resetPeserta(id) {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+            const affected = await PesertaModel.resetPeserta(conn, id);
+            await conn.commit();
+            return affected;
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+
+    /**
     * Login Seleksi
     */
     static async loginSeleksi(data) {
         const conn = await db.getConnection();
         try {
-            const { user_name, password, login_sebagai, seleksi_id } = data;
+            const { user_name, password, device_id, login_sebagai, seleksi_id } = data;
 
             let akun = null;
             if(login_sebagai==='peserta'){
                 akun = await PesertaModel.findByUserName(conn, user_name, seleksi_id);
-                if(akun && akun.is_login==1){
-                    throw new Error('Reset login akun anda terlebih dahulu pada pengawas ujian');
-                }
+                // jika sudah login
+                // if (akun.is_login == 1) {
+                    // jika device berbeda
+                    // console.log('cek device id', akun.device_id, device_id);
+                    if (akun.device_id && akun.device_id !== device_id) {
+                        throw new Error('Reset login akun anda terlebih dahulu pada pengawas ujian');
+                    }
+                    // jika device sama login tetap diizinkan
+                // }
             }else if(login_sebagai==='pengawas'){
                 akun = await PengawasSeleksiModel.findByUserName(conn, user_name, seleksi_id);
             }else{
@@ -89,14 +115,10 @@ class AuthService {
                 throw new Error('Password salah');
             }
 
-            if(login_sebagai==='peserta'){
-                PesertaModel.updateIsLogin(conn, akun.id);
-            }
-
             const user = {
                     id: akun.id,
                     user_name: akun.user_name,
-                    nama: akun.nama,
+                    name: akun.nama,
                     email: akun.email,
                     roles:[akun.role]
                 };
@@ -108,6 +130,11 @@ class AuthService {
                     expiresIn: process.env.JWT_EXPIRES || '6d'
                 }
             );
+
+            if(login_sebagai==='peserta'){
+                await PesertaModel.updateIsLogin(conn, akun.id, token, device_id);
+            }
+
 
             return {
                 user,

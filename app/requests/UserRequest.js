@@ -41,6 +41,7 @@ class UserRequest {
         return Joi.object({
             user_name: Joi.string().min(3).required(),
             password: Joi.string().min(3).required(),
+            device_id: Joi.string().min(3).required(),
             login_sebagai: Joi.string().valid('peserta', 'pengawas').required(),
             seleksi_id: Joi.number().integer().positive().required()
         }).validate(data, {

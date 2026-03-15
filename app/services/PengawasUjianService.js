@@ -15,15 +15,38 @@ class PengawasUjianService {
     /**
      * Ambil detail pengawas
      */
-    static async getPengawasDetail(pengawas_id){
-        const pengawas = await this.findById(pengawas_id);
-        if (!pengawas) {
-            const e = new Error('maaf data pengawas atau peserta jadwal tidak ditemukan');
-            e.statusCode = 404;
-            throw e;
+    static async getPengawasDetail(jadwal_seleksi_id){
+        const conn = await db.getConnection();
+        try {
+            const exec_query = await PengawasSeleksiModel.detailPengawas(conn, jadwal_seleksi_id);
+            if (!exec_query) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return exec_query;
+        } finally {
+            conn.release();
         }
-        return pengawas;
     }
+
+    static async findJadwalPengawas(req) {
+        const user_id = req.user.id;
+        const seleksi_id = req.params.seleksi_id;
+
+        const conn = await db.getConnection();
+        try {
+            const data = await PengawasSeleksiModel.findJadwalPengawas(conn, seleksi_id, user_id);
+
+            if (!data || data.length === 0) {
+                throw new Error('Data tidak ditemukan');
+            }
+
+            return data;
+
+        } finally {
+            conn.release();
+        }
+    }
+
 
     static async getAll(dataWeb) {
         const query = dataWeb.query;
@@ -35,9 +58,13 @@ class PengawasUjianService {
         const where = [];
         const params = [];
 
-        const pengawas = await this.getPengawasDetail(dataWeb.user.id);
-        const jadwal_seleksi_id = pengawas.jadwal_seleksi_id;
+        const jadwal_seleksi_id = parseInt(dataWeb.params.jadwal_seleksi_id) || null;
 
+        const pengawas = await this.getPengawasDetail(jadwal_seleksi_id);
+        if(!pengawas){
+            throw new Error('Data tidak ditemukan');
+        }
+            
         if (query.search) {
             where.push(`
                 (
@@ -78,6 +105,7 @@ class PengawasUjianService {
                 'ps.jadwal_seleksi_id',
                 'ps.is_enter',
                 'ps.enter_foto',
+                'ps.media_path_id',
                 'ps.enter_at',
                 'ps.is_done',
                 'ps.is_allow',
@@ -109,6 +137,8 @@ class PengawasUjianService {
         }
     }
 
+
+
     /**
      * Detail PengawasUjian
      */
@@ -125,43 +155,69 @@ class PengawasUjianService {
         }
     }
 
-    /**
-     * reset login
-     */
     static async resetLogin(peserta_seleksi_id, user_id) {
+
         const conn = await db.getConnection();
+
         try {
+
             await conn.beginTransaction();
 
-            //cari dulu apakah peserta ini ada atau tidak
-            console.log('cari peserta pengawas',peserta_seleksi_id, user_id);
-            const peserta = await PesertaSeleksiModel.cariPesertaPengawas(conn, peserta_seleksi_id, user_id);
+            console.log('cari peserta pengawas', peserta_seleksi_id, user_id);
+
+            const peserta = await PesertaSeleksiModel.cariPesertaPengawas(
+                conn,
+                peserta_seleksi_id,
+                user_id
+            );
+
             if (!peserta) {
                 throw new Error('Data tidak ditemukan');
             }
 
-            const affected = await PengawasSeleksiModel.resetLogin(conn, peserta_seleksi_id, user_id);
+            const affected = await PengawasSeleksiModel.resetLogin(
+                conn,
+                peserta_seleksi_id,
+                user_id
+            );
+
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
+
             await conn.commit();
 
+            // ambil data terbaru
+            const data = await PesertaSeleksiModel.findById(
+                conn,
+                peserta_seleksi_id
+            );
+
+            // hapus foto setelah commit
             if (peserta.enter_foto) {
+
                 const filePath = path.join(process.cwd(), peserta.enter_foto);
+
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath);
                 }
+
             }
 
-            return await PesertaSeleksiModel.findById(conn, peserta_seleksi_id);
+            return data;
+
         } catch (err) {
+
             await conn.rollback();
             throw err;
-        } finally {
-            conn.release();
-        }
-    }
 
+        } finally {
+
+            conn.release();
+
+        }
+
+    }
     /**
      * Validasi peserta
      */
@@ -169,8 +225,8 @@ class PengawasUjianService {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
-
-            const affected = await PengawasSeleksiModel.validasiPeserta(conn, peserta_seleksi_id, jadwal_seleksi_id, pengawas_seleksi_id, data);
+            // console.log('data',data)
+            const affected = await PengawasSeleksiModel.validasiPeserta(conn, peserta_seleksi_id, pengawas_seleksi_id, data);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
@@ -249,12 +305,12 @@ class PengawasUjianService {
         }
     }
 
-    static async akhiriSesiUjian(pengawas_id, jadwal_seleksi_id) {
+    static async akhiriPesertaSesiUjian(jadwal_seleksi_id) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const result = await UjianModel.akhiriSesiUjian(
+            const result = await UjianModel.akhiriPesertaSesiUjian(
                 conn,
                 jadwal_seleksi_id
             );
@@ -273,6 +329,56 @@ class PengawasUjianService {
         }
     }
 
+    static async mulaiJadwalUjian(pengawas_id, jadwal_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            const result = await UjianModel.mulaiJadwalUjian(
+                conn,
+                jadwal_seleksi_id,
+                pengawas_id
+            );
+
+            await conn.commit();
+
+            return {
+                total_berakhir: result.affectedRows
+            };
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+
+    static async selesaiJadwalUjian(pengawas_id, jadwal_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            const result = await UjianModel.selesaiJadwalUjian(
+                conn,
+                jadwal_seleksi_id,
+                pengawas_id            
+            );
+
+            await conn.commit();
+
+            return {
+                total_berakhir: result.affectedRows
+            };
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
 
 }
 

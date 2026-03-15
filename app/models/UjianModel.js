@@ -299,20 +299,125 @@ class UjianModel extends BaseModel {
         return result.affectedRows > 0;
     }
 
-
-    static async akhiriSesiUjian(conn, jadwal_seleksi_id) {
+    static async mulaiJadwalUjian(conn, jadwal_seleksi_id, pengawas_id) {
         const query = `
-            UPDATE peserta_seleksis
+            UPDATE jadwal_seleksis js
+            LEFT jOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = js.id
             SET 
-                is_done = 1,
+                js.is_mulai = 1,
+                js.mulai_at = NOW(),
                 updated_at = NOW()
-            WHERE jadwal_seleksi_id = ?
-                AND is_allow = 1
-                AND is_done = 0
+            WHERE js.id = ? AND ss.user_id = ? AND (js.is_mulai = 0 OR js.is_mulai IS NULL)`;
+
+        const [result] = await conn.query(query, [jadwal_seleksi_id, pengawas_id]);
+        return result;
+    }
+
+    static async selesaiJadwalUjian(conn, jadwal_seleksi_id, pengawas_id) {
+        const query = `
+            UPDATE jadwal_seleksis js
+            LEFT jOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = js.id
+            SET 
+                js.is_selesai = 1,
+                js.selesai_at = NOW(),
+                updated_at = NOW()
+            WHERE js.id = ? js.is_mulai = 1 AND ss.user_id = ?`;
+        const [result] = await conn.query(query, [jadwal_seleksi_id, pengawas_id]);
+        return result;
+    }
+
+    static async akhiriPesertaSesiUjian(conn, jadwal_seleksi_id) {
+        // 1. tutup sesi ujian
+        const queryJadwal = `
+            UPDATE jadwal_seleksis js
+            SET 
+                js.is_selesai = 1,
+                js.selesai_at = NOW(),
+                js.updated_at = NOW()
+            WHERE js.id = ?
+            AND js.is_mulai = 1
+            AND (js.is_selesai = 0 OR js.is_selesai IS NULL)
         `;
 
-        const [result] = await conn.query(query, [jadwal_seleksi_id]);
+        const [jadwalResult] = await conn.query(queryJadwal, [jadwal_seleksi_id]);
+
+        // jika jadwal tidak berubah, hentikan
+        if (jadwalResult.affectedRows === 0) {
+            return jadwalResult;
+        }
+
+        // 2. set peserta selesai
+        const queryPeserta = `
+            UPDATE peserta_seleksis ps
+            SET 
+                ps.is_done = 1,
+                ps.updated_at = NOW()
+            WHERE ps.jadwal_seleksi_id = ?
+            AND ps.is_enter = 1
+            AND ps.is_allow = 1
+            AND ps.is_done = 0
+        `;
+
+        await conn.query(queryPeserta, [jadwal_seleksi_id]);
+        return jadwalResult;
+    }
+
+    static async mulaiJadwalUjian(conn, jadwal_seleksi_id, pengawas_id) {
+        const query = `
+            UPDATE jadwal_seleksis js
+            INNER JOIN pengawas_seleksis ss 
+                ON ss.jadwal_seleksi_id = js.id
+            SET 
+                js.is_mulai = 1,
+                js.mulai_at = NOW(),
+                js.updated_at = NOW()
+            WHERE js.id = ?
+            AND ss.user_id = ?
+            AND (js.is_mulai = 0 OR js.is_mulai IS NULL)
+        `;
+
+        const [result] = await conn.query(query, [jadwal_seleksi_id, pengawas_id]);
         return result;
+    }
+
+    static async selesaiJadwalUjian(conn, jadwal_seleksi_id, pengawas_id) {
+
+        // 1. tutup sesi ujian
+        const queryJadwal = `
+            UPDATE jadwal_seleksis js
+            INNER JOIN pengawas_seleksis ss 
+                ON ss.jadwal_seleksi_id = js.id
+            SET 
+                js.is_selesai = 1,
+                js.selesai_at = NOW(),
+                js.updated_at = NOW()
+            WHERE js.id = ?
+            AND js.is_mulai = 1
+            AND ss.user_id = ?
+            AND (js.is_selesai = 0 OR js.is_selesai IS NULL)
+        `;
+
+        const [jadwalResult] = await conn.query(queryJadwal, [jadwal_seleksi_id, pengawas_id]);
+
+        // jika jadwal tidak berubah, hentikan
+        if (jadwalResult.affectedRows === 0) {
+            return jadwalResult;
+        }
+
+        // 2. set peserta selesai
+        const queryPeserta = `
+            UPDATE peserta_seleksis ps
+            SET 
+                ps.is_done = 1,
+                ps.updated_at = NOW()
+            WHERE ps.jadwal_seleksi_id = ?
+            AND ps.is_enter = 1
+            AND ps.is_allow = 1
+            AND ps.is_done = 0
+        `;
+
+        await conn.query(queryPeserta, [jadwal_seleksi_id]);
+        return jadwalResult;
     }
 
 

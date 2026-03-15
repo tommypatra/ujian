@@ -17,6 +17,7 @@ class PesertaSeleksiModel extends BaseModel {
         ps.jadwal_seleksi_id,
         ps.is_enter,
         ps.enter_foto,
+        ps.media_path_id,
         ps.enter_at,
         ps.is_done,
         ps.is_allow,
@@ -41,6 +42,8 @@ class PesertaSeleksiModel extends BaseModel {
         s.keterangan,
         js.sesi,
         js.tanggal,
+        js.is_selesai,
+        js.is_mulai,
         js.lokasi_ujian,
         js.jam_mulai,
         js.jam_selesai
@@ -99,6 +102,20 @@ class PesertaSeleksiModel extends BaseModel {
     }
 
 
+    static async dataPeserta(conn, peserta_id) {
+        const [[row]] = await conn.query(
+            `
+            SELECT id,email,foto,hp,nama,nomor_peserta,jenis_kelamin,tanggal_lahir,user_name,seleksi_id
+            FROM pesertas p
+            WHERE p.id = ?
+            LIMIT 1
+            `,
+            [peserta_id]
+        );
+
+        return row || null;
+    }
+
     /**
      * cari pengawas
      */
@@ -129,7 +146,7 @@ class PesertaSeleksiModel extends BaseModel {
     }
 
     static async findAllByPesertaId(conn, peserta_id, options = {}) {
-        return super.findByKey(conn, 'p.id', peserta_id, options);
+        return super.findAllByKey(conn, 'p.id', [peserta_id], options);
     }
 
     // static async findAllByPesertaId(conn, peserta_id, options = {}) {
@@ -198,26 +215,29 @@ class PesertaSeleksiModel extends BaseModel {
     }
 
     // app/models/PesertaSeleksiModel.js
-    static async enterUjian(conn, peserta_id, jadwal_seleksi_id, data) {
+    static async enterUjian(conn, peserta_id, jadwal_seleksi_id, media_path_id) {
         try {
+
             const [result] = await conn.query(
                 `
                 UPDATE peserta_seleksis ps
                 INNER JOIN pesertas p ON p.id = ps.peserta_id
+                INNER JOIN jadwal_seleksis ss ON ss.id = ps.jadwal_seleksi_id
                 SET 
                     ps.is_enter = 1,
-                    ps.enter_foto = ?,
+                    ps.media_path_id = ?,
                     ps.enter_at = NOW(),
                     ps.is_allow = 0,
                     ps.allow_at = NULL,
                     ps.updated_at = NOW()
                 WHERE ps.peserta_id = ?
+                    AND ss.is_mulai = 1 AND (ss.is_selesai IS NULL OR ss.is_selesai = 0)
                     AND ps.jadwal_seleksi_id = ?
                     AND ps.is_done = 0
                     AND ps.is_enter = 0
                     AND p.is_login = 1
                 `,
-                [data.enter_foto, peserta_id, jadwal_seleksi_id]
+                [media_path_id, peserta_id, jadwal_seleksi_id]
             );
             return result.affectedRows;
         } catch (err) {

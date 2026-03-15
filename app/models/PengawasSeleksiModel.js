@@ -26,6 +26,9 @@ class PengawasSeleksiModel extends BaseModel {
         js.lokasi_ujian,
         js.jam_mulai,
         js.jam_selesai,
+        js.is_mulai,
+        js.is_selesai,
+
         js.status,
         s.nama AS seleksi_nama,
         s.prefix_app,
@@ -91,6 +94,28 @@ class PengawasSeleksiModel extends BaseModel {
         return super.countAll(conn, whereSql, params);
     }
 
+    
+    static async detailPengawas(conn, jadwal_seleksi_id) {
+        // console.log(pengawas_user_id, jadwal_seleksi_id);
+        const [[row]] = await conn.query(
+            `
+            SELECT ps.id as pengawas_seleksi_id, 
+                    js.is_selesai,
+                    js.is_mulai,
+                    js.seleksi_id, js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, js.status,
+                    u.name as nama, u.email, u.id as user_id                    
+            FROM pengawas_seleksis ps
+            LEFT JOIN jadwal_seleksis js ON js.id=ps.jadwal_seleksi_id
+            LEFT JOIN users u ON u.id = ps.user_id
+            WHERE ps.jadwal_seleksi_id = ?
+            LIMIT 1
+            `,
+            [jadwal_seleksi_id]
+        );
+
+        return row || null;
+    }
+
     /**
      * Cari peserta berdasarkan username + seleksi
      * (lebih aman daripada username saja)
@@ -142,22 +167,20 @@ class PengawasSeleksiModel extends BaseModel {
 
     
     // UPDATE validasiPeserta (ANTI IDOR)
-    static async validasiPeserta(conn, peserta_seleksi_id, jadwal_seleksi_id, pengawas_id, data) {
+    static async validasiPeserta(conn, peserta_seleksi_id, pengawas_id, data) {
         try {
-            // console.log(peserta_seleksi_id, pengawas_id, data);
             const query = `
                 UPDATE peserta_seleksis ps
-                INNER JOIN pesertas p ON p.id = ps.peserta_id
-                INNER JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
+                LEFT JOIN pesertas p ON p.id = ps.peserta_id
+                LEFT JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
                 SET ps.is_allow=?, ps.allow_at=NOW(), ps.updated_at=NOW()
                 WHERE 
                     ps.id = ? AND 
-                    ps.jadwal_seleksi_id = ? AND 
-                    ss.id = ? AND 
-                    p.is_login = 1 AND ps.is_enter = 1 AND ps.is_done = 0
+                    ss.user_id = ? AND 
+                    p.is_login = 1 AND ps.is_enter = 1
             `;
 
-            const params = [data.is_allow, peserta_seleksi_id, jadwal_seleksi_id, pengawas_id];
+            const params = [data.is_allow, peserta_seleksi_id, pengawas_id];
 
             // console.log('[SQL]', query);
             // console.log('[PARAMS]', params);
@@ -170,7 +193,13 @@ class PengawasSeleksiModel extends BaseModel {
         }
     }
 
+
     // UPDATE resetLogin (ANTI IDOR)
+                    // p.device_id = NULL,
+                    // ps.is_enter = 0,
+                    // ps.enter_foto = NULL,
+                    // ps.is_allow = 0,
+
     static async resetLogin(conn, peserta_seleksi_id, user_id) {
         try {
             const [result] = await conn.query(
@@ -180,13 +209,14 @@ class PengawasSeleksiModel extends BaseModel {
                 INNER JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
                 SET 
                     p.is_login = 0,
-                    p.login_at = NULL,
-                    p.updated_at = NOW(),
+
+                    p.device_id = NULL,
                     ps.is_enter = 0,
-                    ps.enter_at = NULL,
                     ps.enter_foto = NULL,
                     ps.is_allow = 0,
-                    ps.allow_at = NULL,
+
+                    p.token_login = NULL,
+                    p.updated_at = NOW(),
                     ps.updated_at = NOW()
                 WHERE ps.id = ? AND ss.user_id = ?
                 `,
@@ -247,6 +277,27 @@ class PengawasSeleksiModel extends BaseModel {
         }    
     }
 
+    static async                                                                                                                                                                                                                findJadwalPengawas(conn, seleksi_id, user_id) {
+        const [rows] = await conn.query(
+            `SELECT 
+                js.id as jadwal_seleksi_id, 
+                js.sesi, js.tanggal, js.lokasi_ujian, js.jam_mulai, js.jam_selesai, js.status,
+                ps.id as pengawas_seleksi_id,
+                js.is_mulai,
+                js.is_selesai,
+                js.seleksi_id,
+                COUNT(pes.id) as jumlah_peserta
+            FROM jadwal_seleksis js
+            INNER JOIN pengawas_seleksis ps ON ps.jadwal_seleksi_id = js.id
+            LEFT JOIN peserta_seleksis pes ON pes.jadwal_seleksi_id = js.id            
+            WHERE 
+                js.seleksi_id = ? AND ps.user_id = ?
+            GROUP BY js.id            
+            ORDER BY js.sesi ASC, js.tanggal ASC`,
+            [seleksi_id, user_id]
+        );
+        return rows;
+    }
 
     static async findPengawasBySeleksi(conn, seleksi_id) {
         const [rows] = await conn.query(

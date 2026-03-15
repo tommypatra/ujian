@@ -2,6 +2,8 @@
 const PesertaSeleksiService = require('../services/PesertaSeleksiService');
 const PesertaSeleksiRequest = require('../requests/PesertaSeleksiRequest');
 const PesertaUjianRequest = require('../requests/PesertaUjianRequest');
+const fs = require('fs');
+const path = require('path');
 
 const isDev = process.env.APP_ENV === 'development';
 
@@ -10,6 +12,24 @@ class PesertaSeleksiController {
      * GET /PesertaSeleksis
      * Ambil jadwal peserta tertentu
      */
+
+
+    static async dataPeserta(req, res) {
+        try {
+            const peserta_id = parseInt(req.user.id) || null;
+            const data_exec = await PesertaSeleksiService.dataPeserta(peserta_id);
+            return res.status(200).json({
+                message: 'Data detail',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('PesertaSeleksiController.dataPeserta error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
 
     static async cariJadwal(req, res) {
         try {
@@ -182,10 +202,9 @@ class PesertaSeleksiController {
             });
         } catch (err) {
             console.error('PesertaSeleksiController.enterUjian error:', err);
-            if (absolutePath) {
-                await fs.unlink(absolutePath).catch(() => {});
-            }                
-
+            if (fs.existsSync(absolutePath)) {
+                fs.unlinkSync(absolutePath);
+            }
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
