@@ -106,6 +106,58 @@ class UjianModel extends BaseModel {
     //     };
     // }
 
+
+    static async statusPeserta(conn, peserta_id, peserta_seleksi_id){
+        const [[row]] = await conn.query(
+            `
+            SELECT p.is_login, ps.is_enter, ps.is_allow, ps.is_done
+            FROM pesertas p
+            INNER JOIN peserta_seleksis ps ON p.id = ps.peserta_id
+            WHERE p.id = ? AND ps.id = ?
+            LIMIT 1
+            `,
+            [peserta_id, peserta_seleksi_id]
+        );
+
+        return row || null;
+
+    }
+
+    static async statusJawaban(conn, peserta_id, peserta_seleksi_id){
+        const [rows] = await conn.query(
+            `
+            SELECT IF(jp.id IS NOT NULL,1,0) AS status
+            FROM maping_soal_pesertas msp
+            INNER JOIN peserta_seleksis ps ON ps.id = msp.peserta_seleksi_id
+            LEFT JOIN jawaban_pesertas jp 
+                ON jp.bank_soal_id = msp.bank_soal_id
+            WHERE ps.peserta_id = ? AND msp.peserta_seleksi_id = ?
+            ORDER BY msp.id ASC
+            `,
+            [peserta_id, peserta_seleksi_id]
+        );
+
+        return rows.map(r => r.status) || [];
+
+    }
+
+    static async countSoalPeserta(conn, peserta_id, peserta_seleksi_id) {
+
+        const [rows] = await conn.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM maping_soal_pesertas msp
+            JOIN peserta_seleksis ps 
+                ON ps.id = msp.peserta_seleksi_id
+            WHERE ps.peserta_id = ?
+            AND msp.peserta_seleksi_id = ?
+            `,
+            [peserta_id, peserta_seleksi_id]
+        );
+
+        return rows[0].total;
+    }
+
     /**
      * Ambil soal peserta berdasarkan range + urutan pilihan terkunci
      */

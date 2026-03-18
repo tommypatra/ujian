@@ -22,12 +22,51 @@ class UjianService {
                 limit
             );
 
+            const total = await UjianModel.countSoalPeserta(
+                conn,
+                peserta_id,
+                jadwal_seleksi_id
+            );            
+
             return {
                 start,
                 limit,
-                count: data.length,
+                count: total,
                 data
             };
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Ambil status jawaban peserta untuk semua soal yang sudah dijawab
+     */
+    static async statusJawaban(peserta_id, peserta_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            const data = await UjianModel.statusJawaban(
+                conn,
+                peserta_id, 
+                peserta_seleksi_id,
+            );
+
+            return data;
+        } finally {
+            conn.release();
+        }
+    }
+
+    static async statusPeserta(peserta_id, peserta_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            const data = await UjianModel.statusPeserta(
+                conn,
+                peserta_id, 
+                peserta_seleksi_id,
+            );
+
+            return data;
         } finally {
             conn.release();
         }
@@ -77,6 +116,68 @@ class UjianService {
             const simpanJawaban = await UjianModel.simpanJawaban(conn, payload);
             await conn.commit();
             return simpanJawaban;
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+    static async simpanJawabanBulk(peserta_id, peserta_seleksi_id, dataList) {
+        const conn = await db.getConnection();
+
+        try {
+            await conn.beginTransaction();
+
+            for (const data of dataList) {
+
+                const payload = {
+                    bank_soal_id: data.bank_soal_id,
+                    bank_soal_pilihan_id: data.pilihan_id ?? null,
+                    jawaban_text: data.jawaban_text ?? null,
+                    peserta_id: peserta_id,
+                    peserta_seleksi_id: peserta_seleksi_id
+                };
+
+                //VALIDASI SOAL MILIK PESERTA (WAJIB)
+                const [validSoal] = await conn.query(`
+                    SELECT 1
+                    FROM maping_soal_pesertas
+                    WHERE peserta_seleksi_id = ?
+                    AND bank_soal_id = ?
+                    LIMIT 1
+                `, [peserta_seleksi_id, payload.bank_soal_id]);
+
+                if (!validSoal.length) {
+                    throw new Error(`Soal tidak valid untuk peserta`);
+                }
+
+                //VALIDASI PILIHAN
+                if (payload.bank_soal_pilihan_id) {
+                    const valid = await UjianModel.cekPilihanSoal(
+                        conn,
+                        payload.bank_soal_id,
+                        payload.bank_soal_pilihan_id
+                    );
+
+                    if (!valid) {
+                        throw new Error(
+                            `Pilihan tidak valid untuk soal ${payload.bank_soal_id}`
+                        );
+                    }
+                }
+
+                //SIMPAN
+                await UjianModel.simpanJawaban(conn, payload);
+            }
+            await conn.commit();
+
+            return {
+                success: true,
+                total: dataList.length
+            };
 
         } catch (err) {
             await conn.rollback();

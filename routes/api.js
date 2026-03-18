@@ -308,7 +308,10 @@ router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, Pe
 
 
 router.put('/reset-peserta', AuthMiddleware, RequireRoleMiddleware('peserta'), AuthController.resetPeserta);
+router.get('/status-peserta/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusPeserta);
 
+router.post('/sync-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.syncJawaban);
+router.get('/status-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusJawaban);
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
 router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
 router.post('/ujian/:peserta_seleksi_id/selesai-ujian', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.selesaiUjian);
