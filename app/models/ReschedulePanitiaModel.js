@@ -2,20 +2,26 @@ const BaseModel = require('./BaseModel');
 const { buildUpdate } = require('../helpers/sqlHelper');
 const { mapDbError } = require('../helpers/dbErrorHelper');
 
-class ReschedullePanitiaModel extends BaseModel {
+class ReschedulePanitiaModel extends BaseModel {
 
     /* =======================
      * TABLE CONFIG
      * ======================= */
-    static tableName  = 'reschedulles';
+    static tableName  = 'reschedules';
     static tableAlias = 'rs';
 
     static selectFields = `
         rs.id,
+        rs.id as reschedule_id,
         rs.peserta_seleksi_id,
         rs.alasan,
-        rs.dokumen_pendukung,
+        rs.media_path_id,
+        mp.uuid,
+        rs.is_kirim,
         rs.status,
+        rs.catatan_verifikasi,        
+        rs.verified_user_id,
+        rs.verified_at,
         rs.created_at,
         rs.updated_at,
         ps.peserta_id,
@@ -23,12 +29,24 @@ class ReschedullePanitiaModel extends BaseModel {
         p.email,
         p.nomor_peserta,
         p.hp,
-        p.seleksi_id
+        p.seleksi_id,
+        p.jenis_kelamin,
+        p.tanggal_lahir,
+        js.sesi,
+        js.tanggal,
+        js.is_selesai,
+        js.is_mulai,
+        js.lokasi_ujian,
+        js.jam_mulai,
+        js.jam_selesai
+
     `;
 
     static joinTables = `
         INNER JOIN peserta_seleksis ps ON ps.id = rs.peserta_seleksi_id
+        INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
         INNER JOIN pesertas p ON p.id = ps.peserta_id
+        INNER JOIN media_paths mp ON mp.id = rs.media_path_id   
     `;
 
     static countColumns = 'COUNT(rs.id)';
@@ -41,6 +59,7 @@ class ReschedullePanitiaModel extends BaseModel {
     static columns = [
         'status',
         'alasan',
+        'catatan_verifikasi',
     ];
 
     static allowedFields = [
@@ -68,10 +87,10 @@ class ReschedullePanitiaModel extends BaseModel {
      * ======================= */
 
     /**
-     * UPDATE reschedulle (peserta)
+     * UPDATE reschedule (peserta)
      * TIDAK boleh update jika sudah final
      */
-    static async update(conn, id, peserta_seleksi_id, data) {
+    static async update(conn, id, data) {
         const update = buildUpdate(data, this.columns, {
             alias: 'rs'
         });
@@ -81,13 +100,12 @@ class ReschedullePanitiaModel extends BaseModel {
         try {
             const [result] = await conn.query(
                 `
-                UPDATE reschedulle_seleksis rs
+                UPDATE reschedules rs
                 INNER JOIN peserta_seleksis ps ON ps.id = rs.peserta_seleksi_id
                 SET ${update.setClause}
                 WHERE rs.id = ?
-                  AND ps.id = ?
                 `,
-                [...update.values, id, peserta_seleksi_id]
+                [...update.values, id]
             );
 
             return result.affectedRows;
@@ -98,4 +116,4 @@ class ReschedullePanitiaModel extends BaseModel {
 
 }
 
-module.exports = ReschedullePanitiaModel;
+module.exports = ReschedulePanitiaModel;

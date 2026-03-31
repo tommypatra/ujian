@@ -5,6 +5,7 @@ const path = require('path');
 const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 const MediaPathModel = require('../models/MediaPathModel');
+const MediaPathService = require('../services/MediaPathService');
 
 
 const { pickFields } = require('../helpers/payloadHelper');
@@ -45,6 +46,11 @@ class PesertaSeleksiService {
         if (query.sesi) {
             where.push(`js.sesi = ?`);
             params.push(query.sesi);
+        }
+
+        if (query.jadwal_seleksi_id) {
+            where.push(`js.id = ?`);
+            params.push(query.jadwal_seleksi_id);
         }
 
         where.push(`p.seleksi_id = ?`);
@@ -112,6 +118,20 @@ class PesertaSeleksiService {
     }
     
 
+    static async validasiPesertaSeleksi(peserta_id,peserta_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            const isValidPesertaSeleksi = await PesertaSeleksiModel._validasiPesertaSeleksi(conn, peserta_id, peserta_seleksi_id);
+            if(!isValidPesertaSeleksi){
+                throw new Error('Anda tidak memiliki akses ke seleksi ini');
+            }
+            return isValidPesertaSeleksi;
+        } finally {
+            conn.release();
+        }
+    }
+
+
     /**
      * Simpan PesertaSeleksi baru
      */
@@ -145,7 +165,74 @@ class PesertaSeleksiService {
         }
     }
 
-    
+    /**
+     * Simpan PesertaSeleksi bulk baru
+     */
+
+    static async storeBulk(data, seleksi_id) {
+        const conn = await db.getConnection();
+
+        try {
+            await conn.beginTransaction();
+
+            const { peserta_ids, jadwal_seleksi_id } = data;
+        
+            // =====================
+            // VALIDASI JADWAL
+            // =====================
+            const isValidJadwal = await JadwalSeleksiModel._isValidJadwalSeleksi(
+                conn,
+                jadwal_seleksi_id,
+                seleksi_id
+            );
+
+            if (!isValidJadwal) {
+                throw new Error('Jadwal tidak valid');
+            }
+
+            // =====================
+            // AMBIL DATA PESERTA (MODEL)
+            // =====================
+            // console.log(peserta_ids);
+            const rows = await PesertaSeleksiModel.getPesertaByPesertaSeleksiIds(
+                conn,
+                peserta_ids
+            );
+
+            if (!rows.length) {
+                throw new Error('Data peserta tidak ditemukan');
+            }
+
+            // =====================
+            // SIAPKAN VALUES
+            // =====================
+            const values = rows.map(r => [
+                r.peserta_id,
+                jadwal_seleksi_id
+            ]);
+
+            // =====================
+            // BULK INSERT (IGNORE DUPLICATE)
+            // =====================
+            const inserted = await PesertaSeleksiModel.insertBulkIgnore(conn, values);
+
+            await conn.commit();
+
+            return {
+                total: values.length,
+                inserted,
+                skipped: values.length - inserted
+            };
+
+        } catch (err) {
+            await conn.rollback();
+            throw err;
+        } finally {
+            conn.release();
+        }
+    }
+
+
     /**
      * Update PesertaSeleksi (AMAN)
      */
@@ -228,11 +315,12 @@ class PesertaSeleksiService {
                 throw new Error('Foto enter ujian wajib ada');
             }
             await conn.beginTransaction();
-
+            const uuid = await MediaPathService.generateUniqueKey(conn);
             const media_path_id = await MediaPathModel.insert(conn, {
                 judul:'Foto Enter Ujian',
                 path: uploadedPath,
-                jenis:'gambar'
+                jenis:'gambar',
+                uuid
             });
 
             const affected = await PesertaSeleksiModel.enterUjian(conn, peserta_id, jadwal_seleksi_id, media_path_id);

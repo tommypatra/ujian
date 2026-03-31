@@ -58,7 +58,9 @@ class MediaPathController {
      */
     static async getPath(req, res) {
         try {
-            const media = await MediaPathService.findById(req.params.id);
+            const uuid = req.params.uuid;
+            console.log(uuid);
+            const media = await MediaPathService.findByUuid(uuid);
             const filePath = path.resolve(media.path);
             res.sendFile(filePath);
         } catch (err) {
@@ -80,7 +82,7 @@ class MediaPathController {
                 ...req.body,
                 path:relativePath
             };
-
+            // console.log(payload);
             const { error, value } = MediaPathRequest.store(payload);
             if (error) {
 

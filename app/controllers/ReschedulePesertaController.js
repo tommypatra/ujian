@@ -1,10 +1,12 @@
-// app/controllers/ReschedullePesertaController.js
-const ReschedullePesertaService = require('../services/ReschedullePesertaService');
-const ReschedullePesertaRequest = require('../requests/ReschedullePesertaRequest');
+// app/controllers/ReschedulePesertaController.js
+const fs = require('fs').promises;
+
+const ReschedulePesertaService = require('../services/ReschedulePesertaService');
+const ReschedulePesertaRequest = require('../requests/ReschedulePesertaRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
-class ReschedullePesertaController {
+class ReschedulePesertaController {
 
     /**
      * GET /ReschedullePesertas
@@ -12,13 +14,13 @@ class ReschedullePesertaController {
      */
     static async index(req, res) {
         try {
-            const data_exec = await ReschedullePesertaService.getAll(req);
+            const data_exec = await ReschedulePesertaService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,
             });
         } catch (err) {
-            console.error('ReschedullePesertaController.index error:', err);
+            console.error('ReschedulePesertaController.index error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -34,14 +36,15 @@ class ReschedullePesertaController {
     static async show(req, res) {
         try {
             const { id } = req.params;
+            const peserta_id = parseInt(req.user.id) || null;
 
-            const data_exec = await ReschedullePesertaService.findById(id);
+            const data_exec = await ReschedulePesertaService.findById(id,peserta_id);
             return res.status(200).json({
                 message: 'Data detail',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePesertaController.show error:', err);
+            console.error('ReschedulePesertaController.show error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -55,18 +58,28 @@ class ReschedullePesertaController {
      */
     static async store(req, res) {
 
-        const relativePath = req.uploadedFiles.dokumen_pendukung?.relative_path;   // simpan ke DB
-        const absolutePath = req.uploadedFiles.dokumen_pendukung?.absolute_path;   // untuk fs.unlink
+        const relativePath = req.uploadedFiles.file?.relative_path;   // simpan ke DB
+        const absolutePath = req.uploadedFiles.file?.absolute_path;   // untuk fs.unlink
+        const peserta_id = parseInt(req.user.id) || null;
 
         try {
+
+            if (!req.uploadedFiles?.file) {
+                return res.status(422).json({
+                    message: 'Foto enter ujian wajib diupload',
+                    data: null
+                });
+            }            
 
             const payload = {
                 ...req.body,
                 peserta_seleksi_id: req.params?.peserta_seleksi_id,
-                dokumen_pendukung: relativePath
+                peserta_id
             };
             
-            const { error, value } = ReschedullePesertaRequest.store(payload);
+            // console.log(payload);
+
+            const { error, value } = ReschedulePesertaRequest.store(payload);
             if (error) {
                 if (absolutePath) {
                     await fs.unlink(absolutePath).catch(() => {});
@@ -78,13 +91,14 @@ class ReschedullePesertaController {
                 });
             }
 
-            const data_exec = await ReschedullePesertaService.store(value);
+            const file = relativePath;
+            const data_exec = await ReschedulePesertaService.store(value,{file});
             return res.status(201).json({
                 message: 'Tambah data berhasil',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePesertaController.store error:', err);
+            console.error('ReschedulePesertaController.store error:', err);
             if (absolutePath) {
                 await fs.unlink(absolutePath).catch(() => {});
             }                
@@ -102,18 +116,21 @@ class ReschedullePesertaController {
      * Update data
      */
     static async update(req, res) {
-        const relativePath = req.uploadedFiles.dokumen_pendukung?.relative_path;   // simpan ke DB
-        const absolutePath = req.uploadedFiles.dokumen_pendukung?.absolute_path;   // untuk fs.unlink
+        const file = req.uploadedFiles?.file;
+
+        const relativePath = file?.relative_path;
+        const absolutePath = file?.absolute_path;
 
         try {
-            const { id,peserta_seleksi_id } = req.params;
+            const { id, peserta_seleksi_id } = req.params;
+            const peserta_id = parseInt(req.user.id) || null;
+
             const payload = {
                 ...req.body,
                 peserta_seleksi_id: peserta_seleksi_id,
-                dokumen_pendukung: relativePath
             };
 
-            const { error, value } = ReschedullePesertaRequest.update(payload);
+            const { error, value } = ReschedulePesertaRequest.update(payload);
             if (error) {
 
                 if (absolutePath) {
@@ -126,17 +143,37 @@ class ReschedullePesertaController {
                 });
             }
 
-            const data_exec = await ReschedullePesertaService.update(id, value,peserta_seleksi_id);
+            const file = relativePath;
+            const data_exec = await ReschedulePesertaService.update(id, peserta_id, value, {file});
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePesertaController.update error:', err);
+            console.error('ReschedulePesertaController.update error:', err);
 
             if (absolutePath) {
                 await fs.unlink(absolutePath).catch(() => {});
             }                
+
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
+    static async kirim(req, res) {
+
+        try {
+            const { id,peserta_seleksi_id } = req.params;
+            const data_exec = await ReschedulePesertaService.kirim(id, peserta_seleksi_id);
+            return res.status(200).json({
+                message: 'Data berhasil diperbarui',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('ReschedulePesertaController.update error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -151,14 +188,16 @@ class ReschedullePesertaController {
      */
     static async destroy(req, res) {
         try {
-            const { id,peserta_seleksi_id } = req.params;
-            const data_exec = await ReschedullePesertaService.destroy(id,peserta_seleksi_id);
+            const { id, peserta_seleksi_id } = req.params;
+            const peserta_id = parseInt(req.user.id) || null;
+
+            const data_exec = await ReschedulePesertaService.destroy(id, peserta_id, peserta_seleksi_id);
             return res.status(200).json({
                 message: 'Data berhasil dihapus',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePesertaController.destroy error:', err);
+            console.error('ReschedulePesertaController.destroy error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -168,4 +207,4 @@ class ReschedullePesertaController {
 
 }
 
-module.exports = ReschedullePesertaController;
+module.exports = ReschedulePesertaController;

@@ -14,6 +14,8 @@ class JadwalSeleksiModel extends BaseModel {
         js.seleksi_id,
         js.sesi,
         js.tanggal,
+        js.is_mulai,
+        js.is_selesai,
         js.lokasi_ujian,
         js.jam_mulai,
         js.jam_selesai,

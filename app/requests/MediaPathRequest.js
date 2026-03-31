@@ -5,7 +5,7 @@ class MediaPathRequest {
 
     static store(data) {
         return Joi.object({
-            jenis: Joi.string().valid('gambar', 'audio','video','pdf').optional(),
+            jenis: Joi.string().valid('gambar', 'audio','video','pdf','dokumen').optional(),
             judul: Joi.string().min(1).optional(),
             path: Joi.string().min(3).required(),
         }).validate(data, {
@@ -16,7 +16,7 @@ class MediaPathRequest {
 
     static update(data) {
         return Joi.object({
-            jenis: Joi.string().valid('gambar', 'audio','video','pdf').optional(),
+            jenis: Joi.string().valid('gambar', 'audio','video','pdf','dokumen').optional(),
             judul: Joi.string().min(1).optional(),
             path: Joi.string().min(3).optional(),
         })

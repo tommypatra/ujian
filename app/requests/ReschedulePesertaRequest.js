@@ -1,13 +1,13 @@
-// requests/ReschedulleRequest.js
+// requests/ReschedulePesertaRequest.js
 const Joi = require('joi');
 
-class ReschedulleRequest {
+class ReschedulePesertaRequest {
 
     static store(data) {
         return Joi.object({
             peserta_seleksi_id: Joi.number().integer().positive().required(),
+            peserta_id: Joi.number().integer().positive().required(),
             alasan: Joi.string().min(6).required(),
-            dokumen_pendukung: Joi.string().min(6).required(),
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,
@@ -17,8 +17,8 @@ class ReschedulleRequest {
     static update(data) {
         return Joi.object({
             peserta_seleksi_id: Joi.number().integer().positive().optional(),
+            peserta_id: Joi.number().integer().positive().optional(),
             alasan: Joi.string().min(6).optional(),
-            dokumen_pendukung: Joi.string().min(6).optional(),
         }).
         min(1).
         validate(data, {
@@ -45,4 +45,4 @@ class ReschedulleRequest {
     }
 }
 
-module.exports = ReschedulleRequest;
+module.exports = ReschedulePesertaRequest;

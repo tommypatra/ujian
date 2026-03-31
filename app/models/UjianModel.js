@@ -110,9 +110,10 @@ class UjianModel extends BaseModel {
     static async statusPeserta(conn, peserta_id, peserta_seleksi_id){
         const [[row]] = await conn.query(
             `
-            SELECT p.is_login, ps.is_enter, ps.is_allow, ps.is_done
+            SELECT p.is_login, ps.is_enter, ps.is_allow, ps.is_done, js.is_mulai, js.is_selesai
             FROM pesertas p
             INNER JOIN peserta_seleksis ps ON p.id = ps.peserta_id
+            INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
             WHERE p.id = ? AND ps.id = ?
             LIMIT 1
             `,
@@ -164,6 +165,8 @@ class UjianModel extends BaseModel {
     static async getSoalByRange(conn, peserta_id, peserta_seleksi_id, start = 1, limit = 20) {
         const offset = start - 1;
 
+        if (limit > 50) limit = 50;
+
         /**
          * 1. Ambil mapping soal + urutan pilihan
          */
@@ -174,16 +177,29 @@ class UjianModel extends BaseModel {
                 msp.pilihan_order
             FROM maping_soal_pesertas msp
             JOIN peserta_seleksis ps ON ps.id = msp.peserta_seleksi_id
+
+            JOIN pesertas p ON p.id = ps.peserta_id
+            JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
             WHERE ps.peserta_id = ?
-            AND msp.peserta_seleksi_id = ?
+            AND ps.id = ?
+            AND p.is_login = 1
+            AND ps.is_allow = 1
+            AND COALESCE(ps.is_done, 0) = 0
+            AND js.is_mulai = 1
+            AND COALESCE(js.is_selesai, 0) = 0
+
             ORDER BY msp.id ASC
             LIMIT ? OFFSET ?
             `,
             [peserta_id, peserta_seleksi_id, limit, offset]
         );
 
+        // if (!mapping.length) {
+        //     return { soal: [] };
+        // }
+
         if (!mapping.length) {
-            return { soal: [] };
+            throw new Error('Tidak berhak mengakses soal');
         }
 
         const soalIds = mapping.map(m => m.bank_soal_id);
@@ -301,11 +317,13 @@ class UjianModel extends BaseModel {
                 NOW()
             FROM peserta_seleksis ps
             JOIN pesertas p ON p.id = ps.peserta_id
+            JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
             WHERE ps.id = ?
             AND p.id = ?
             AND p.is_login = 1
             AND ps.is_allow = 1
-            AND ps.is_done = 0
+            AND (ps.is_done = 0 OR ps.is_done IS NULL)
+            AND js.is_mulai = 1 AND (js.is_selesai = 0 OR js.is_selesai IS NULL)
             ON DUPLICATE KEY UPDATE
                 bank_soal_pilihan_id = VALUES(bank_soal_pilihan_id),
                 jawaban_text = VALUES(jawaban_text),
@@ -324,6 +342,7 @@ class UjianModel extends BaseModel {
 
         const [result] = await conn.query(query, params);
 
+        
         if (result.affectedRows === 0) {
             throw new Error('Tidak berhak menyimpan jawaban');
         }

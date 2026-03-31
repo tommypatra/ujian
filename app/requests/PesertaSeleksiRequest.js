@@ -19,6 +19,27 @@ class PesertaSeleksiRequest {
         });
     }
 
+    static storeBulk(data) {
+        return Joi.object({
+            jadwal_seleksi_id: Joi.number()
+                .integer()
+                .positive()
+                .required(),
+
+            peserta_ids: Joi.array()
+                .items(
+                    Joi.number()
+                        .integer()
+                        .positive()
+                        .required()
+                )
+                .min(1)
+                .required()
+        }).validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
+    }    
     
     static update(data) {
         return Joi.object({

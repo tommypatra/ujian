@@ -104,8 +104,8 @@ class PengawasUjianService {
                 'ps.peserta_id',
                 'ps.jadwal_seleksi_id',
                 'ps.is_enter',
-                'ps.enter_foto',
                 'ps.media_path_id',
+                'mp.uuid',
                 'ps.enter_at',
                 'ps.is_done',
                 'ps.is_allow',
@@ -194,9 +194,9 @@ class PengawasUjianService {
             );
 
             // hapus foto setelah commit
-            if (peserta.enter_foto) {
+            if (peserta.path) {
 
-                const filePath = path.join(process.cwd(), peserta.enter_foto);
+                const filePath = path.join(process.cwd(), peserta.path);
 
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath);

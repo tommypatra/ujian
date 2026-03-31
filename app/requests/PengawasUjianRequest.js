@@ -5,7 +5,8 @@ class PengawasUjianRequest {
 
     static validasiPeserta(data) {
         return Joi.object({
-            is_allow: Joi.number().valid(0, 1).required()
+            is_allow: Joi.number().valid(0, 1).required(),
+            is_enter: Joi.number().valid(0, 1).required()
         })
         .validate(data, {
             abortEarly: false,

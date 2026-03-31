@@ -1,14 +1,14 @@
-// app/services/ReschedullePanitiaService.js
+// app/services/ReschedulePanitiaService.js
 const db = require('../../config/database');
 const bcrypt = require('bcryptjs');
-const ReschedullePanitiaModel = require('../models/ReschedullePanitiaModel');
+const ReschedulePanitiaModel = require('../models/ReschedulePanitiaModel');
 // const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 // const UserModel = require('../models/UserModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
 
 
-class ReschedullePanitiaService {
+class ReschedulePanitiaService {
 
     /**
      * Ambil semua ReschedullePanitia (paging + search)
@@ -36,23 +36,33 @@ class ReschedullePanitiaService {
         where.push(`(p.seleksi_id = ?)`);
         params.push(`${seleksi_id}`);
 
+        where.push(`(rs.is_kirim = 1)`);
+
         // filter by status
         if (query.status) {
             where.push(`(rs.status = ?)`);
-            params.push(parseInt(query.status));
+            params.push(query.status);
         }else{
-            where.push(`(rs.status = 'pending')`);
+            where.push(`(rs.status = 'proses')`);
         }
 
-
+        // filter by status
+        if (query.pilih_peserta) { 
+            where.push( `
+                NOT EXISTS ( 
+                SELECT 1 FROM peserta_seleksis ps2 
+                INNER JOIN jadwal_seleksis js2 ON js2.id = ps2.jadwal_seleksi_id 
+                WHERE ps2.peserta_id = p.id AND js2.status = 'susulan')`
+            ); 
+        }        
         const whereSql = where.length
             ? `WHERE ${where.join(' AND ')}`
             : '';
 
         const conn = await db.getConnection();
         try {
-            const data  = await ReschedullePanitiaModel.findAll(conn, whereSql, params, limit, offset);
-            const total = await ReschedullePanitiaModel.countAll(conn, whereSql, params);
+            const data  = await ReschedulePanitiaModel.findAll(conn, whereSql, params, limit, offset);
+            const total = await ReschedulePanitiaModel.countAll(conn, whereSql, params);
 
             return {
                 data,
@@ -73,7 +83,7 @@ class ReschedullePanitiaService {
     static async findById(id) {
         const conn = await db.getConnection();
         try {
-            const ReschedullePanitia = await ReschedullePanitiaModel.findById(conn, id);
+            const ReschedullePanitia = await ReschedulePanitiaModel.findById(conn, id);
             if (!ReschedullePanitia) {
                 throw new Error('Data tidak ditemukan');
             }
@@ -86,25 +96,25 @@ class ReschedullePanitiaService {
     /**
      * validasi ReschedullePeserta
      */
-    static async validasi(id, user, peserta_seleksi_id, data) {
+    static async validasi(id, user_id, data) {
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
 
-            const payload = pickFields(data,ReschedullePanitiaModel.columns);
-            
-            payload.verified_user_id = user.id;
-            payload.peserta_seleksi_id=peserta_seleksi_id;
+            const payload = pickFields(data, ReschedulePanitiaModel.columns);            
+            payload.verified_user_id = user_id;
             payload.verified_at = new Date();
 
-            const affected = await ReschedullePanitiaModel.update(conn, id, peserta_seleksi_id, payload);
+
+            console.log(payload);
+            const affected = await ReschedulePanitiaModel.update(conn, id, payload);
             if (affected === 0) {
                 throw new Error('Data tidak ditemukan atau tidak ada perubahan');
             }
 
             await conn.commit();
 
-            return await ReschedullePesertaModel.findById(conn, id);
+            return await ReschedulePanitiaModel.findById(conn, id);
 
 
         } catch (err) {
@@ -117,4 +127,4 @@ class ReschedullePanitiaService {
 
 }
 
-module.exports = ReschedullePanitiaService;
+module.exports = ReschedulePanitiaService;

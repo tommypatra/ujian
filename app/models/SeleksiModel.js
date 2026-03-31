@@ -14,6 +14,9 @@ class SeleksiModel extends BaseModel {
         nama,
         waktu_mulai,
         waktu_selesai,
+        wajib_validasi_foto,
+        reschedule_mulai,
+        reschedule_selesai,
         prefix_app,
         tahun,
         urutan,
@@ -28,8 +31,11 @@ class SeleksiModel extends BaseModel {
 
     static columns = [
         'nama',
+        'wajib_validasi_foto',
         'waktu_mulai',
         'waktu_selesai',
+        'reschedule_mulai',
+        'reschedule_selesai',
         'prefix_app',
         'tahun',
         'urutan',

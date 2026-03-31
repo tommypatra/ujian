@@ -19,7 +19,8 @@ function UploadMiddleware({
   folder,
   maxSize = 5 * 1024 * 1024,
   allowed = [],
-  fieldName = 'file'
+  fieldName = 'file',
+  required = true
 }) {
   const storage = multer.diskStorage({
     destination(req, file, cb) {
@@ -49,7 +50,7 @@ function UploadMiddleware({
         .digest('hex')
         .slice(0, 32);
 
-      cb(null, name); // tanpa ext dulu (akan ditambah setelah validasi magic number)
+      cb(null, name); // tanpa ext dulu
     }
   });
 
@@ -60,7 +61,7 @@ function UploadMiddleware({
 
   return [
     /* =====================================================
-     * 1) Multer upload + error handler
+     * 1) Multer upload + error handler + required check
      * ===================================================== */
     (req, res, next) => {
       upload.single(fieldName)(req, res, function (err) {
@@ -78,21 +79,33 @@ function UploadMiddleware({
           });
         }
 
+        // ✅ NEW (support boolean / function)
+        const isRequired =
+          typeof required === 'function'
+            ? required(req)
+            : required;
+
+        if (!req.file && isRequired) {
+          return res.status(422).json({
+            message: `${fieldName} wajib diupload`,
+            data: null
+          });
+        }
+
         next();
       });
     },
 
     /* =====================================================
-     * 2) Validasi magic number + rename ext + set req.uploadedFiles
+     * 2) Validasi magic number + rename + set req.uploadedFiles
      * ===================================================== */
     async (req, res, next) => {
-      if (!req.file) return next();
+      if (!req.file) return next(); // ✅ tetap optional (tidak berubah)
 
       const tmpPath = req.file.path;
       let finalPath = null;
 
       try {
-        // baca file kecil (aman karena ada maxSize)
         const buffer = fs.readFileSync(tmpPath);
         const detected = await FileType.fromBuffer(buffer);
 
@@ -113,7 +126,7 @@ function UploadMiddleware({
           });
         }
 
-        // validasi mime (extra safety)
+        // validasi mime
         if (MIME_MAP[detected.ext] && MIME_MAP[detected.ext] !== detected.mime) {
           if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
           return res.status(400).json({
@@ -122,7 +135,7 @@ function UploadMiddleware({
           });
         }
 
-        // rename -> tambah ext
+        // rename tambah ext
         finalPath = `${tmpPath}.${detected.ext}`;
         fs.renameSync(tmpPath, finalPath);
 
@@ -133,29 +146,21 @@ function UploadMiddleware({
           });
         }
 
-        // pastikan container
         if (!req.uploadedFiles) req.uploadedFiles = {};
 
-        // simpan relative path (tanpa "storage/")
-        // const relativePath = finalPath.replace(/^storage[\\/]/, '');
-
-        // simpan relative path lengkap termasuk "storage/"
         const relativePath = finalPath.replace(/\\/g, '/');
 
         req.uploadedFiles[fieldName] = {
           filename: path.basename(finalPath),
-          // untuk database
           relative_path: relativePath,
-          // untuk fs.unlink
           absolute_path: path.resolve(finalPath),
           ext: detected.ext,
           mime: detected.mime,
-          size: req.file.size        
+          size: req.file.size
         };
 
         next();
       } catch (err) {
-        // cleanup aman
         if (finalPath && fs.existsSync(finalPath)) {
           fs.unlinkSync(finalPath);
         } else if (tmpPath && fs.existsSync(tmpPath)) {

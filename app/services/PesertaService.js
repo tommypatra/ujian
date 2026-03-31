@@ -42,6 +42,10 @@ const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
             where.push(`(p.seleksi_id = ?)`);
             params.push(`${seleksi_id}`);
 
+            if (query.not_assigned==1) {
+                where.push(`(ps.id IS NULL)`);
+            }
+
             const whereSql = where.length
                 ? `WHERE ${where.join(' AND ')}`
                 : '';

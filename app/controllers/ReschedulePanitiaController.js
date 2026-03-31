@@ -1,10 +1,10 @@
-// app/controllers/ReschedullePanitiaController.js
-const ReschedullePanitiaService = require('../services/ReschedullePanitiaService');
-const ReschedullePanitiaRequest = require('../requests/ReschedullePanitiaRequest');
+// app/controllers/ReschedulePanitiaController.js
+const ReschedulePanitiaService = require('../services/ReschedulePanitiaService');
+const ReschedulePanitiaRequest = require('../requests/ReschedulePanitiaRequest');
 
 const isDev = process.env.APP_ENV === 'development';
 
-class ReschedullePanitiaController {
+class ReschedulePanitiaController {
 
     /**
      * GET /ReschedullePanitias
@@ -12,13 +12,13 @@ class ReschedullePanitiaController {
      */
     static async index(req, res) {
         try {
-            const data_exec = await ReschedullePanitiaService.getAll(req);
+            const data_exec = await ReschedulePanitiaService.getAll(req);
             return res.status(200).json({
                 message: 'Data ditemukan',
                 data: data_exec,
             });
         } catch (err) {
-            console.error('ReschedullePanitiaController.index error:', err);
+            console.error('ReschedulePanitiaController.index error:', err);
 
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
@@ -35,13 +35,13 @@ class ReschedullePanitiaController {
         try {
             const { id } = req.params;
 
-            const data_exec = await ReschedullePanitiaService.findById(id);
+            const data_exec = await ReschedulePanitiaService.findById(id);
             return res.status(200).json({
                 message: 'Data detail',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePanitiaController.show error:', err);
+            console.error('ReschedulePanitiaController.show error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -57,8 +57,9 @@ class ReschedullePanitiaController {
     static async update(req, res) {
         try {
             const { id } = req.params;
+            const user_id = parseInt(req.user.id) || null;
 
-            const { error, value } = ReschedullePanitiaRequest.update(req.body);
+            const { error, value } = ReschedulePanitiaRequest.update(req.body);
             if (error) {
                 return res.status(422).json({
                     message: error.details[0].message,
@@ -66,13 +67,13 @@ class ReschedullePanitiaController {
                 });
             }
 
-            const data_exec = await ReschedullePanitiaService.validasi(id, value);
+            const data_exec = await ReschedulePanitiaService.validasi(id, user_id, value);
             return res.status(200).json({
                 message: 'Data berhasil diperbarui',
                 data: data_exec
             });
         } catch (err) {
-            console.error('ReschedullePanitiaController.update error:', err);
+            console.error('ReschedulePanitiaController.update error:', err);
             return res.status(500).json({
                 message: isDev ? err.message : 'Internal server error',
                 data: null
@@ -82,4 +83,4 @@ class ReschedullePanitiaController {
 
 }
 
-module.exports = ReschedullePanitiaController;
+module.exports = ReschedulePanitiaController;

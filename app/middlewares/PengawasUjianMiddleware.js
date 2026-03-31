@@ -19,18 +19,21 @@ module.exports = async function PengawasUjianMiddleware(req, res, next) {
 
         const conn = await db.getConnection();
         try {
-            const [rows] = await conn.query(`
+            const sql = `
                 SELECT ps.id
-                FROM pengawas_seleksis ps
-                INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id 
-                WHERE ps.id = ?
-                    AND js.seleksi_id = ?
+                FROM pengelola_seleksis ps
+                WHERE ps.user_id = ?
+                    AND ps.seleksi_id = ?
+                    AND ps.jabatan = 'pengawas'
                 LIMIT 1
-            `, [user.id, seleksiId]);
+            `;
+            console.log(sql,user.id, seleksiId);
+
+            const [rows] = await conn.query(sql, [user.id, seleksiId]);
 
             if (rows.length === 0) {
                 return res.status(403).json({
-                    message: 'Anda tidak memiliki akses ke seleksi ini',
+                    message: 'Anda tidak memiliki akses ke pengawas seleksi ini',
                     data: null
                 });
             }

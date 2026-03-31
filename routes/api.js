@@ -23,8 +23,8 @@ const JadwalSeleksiController = require('../app/controllers/JadwalSeleksiControl
 const PengawasSeleksiController = require('../app/controllers/PengawasSeleksiController');
 const PesertaController = require('../app/controllers/PesertaController');
 const PesertaSeleksiController = require('../app/controllers/PesertaSeleksiController');
-const ReschedullePesertaController = require('../app/controllers/ReschedullePesertaController');
-const ReschedullePanitiaController = require('../app/controllers/ReschedullePanitiaController');
+const ReschedulePesertaController = require('../app/controllers/ReschedulePesertaController');
+const ReschedulePanitiaController = require('../app/controllers/ReschedulePanitiaController');
 const BankSoalController = require('../app/controllers/BankSoalController');
 const BankSoalPilihanController = require('../app/controllers/BankSoalPilihanController');
 const PengawasUjianController = require('../app/controllers/PengawasUjianController');
@@ -145,16 +145,17 @@ router.delete('/peserta/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSelek
 //route peserta seleksi jadwal sesuai :seleksi_id
 router.get('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.index);
 router.post('/peserta/:seleksi_id/jadwal', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.store);
+router.post('/peserta/:seleksi_id/bulk', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.storeBulk);
 router.post('/peserta/:seleksi_id/jadwal-seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaController.storeJadwalSeleksi);
 router.get('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.show);
 router.put('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.update);
 router.delete('/peserta/:seleksi_id/jadwal/:id', AuthMiddleware, PengelolaSeleksiMiddleware, PesertaSeleksiController.destroy);
 
-//route reschedulle seleksi sesuai :seleksi_id
-//melihat daftar reschedulle sesuai seleksi_id dan mengubah status reschedulle
-router.get('/pengelola/:seleksi_id/reschedulle', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.index);
-router.get('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.show);
-router.put('/pengelola/:seleksi_id/reschedulle/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedullePanitiaController.update);
+//route reschedule seleksi sesuai :seleksi_id
+//melihat daftar reschedule sesuai seleksi_id dan mengubah status reschedule
+router.get('/pengelola/:seleksi_id/reschedule', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulePanitiaController.index);
+router.get('/pengelola/:seleksi_id/reschedule/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulePanitiaController.show);
+router.put('/pengelola/:seleksi_id/reschedule/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulePanitiaController.update);
 
 //untuk jumlah domain soal tiap seleksi
 router.get('/jumlah/:seleksi_id/soal', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.index);
@@ -172,7 +173,7 @@ router.delete('/bank-soal/:id', AuthMiddleware, RolePengelolaMiddleware, BankSoa
 
 
 router.get('/media-path', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.index);
-router.get('/media-path/file/:id', MediaPathController.getPath);
+router.get('/media-path/file/:uuid', MediaPathController.getPath);
 router.get('/media-path/:id', AuthMiddleware, RolePengelolaMiddleware, MediaPathController.show);
 router.post('/media-path',
     AuthMiddleware, 
@@ -267,10 +268,12 @@ router.post('/enter-ujian/:jadwal_seleksi_id',
     PesertaSeleksiController.enterUjian
 );
 
-// lihat reschedulle yg mereka input, bisa tambah, hapus, ganti, finalisasi
+// lihat reschedule yg mereka input, bisa tambah, hapus, ganti, finalisasi
 // kalau sudah finalisasi tidak bisa hapus atau ganti
-router.get('/peserta/:peserta_seleksi_id/reschedulle', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.index);
-router.post('/peserta/:peserta_seleksi_id/reschedulle', 
+// router.get('/peserta/:peserta_seleksi_id/reschedule', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulePesertaController.index);
+router.get('/peserta-reschedule', AuthMiddleware, RequireRoleMiddleware('peserta'), ReschedulePesertaController.index);
+
+router.post('/peserta/:peserta_seleksi_id/reschedule', 
     AuthMiddleware, 
     PesertaSeleksiMiddleware, 
     ...UploadMiddleware({
@@ -278,16 +281,18 @@ router.post('/peserta/:peserta_seleksi_id/reschedulle',
             const now = new Date();
             const tahun = now.getFullYear();
             const bulan = String(now.getMonth() + 1).padStart(2, '0');
-            return `storage/reschedulle/${tahun}/${bulan}`;
+            return `storage/reschedule/${tahun}/${bulan}`;
         },
         maxSize: 0.5 * 1024 * 1024,
         // allowed: ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx'],
         allowed: ['pdf'],
-        fieldName: 'dokumen_pendukung'
-    }),    
-    ReschedullePesertaController.store
+        fieldName: 'file'
+    }),
+    ReschedulePesertaController.store
 );
-router.put('/peserta/:peserta_seleksi_id/reschedulle/:id', 
+router.put('/peserta/:peserta_seleksi_id/reschedule-kirim/:id',AuthMiddleware,PesertaSeleksiMiddleware,ReschedulePesertaController.kirim);
+
+router.put('/peserta/:peserta_seleksi_id/reschedule/:id', 
     AuthMiddleware, 
     PesertaSeleksiMiddleware,
     ...UploadMiddleware({
@@ -295,25 +300,29 @@ router.put('/peserta/:peserta_seleksi_id/reschedulle/:id',
             const now = new Date();
             const tahun = now.getFullYear();
             const bulan = String(now.getMonth() + 1).padStart(2, '0');
-            return `storage/reschedulle/${tahun}/${bulan}`;
+            return `storage/reschedule/${tahun}/${bulan}`;
         },
         maxSize: 1 * 1024 * 1024,
         // allowed: ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx'],
         allowed: ['pdf'],
-        fieldName: 'dokumen_pendukung'
+        fieldName: 'file',
+        required: false
     }),
-    ReschedullePesertaController.update);
-router.get('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.show);
-router.delete('/peserta/:peserta_seleksi_id/reschedulle/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedullePesertaController.destroy);
+    ReschedulePesertaController.update);
+router.get('/peserta/:peserta_seleksi_id/reschedule/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulePesertaController.show);
+router.delete('/peserta/:peserta_seleksi_id/reschedule/:id', AuthMiddleware, PesertaSeleksiMiddleware, ReschedulePesertaController.destroy);
 
 
 router.put('/reset-peserta', AuthMiddleware, RequireRoleMiddleware('peserta'), AuthController.resetPeserta);
 router.get('/status-peserta/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusPeserta);
 
-router.post('/sync-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.syncJawaban);
 router.get('/status-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusJawaban);
+
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
 router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
+router.post('/sync-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.syncJawaban);
+
+
 router.post('/ujian/:peserta_seleksi_id/selesai-ujian', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.selesaiUjian);
 // ------------- AKHIR ROUTE PESERTA --------------
 

@@ -11,6 +11,7 @@ class PesertaModel extends BaseModel {
 
     static selectFields = `
         p.id,
+        p.id as peserta_id,
         p.seleksi_id,
         p.jenis_kelamin,
         p.device_id,
@@ -35,7 +36,7 @@ class PesertaModel extends BaseModel {
 
     static joinTables = `
         LEFT JOIN seleksis s ON s.id = p.seleksi_id
-    `;
+        LEFT JOIN peserta_seleksis ps ON ps.peserta_id = p.id`;
 
     static countColumns = 'COUNT(p.id)';
 

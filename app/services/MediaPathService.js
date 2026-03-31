@@ -1,5 +1,6 @@
 // app/services/MediaPathService.js
 const db = require('../../config/database');
+const crypto = require('crypto');
 const MediaPathModel = require('../models/MediaPathModel');
 const {pickFields} = require('../helpers/payloadHelper');
 
@@ -47,6 +48,22 @@ class MediaPathService {
     /**
      * Detail MediaPath
      */
+    static async findByUuid(uuid) {
+        const conn = await db.getConnection();
+        try {
+            const MediaPath = await MediaPathModel.findByUuid(conn, uuid);
+            if (!MediaPath) {
+                throw new Error('Data tidak ditemukan');
+            }
+            return MediaPath;
+        } finally {
+            conn.release();
+        }
+    }
+
+    /**
+     * Detail MediaPath
+     */
     static async findById(id) {
         const conn = await db.getConnection();
         try {
@@ -60,6 +77,15 @@ class MediaPathService {
         }
     }
 
+    static async generateUniqueKey(conn) {
+        while (true) {
+            const uuid = crypto.randomBytes(32).toString('hex');
+
+            const exists = await MediaPathModel.findByKey(conn,'uuid', uuid);
+            if (!exists) return uuid;
+        }
+    }
+
     /**
      * Simpan MediaPath baru + MediaPath default
      */
@@ -69,8 +95,11 @@ class MediaPathService {
             await conn.beginTransaction();
             const payload = pickFields(data,MediaPathModel.columns);
 
-            const MediaPathId = await MediaPathModel.insert(conn, payload);
+            const uuid = await this.generateUniqueKey(conn);  
+            // console.log(uuid);      
+            payload.uuid = uuid;
 
+            const MediaPathId = await MediaPathModel.insert(conn, payload);
             await conn.commit();
 
             return await MediaPathModel.findById(conn, MediaPathId);

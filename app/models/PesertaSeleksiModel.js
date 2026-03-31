@@ -16,8 +16,10 @@ class PesertaSeleksiModel extends BaseModel {
         ps.peserta_id,
         ps.jadwal_seleksi_id,
         ps.is_enter,
-        ps.enter_foto,
         ps.media_path_id,
+        mp.uuid,
+        mp.path, 
+        mp.jenis,
         ps.enter_at,
         ps.is_done,
         ps.is_allow,
@@ -53,6 +55,7 @@ class PesertaSeleksiModel extends BaseModel {
         LEFT JOIN pesertas p ON p.id = ps.peserta_id
         LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
         LEFT JOIN seleksis s ON s.id = p.seleksi_id
+        LEFT JOIN media_paths mp ON mp.id = ps.media_path_id
     `;
 
     static countColumns = 'COUNT(ps.id)';
@@ -70,7 +73,7 @@ class PesertaSeleksiModel extends BaseModel {
         'peserta_id',
         'jadwal_seleksi_id',
         'is_enter',
-        'enter_foto',
+        'media_path_id',
         'enter_at',
         'is_allow',
         'is_done',
@@ -86,6 +89,19 @@ class PesertaSeleksiModel extends BaseModel {
      * Validasi peserta milik seleksi tertentu
      * (fungsi spesifik, bukan CRUD generic)
      */
+
+    static async _validasiPesertaSeleksi(conn, peserta_id,peserta_seleksi_id) {
+        const [[row]] = await conn.query(
+            `
+                SELECT p.id FROM pesertas p
+                LEFT JOIN peserta_seleksis ps ON p.id=ps.peserta_id
+                WHERE p.id = ? AND ps.id = ? LIMIT 1
+            `,
+            [peserta_id, peserta_seleksi_id]
+        );
+        return !!row;
+    }
+
     static async _isValidPesertaSeleksi(conn, peserta_id, seleksi_id) {
         const [[row]] = await conn.query(
             `
@@ -122,7 +138,7 @@ class PesertaSeleksiModel extends BaseModel {
     static async cariPesertaPengawas(conn, peserta_id, user_id) {
         const [rows] = await conn.query(
             `
-            SELECT ps.id, ps.enter_foto, pw.id as pengawas_seleksi_id 
+            SELECT ps.id, ps.media_path_id, pw.id as pengawas_seleksi_id 
             FROM peserta_seleksis ps 
             INNER JOIN pengawas_seleksis pw ON pw.jadwal_seleksi_id = ps.jadwal_seleksi_id AND pw.user_id = ?
             WHERE ps.id = ?
@@ -165,11 +181,54 @@ class PesertaSeleksiModel extends BaseModel {
      * WRITE (AMAN)
      * ======================= */
 
-    // INSERT (jadwal_seleksi_id HARUS dari service / URL)
+    // INSERT (jadwal_seleksi_id apiRUS dari service / URL)
     static async insert(conn, data) {
         return super.insert(conn, data);
     }
 
+    static async getValidPesertaSeleksiIds(conn, peserta_seleksi_ids, jadwal_seleksi_id) {
+        const [rows] = await conn.query(
+            `
+            SELECT id 
+            FROM peserta_seleksis 
+            WHERE id IN (?)
+            AND jadwal_seleksi_id = ?
+            `,
+            [peserta_seleksi_ids, jadwal_seleksi_id]
+        );
+
+        return rows.map(r => r.id);
+    }    
+
+    static async getPesertaByPesertaSeleksiIds(conn, peserta_ids) {
+        const [rows] = await conn.query(
+            `
+            SELECT ps.id as peserta_seleksi_id, ps.peserta_id
+            FROM peserta_seleksis ps
+            WHERE ps.peserta_id IN (?) 
+            `,
+            [peserta_ids]
+        );
+        return rows;
+    }
+
+    static async insertBulkIgnore(conn, values) {
+        if (!values.length) return 0;
+
+        const placeholders = values.map(() => '(?, ?)').join(',');
+        const flatValues = values.flat();
+
+        const [result] = await conn.query(
+            `
+            INSERT IGNORE INTO peserta_seleksis 
+            (peserta_id, jadwal_seleksi_id)
+            VALUES ${placeholders}
+            `,
+            flatValues
+        );
+
+        return result.affectedRows;
+    }    
     // UPDATE by id + seleksi_id (ANTI IDOR)
     static async update(conn, id, data,seleksi_id) {
         

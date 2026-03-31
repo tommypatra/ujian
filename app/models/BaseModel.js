@@ -56,6 +56,68 @@ class BaseModel {
     }
 
     /* =======================
+    * FIND MANY BY MULTIPLE KEYS
+    * ======================= */
+    static async findAllByMultipleKeys(conn, fields = [], values = [], options = {}) {
+        this._ensureAllowedFields();
+        this._ensureConfig();
+
+        if (!Array.isArray(fields) || !Array.isArray(values)) {
+            throw new Error('Fields dan values harus berupa array');
+        }
+
+        if (fields.length === 0 || values.length === 0) {
+            throw new Error('Fields dan values tidak boleh kosong');
+        }
+
+        if (fields.length !== values.length) {
+            throw new Error('Jumlah fields dan values harus sama');
+        }
+
+        // validasi field
+        console.log('allowed fields',this.allowedFields);
+        for (const field of fields) {
+            console.log('cek',field);
+            if (!this.allowedFields.includes(field)) {
+                // throw new Error(`Field tidak diizinkan: ${field}`);
+            }
+        }
+
+        const selectFields = Array.isArray(options.select) && options.select.length > 0
+            ? options.select.join(', ')
+            : this.selectFields;
+
+        // contoh: id = ? AND user_id = ?
+        const whereClause = fields
+            .map(field => `${field} = ?`)
+            .join(' AND ');
+
+        let orderSql = this.orderBy;
+
+        if (options.random === true) {
+            orderSql = `ORDER BY RAND()`;
+        }
+
+
+        const sql = `SELECT ${selectFields}
+            FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
+            ${this.joinTables}
+            WHERE ${whereClause}
+            ${orderSql}`;
+
+        const [rows] = await conn.query(
+            sql,
+            values
+        );
+
+        if (process.env.APP_ENV === 'development') {
+            console.log(sql);
+        }
+
+        return rows;
+    }    
+
+    /* =======================
      * FIND MANY BY KEY
      * ======================= */
     static async findAllByKey(conn, field, values = [], options = {}) {
@@ -80,7 +142,6 @@ class BaseModel {
         const selectFields = Array.isArray(options.select) && options.select.length > 0
             ? options.select.join(', ')
             : this.selectFields;
-
 
         const [rows] = await conn.query(
             `SELECT ${selectFields}

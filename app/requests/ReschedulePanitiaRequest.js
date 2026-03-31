@@ -1,19 +1,19 @@
-// requests/ReschedulleSeleksiRequest.js
+// requests/RescheduleSeleksiRequest.js
 const Joi = require('joi');
 
-class ReschedulleSeleksiRequest {
+class RescheduleSeleksiRequest {
 
     static store(data) {
         return Joi.object({
             status: Joi.string()
-                .valid('diterima', 'ditolak')
+                .valid('proses', 'terima', 'tolak')
                 .required(),
+
             catatan_verifikasi: Joi.when('status', {
-                is: 'ditolak',
+                is: 'tolak',
                 then: Joi.string().min(6).required(),
-                otherwise: Joi.string().optional()
+                otherwise: Joi.string().allow('', null).optional()
             }),
-            verified_at: Joi.date().default(() => new Date(), 'current date'),
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,
@@ -23,14 +23,14 @@ class ReschedulleSeleksiRequest {
     static update(data) {
         return Joi.object({
             status: Joi.string()
-                .valid('diterima', 'ditolak')
+                .valid('proses', 'terima', 'tolak')
                 .required(),
+
             catatan_verifikasi: Joi.when('status', {
-                is: 'ditolak',
+                is: 'tolak',
                 then: Joi.string().min(6).required(),
-                otherwise: Joi.string().optional()
+                otherwise: Joi.string().allow('', null).optional()
             }),
-            verified_at: Joi.date().default(() => new Date(), 'current date'),
         }).validate(data, {
             abortEarly: false,
             stripUnknown: true,
@@ -39,4 +39,4 @@ class ReschedulleSeleksiRequest {
 
 }
 
-module.exports = ReschedulleSeleksiRequest;
+module.exports = RescheduleSeleksiRequest;

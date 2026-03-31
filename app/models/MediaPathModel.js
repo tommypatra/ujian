@@ -10,7 +10,7 @@ class MediaPathModel extends BaseModel {
     static tableAlias = '';
 
     static selectFields = `
-        id, judul, path, jenis, created_at, updated_at
+        id, judul, path, jenis, uuid, created_at, updated_at
     `;
 
     static joinTables = ``;
@@ -18,13 +18,11 @@ class MediaPathModel extends BaseModel {
     static orderBy = `ORDER BY jenis DESC, judul DESC`;
 
     static columns = [
-        'judul',
-        'path',
-        'jenis'
+        'judul', 'path', 'uuid', 'jenis'
     ];
 
     // untuk guard BaseModel
-    static allowedFields = ['id'];
+    static allowedFields = ['id', 'uuid'];
 
     /* =======================
      * FIND
@@ -42,6 +40,14 @@ class MediaPathModel extends BaseModel {
         // wrapper aman → tetap pakai logic BaseModel
         return super.findAllByKey(conn, 'id', ids);
     }
+
+    /* =======================
+     * FIND BY KEY
+     * ======================= */
+    static async findByUuid(conn, value) {
+        return super.findByKey(conn, 'uuid', value);
+    }
+
 
     /* =======================
      * FIND ALL (PAGING)

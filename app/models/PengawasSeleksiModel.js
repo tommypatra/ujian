@@ -173,14 +173,14 @@ class PengawasSeleksiModel extends BaseModel {
                 UPDATE peserta_seleksis ps
                 LEFT JOIN pesertas p ON p.id = ps.peserta_id
                 LEFT JOIN pengawas_seleksis ss ON ss.jadwal_seleksi_id = ps.jadwal_seleksi_id
-                SET ps.is_allow=?, ps.allow_at=NOW(), ps.updated_at=NOW()
+                SET ps.is_allow=?,ps.is_enter=?, ps.allow_at=NOW(), ps.updated_at=NOW()
                 WHERE 
                     ps.id = ? AND 
                     ss.user_id = ? AND 
                     p.is_login = 1 AND ps.is_enter = 1
             `;
 
-            const params = [data.is_allow, peserta_seleksi_id, pengawas_id];
+            const params = [data.is_allow, data.is_enter, peserta_seleksi_id, pengawas_id];
 
             // console.log('[SQL]', query);
             // console.log('[PARAMS]', params);
@@ -212,7 +212,7 @@ class PengawasSeleksiModel extends BaseModel {
 
                     p.device_id = NULL,
                     ps.is_enter = 0,
-                    ps.enter_foto = NULL,
+                    ps.media_path_id = NULL,
                     ps.is_allow = 0,
 
                     p.token_login = NULL,
