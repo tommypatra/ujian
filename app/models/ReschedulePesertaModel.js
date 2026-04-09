@@ -29,7 +29,17 @@ class ReschedulePesertaModel extends BaseModel {
         p.nomor_peserta,
         p.hp,
         s.nama as nama_seleksi,
-        p.seleksi_id
+        p.seleksi_id,
+        reschedule_mulai,
+        reschedule_selesai,
+        wajib_validasi_foto,
+        (
+            CASE 
+                WHEN CURDATE() BETWEEN s.reschedule_mulai AND s.reschedule_selesai 
+                THEN 1 
+                ELSE 0 
+            END
+        ) AS reschedule_aktif        
     `;
 
     static joinTables = `
@@ -140,6 +150,32 @@ class ReschedulePesertaModel extends BaseModel {
             throw mapDbError(err);
         }
     }
+
+    static async cariInfoSeleksi(conn, peserta_seleksi_id) {
+        const sql = `SELECT 
+                s.wajib_validasi_foto,
+                ps.id as peserta_seleksi_id,
+                ps.peserta_id,
+                s.id as seleksi_id,
+                js.id as jadwal_seleksi_id,
+                (
+                    CASE 
+                        WHEN CURDATE() BETWEEN s.reschedule_mulai AND s.reschedule_selesai 
+                        THEN 1 
+                        ELSE 0 
+                    END
+                ) AS reschedule_aktif     
+            FROM peserta_seleksis ps
+                INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id  
+                INNER JOIN seleksis s ON s.id = js.seleksi_id  
+            WHERE ps.id = ?`;
+        const [[row]] = await conn.query(
+            sql,
+            [peserta_seleksi_id]
+        );
+        return row;
+    }  
+
 
     static async cariMediPath(conn, id, peserta_id) {
         const sql = `SELECT 

@@ -2,29 +2,45 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+
+// 🔥 WS
+const { initWebSocket } = require('./ws');
+
+// =====================
+// INIT APP
+// =====================
 const app = express();
 
+// =====================
+// MIDDLEWARE
+// =====================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === AKTIFKAN CORS ===
+// CORS (DEV)
 app.use(cors({
-    origin: '*',          // sementara (dev)
-    methods: ['GET','POST','PUT','DELETE'],
-    allowedHeaders: ['Content-Type','Authorization','X-Form-Submit']
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Form-Submit']
 }));
 
-// routes
+// =====================
+// ROUTES
+// =====================
 const apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes);
 
-// test endpoint
+// =====================
+// TEST ENDPOINT
+// =====================
 app.get('/', (req, res) => {
-    // res.json({ message: 'Server ujian jalan' });
-    res.type('html').send('<h1>API Ujian Running</h1>');
+    res.type('html').send('<h1>API Ujian Running 🚀</h1>');
 });
 
-// 404 handler (WAJIB PALING BAWAH)
+// =====================
+// 404 HANDLER (WAJIB PALING BAWAH)
+// =====================
 app.use((req, res) => {
     res.status(404).json({
         message: 'Route not found',
@@ -32,8 +48,21 @@ app.use((req, res) => {
     });
 });
 
+// =====================
+// CREATE SERVER (WAJIB UNTUK WS)
+// =====================
 const PORT = process.env.PORT || process.env.APP_PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server berjalan di port ${PORT}`);
+const server = http.createServer(app);
+
+// =====================
+// INIT WEBSOCKET
+// =====================
+initWebSocket(server);
+
+// =====================
+// START SERVER
+// =====================
+server.listen(PORT, () => {
+    console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });

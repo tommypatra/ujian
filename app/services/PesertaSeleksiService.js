@@ -6,7 +6,9 @@ const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 const JadwalSeleksiModel = require('../models/JadwalSeleksiModel');
 const MediaPathModel = require('../models/MediaPathModel');
 const MediaPathService = require('../services/MediaPathService');
+const PengawasUjianService = require('../services/PengawasUjianService');
 
+const ReschedulePesertaModel = require('../models/ReschedulePesertaModel');
 
 const { pickFields } = require('../helpers/payloadHelper');
 
@@ -306,15 +308,21 @@ class PesertaSeleksiService {
     }
 
 
-    static async enterUjian(peserta_id, jadwal_seleksi_id, data) {
+    static async enterUjian(peserta_seleksi_id, data) {
         const conn = await db.getConnection();
         const uploadedPath = data?.enter_foto;
 
         try {
+            await conn.beginTransaction();
             if (!uploadedPath) {
                 throw new Error('Foto enter ujian wajib ada');
             }
-            await conn.beginTransaction();
+
+            const seleksi = await ReschedulePesertaModel.cariInfoSeleksi(conn, peserta_seleksi_id);
+            if (!seleksi) {
+                throw new Error('Data tidak ditemukan');
+            }
+
             const uuid = await MediaPathService.generateUniqueKey(conn);
             const media_path_id = await MediaPathModel.insert(conn, {
                 judul:'Foto Enter Ujian',
@@ -323,13 +331,27 @@ class PesertaSeleksiService {
                 uuid
             });
 
-            const affected = await PesertaSeleksiModel.enterUjian(conn, peserta_id, jadwal_seleksi_id, media_path_id);
+            const affected = await PesertaSeleksiModel.enterUjian(
+                conn, 
+                seleksi.peserta_id, 
+                seleksi.jadwal_seleksi_id, 
+                seleksi.wajib_validasi_foto, 
+                media_path_id
+            );
             if (affected === 0) {
                 throw new Error('proses enter ujian gagal dilakukan');
             }
 
-            await conn.commit();
-            return { success: true };
+            let validasiPeserta = {};
+            if(!seleksi.wajib_validasi_foto){
+                validasiPeserta = await PengawasUjianService.pembagianSoal(
+                    conn, 
+                    seleksi.seleksi_id, 
+                    seleksi.peserta_seleksi_id
+                );
+            }
+            await conn.commit();            
+            return { success: true, validasiPeserta };
         } catch (err) {
             await conn.rollback();
             if (uploadedPath) {

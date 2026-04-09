@@ -34,6 +34,7 @@ const UjianController = require('../app/controllers/UjianController');
 const DomainController = require('../app/controllers/DomainController');
 const JenisSoalController = require('../app/controllers/JenisSoalController');
 const MediaPathController = require('../app/controllers/MediaPathController');
+const NilaiSeleksiController = require('../app/controllers/NilaiSeleksiController');
 
 const router = express.Router()
 
@@ -157,6 +158,12 @@ router.get('/pengelola/:seleksi_id/reschedule', AuthMiddleware, PengelolaSeleksi
 router.get('/pengelola/:seleksi_id/reschedule/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulePanitiaController.show);
 router.put('/pengelola/:seleksi_id/reschedule/:id', AuthMiddleware, PengelolaSeleksiMiddleware, ReschedulePanitiaController.update);
 
+//melihat nilai dan status peserta
+router.get('/nilai/:seleksi_id/seleksi', AuthMiddleware, PengelolaSeleksiMiddleware, NilaiSeleksiController.index);
+router.get('/nilai/:seleksi_id/seleksi/:id', AuthMiddleware, PengelolaSeleksiMiddleware, NilaiSeleksiController.show);
+router.post('/nilai/:seleksi_id/daftar', AuthMiddleware, PengelolaSeleksiMiddleware, NilaiSeleksiController.findAllByKey);
+
+
 //untuk jumlah domain soal tiap seleksi
 router.get('/jumlah/:seleksi_id/soal', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.index);
 router.post('/jumlah/:seleksi_id/soal', AuthMiddleware, RolePengelolaMiddleware, JumlahSoalController.store);
@@ -251,7 +258,7 @@ router.put('/pengawas/:seleksi_id/reset-login/:peserta_seleksi_id', AuthMiddlewa
 //untuk lihat jadwal yang dimiliki
 router.get('/data-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.dataPeserta);
 router.get('/jadwal-peserta-seleksi', AuthMiddleware, RolePesertaMiddleware, PesertaSeleksiController.cariJadwal);
-router.post('/enter-ujian/:jadwal_seleksi_id',
+router.post('/enter-ujian/:jadwal_seleksi_id/peserta/:peserta_seleksi_id',
     AuthMiddleware, 
     RolePesertaMiddleware, 
     ...UploadMiddleware({
@@ -319,7 +326,7 @@ router.get('/status-peserta/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksi
 router.get('/status-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusJawaban);
 
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
-router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
+// router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
 router.post('/sync-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.syncJawaban);
 
 

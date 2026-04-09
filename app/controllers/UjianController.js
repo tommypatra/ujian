@@ -146,33 +146,33 @@ class UjianController {
      * PUT /UjianControllers/:id
      * Update data
      */
-    static async simpanJawaban(req, res) {
-        try {
-            const peserta_id = req.user.id;
-            const { peserta_seleksi_id } = req.params;
+    // static async simpanJawaban(req, res) {
+    //     try {
+    //         const peserta_id = req.user.id;
+    //         const { peserta_seleksi_id } = req.params;
 
-            const { error, value } = UjianRequest.simpanJawaban(req.body);
-            if (error) {
-                return res.status(422).json({
-                    message: error.details[0].message,
-                    data: null
-                });
-            }
+    //         const { error, value } = UjianRequest.simpanJawaban(req.body);
+    //         if (error) {
+    //             return res.status(422).json({
+    //                 message: error.details[0].message,
+    //                 data: null
+    //             });
+    //         }
 
-            const data_exec = await UjianService.simpanJawaban(peserta_id,peserta_seleksi_id,value);
+    //         const data_exec = await UjianService.simpanJawaban(peserta_id,peserta_seleksi_id,value);
 
-            return res.status(200).json({
-                message: 'jawaban tersimpan',
-                data: data_exec
-            });
-        } catch (err) {
-            console.error('UjianController.update error:', err);
-            return res.status(500).json({
-                message: isDev ? err.message : 'Internal server error',
-                data: null
-            });
-        }
-    }
+    //         return res.status(200).json({
+    //             message: 'jawaban tersimpan',
+    //             data: data_exec
+    //         });
+    //     } catch (err) {
+    //         console.error('UjianController.update error:', err);
+    //         return res.status(500).json({
+    //             message: isDev ? err.message : 'Internal server error',
+    //             data: null
+    //         });
+    //     }
+    // }
 
     static async syncJawaban(req, res) {
         try {

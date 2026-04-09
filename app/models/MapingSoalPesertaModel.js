@@ -62,6 +62,17 @@ class MapingSoalPesertaModel extends BaseModel {
         return this.findAll(conn, 'WHERE msp.peserta_seleksi_id = ?', [peserta_seleksi_id], 0);
     }
 
+    static async countAllByPeserta(conn, peserta_seleksi_id) {
+        const [rows] = await conn.query(
+            `SELECT COUNT(*) as total 
+            FROM maping_soal_pesertas 
+            WHERE peserta_seleksi_id = ?`,
+            [peserta_seleksi_id]
+        );
+
+        return rows[0].total;
+    }
+
     /**
      * Insert baru
      */

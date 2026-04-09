@@ -212,8 +212,8 @@ class PesertaSeleksiController {
         const absolutePath = req.uploadedFiles.enter_foto?.absolute_path;   // untuk fs.unlink
         try {
 
-            const { jadwal_seleksi_id } = req.params;
-            const peserta_id = req.user.id;
+            const { peserta_seleksi_id } = req.params;
+            // const peserta_id = req.user.id;
 
             if (!req.uploadedFiles?.enter_foto) {
                 return res.status(422).json({
@@ -223,7 +223,7 @@ class PesertaSeleksiController {
             }
 
             const enter_foto = relativePath;
-            const data_exec = await PesertaSeleksiService.enterUjian(peserta_id,jadwal_seleksi_id,{enter_foto});
+            const data_exec = await PesertaSeleksiService.enterUjian(peserta_seleksi_id,{enter_foto});
 
             return res.status(200).json({
                 message: 'Enter ujian berhasil dilakukan',

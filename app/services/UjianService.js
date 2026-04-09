@@ -89,45 +89,45 @@ class UjianService {
     /**
      * Simpan Jawaban
      */
-    static async simpanJawaban(peserta_id,peserta_seleksi_id,data) {
-        const conn = await db.getConnection();
-        try {
-            await conn.beginTransaction();
-            const payload = {
-                bank_soal_id:data.bank_soal_id,
-                bank_soal_pilihan_id:data.bank_soal_pilihan_id,
-                jawaban_text:data.jawaban_text,
-                peserta_id:peserta_id,
-                peserta_seleksi_id:peserta_seleksi_id
-            }
+    // static async simpanJawaban(peserta_id,peserta_seleksi_id,data) {
+    //     const conn = await db.getConnection();
+    //     try {
+    //         await conn.beginTransaction();
+    //         const payload = {
+    //             bank_soal_id:data.bank_soal_id,
+    //             bank_soal_pilihan_id:data.bank_soal_pilihan_id,
+    //             jawaban_text:data.jawaban_text,
+    //             peserta_id:peserta_id,
+    //             peserta_seleksi_id:peserta_seleksi_id
+    //         }
 
-            if(data.bank_soal_pilihan_id){
-                const validPilihan = await UjianModel.cekPilihanSoal(
-                    conn,
-                    data.bank_soal_id,
-                    data.bank_soal_pilihan_id
-                );
+    //         if(data.bank_soal_pilihan_id){
+    //             const validPilihan = await UjianModel.cekPilihanSoal(
+    //                 conn,
+    //                 data.bank_soal_id,
+    //                 data.bank_soal_pilihan_id
+    //             );
 
-                if (!validPilihan) {
-                    throw new Error('Pilihan jawaban tidak valid untuk soal ini');
-                }
-            }
+    //             if (!validPilihan) {
+    //                 throw new Error('Pilihan jawaban tidak valid untuk soal ini');
+    //             }
+    //         }
 
-            const simpanJawaban = await UjianModel.simpanJawaban(conn, payload);
-            await conn.commit();
-            return simpanJawaban;
+    //         const simpanJawaban = await UjianModel.simpanJawaban(conn, payload);
+    //         await conn.commit();
+    //         return simpanJawaban;
 
-        } catch (err) {
-            await conn.rollback();
-            throw err;
-        } finally {
-            conn.release();
-        }
-    }
+    //     } catch (err) {
+    //         await conn.rollback();
+    //         throw err;
+    //     } finally {
+    //         conn.release();
+    //     }
+    // }
 
     static async simpanJawabanBulk(peserta_id, peserta_seleksi_id, dataList) {
         const conn = await db.getConnection();
-
+        let totalTambah = 0; // counter
         try {
             await conn.beginTransaction();
 
@@ -141,18 +141,8 @@ class UjianService {
                     peserta_seleksi_id: peserta_seleksi_id
                 };
 
-                //VALIDASI SOAL MILIK PESERTA (WAJIB)
-                const [validSoal] = await conn.query(`
-                    SELECT 1
-                    FROM maping_soal_pesertas
-                    WHERE peserta_seleksi_id = ?
-                    AND bank_soal_id = ?
-                    LIMIT 1
-                `, [peserta_seleksi_id, payload.bank_soal_id]);
-
-                if (!validSoal.length) {
-                    throw new Error(`Soal tidak valid untuk peserta`);
-                }
+                //VALIDASI SOAL MILIK PESERTA
+                await UjianModel.cekValidSoal(conn, peserta_seleksi_id, payload.bank_soal_id);
 
                 //VALIDASI PILIHAN
                 if (payload.bank_soal_pilihan_id) {
@@ -170,13 +160,27 @@ class UjianService {
                 }
 
                 //SIMPAN
-                await UjianModel.simpanJawaban(conn, payload);
+                const isNew = await UjianModel.simpanJawaban(conn, payload);
+                if (isNew) {
+                    totalTambah++;
+                }            
             }
+ 
+            // UPDATE COUNTER
+            if (totalTambah > 0) {
+                await UjianModel.tambahTotalDijawab(
+                    conn,
+                    peserta_seleksi_id,
+                    totalTambah
+                );
+            }
+
             await conn.commit();
 
             return {
                 success: true,
-                total: dataList.length
+                total: dataList.length,
+                totalTambah
             };
 
         } catch (err) {

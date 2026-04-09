@@ -4,10 +4,12 @@ const fs = require('fs').promises;
 
 const ReschedulePesertaModel = require('../models/ReschedulePesertaModel');
 const MediaPathModel = require('../models/MediaPathModel');
+const SeleksiModel = require('../models/SeleksiModel');
 const MediaPathService = require('../services/MediaPathService');
 // const UserModel = require('../models/UserModel');
 
 const {pickFields} = require('../helpers/payloadHelper');
+const PesertaSeleksiModel = require('../models/PesertaSeleksiModel');
 
 
 class ReschedulePesertaService {
@@ -87,10 +89,14 @@ class ReschedulePesertaService {
         try {
             await conn.beginTransaction();
 
-            // const existing = await ReschedulePesertaModel.findActiveByPesertaSeleksi(conn,data.peserta_seleksi_id);
-            // if (existing) {
-            //     throw new Error('Tidak bisa menambah reschedule, masih ada yang proses atau sudah diterima');
-            // }
+            const seleksi = await ReschedulePesertaModel.cariInfoSeleksi(conn, data.peserta_seleksi_id);
+            if (!seleksi) {
+                throw new Error('Data tidak ditemukan');
+            }
+
+            if(!seleksi.reschedule_aktif){
+                throw new Error('Maaf, pembuatan reschedule pada seleksi ini tidak bisa dilakukan');
+            }
 
             const uuid = await MediaPathService.generateUniqueKey(conn);
             const media_path_id = await MediaPathModel.insert(conn, {

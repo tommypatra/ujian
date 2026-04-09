@@ -39,6 +39,8 @@ class BaseModel {
             throw new Error('Field tidak diizinkan');
         }
 
+        let groupBy = (this.groupBy)?`GROUP BY ${this.groupBy}`:'';
+
         const selectFields = Array.isArray(options.select) && options.select.length > 0
             ? options.select.join(', ')
             : this.selectFields;
@@ -48,6 +50,7 @@ class BaseModel {
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
             ${this.joinTables}
             WHERE ${field} = ?
+            ${groupBy}
             LIMIT 1`,
             [value]
         );
@@ -93,6 +96,7 @@ class BaseModel {
             .join(' AND ');
 
         let orderSql = this.orderBy;
+        let groupBy = (this.groupBy)?`GROUP BY ${this.groupBy}`:'';
 
         if (options.random === true) {
             orderSql = `ORDER BY RAND()`;
@@ -103,6 +107,7 @@ class BaseModel {
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
             ${this.joinTables}
             WHERE ${whereClause}
+            ${groupBy}
             ${orderSql}`;
 
         const [rows] = await conn.query(
@@ -111,7 +116,7 @@ class BaseModel {
         );
 
         if (process.env.APP_ENV === 'development') {
-            console.log(sql);
+            console.log('findAllByMultipleKeys', sql,values);
         }
 
         return rows;
@@ -133,6 +138,7 @@ class BaseModel {
         const placeholders = values.map(() => '?').join(',');
         // default order
         let orderSql = this.orderBy;
+        let groupBy = (this.groupBy)?`GROUP BY ${this.groupBy}`:'';
 
         // random order
         if (options.random === true) {
@@ -142,16 +148,19 @@ class BaseModel {
         const selectFields = Array.isArray(options.select) && options.select.length > 0
             ? options.select.join(', ')
             : this.selectFields;
-
-        const [rows] = await conn.query(
-            `SELECT ${selectFields}
+        
+        const sql = `SELECT ${selectFields}
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
                 ${this.joinTables}
             WHERE ${field} IN (${placeholders})
-            ${orderSql}`,
-            values
-        );
+            ${groupBy}
+            ${orderSql}`
 
+        const [rows] = await conn.query(sql,values);
+
+        if (process.env.APP_ENV === 'development') {
+            console.log('findAllByKey', sql,values);
+        }
         return rows;
     }
 
@@ -180,8 +189,8 @@ class BaseModel {
             SELECT ${selectFields}
             FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
             ${this.joinTables}
-            ${whereSql}
-            ${groupBy}
+            ${whereSql}    
+            ${groupBy}        
             ${this.orderBy}
         `;
 
@@ -193,11 +202,11 @@ class BaseModel {
             bindings.push(limit, offset);
         }
 
+        const [rows] = await conn.query(sql, bindings);
         if (process.env.APP_ENV === 'development') {
-            console.log(sql);
+            console.log('findAll', sql,bindings);
         }
 
-        const [rows] = await conn.query(sql, bindings);
         return rows;
     }
 
@@ -206,9 +215,15 @@ class BaseModel {
      * ======================= */
     static async countAll(conn, whereSql = '', params = []) {
         this._ensureConfig();
+        // let groupBy = (this.groupBy)?`GROUP BY ${this.groupBy}`:'';
+
+        const countColumn = this.groupBy
+            ? `COUNT(DISTINCT ${this.groupBy})`
+            : this.countColumns;
+
 
         const [[row]] = await conn.query(
-            `SELECT ${this.countColumns} AS total
+            `SELECT ${countColumn} AS total
              FROM ${this.tableName}${this.tableAlias ? ' ' + this.tableAlias : ''}
              ${this.joinTables}
              ${whereSql}`,

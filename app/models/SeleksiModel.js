@@ -17,12 +17,20 @@ class SeleksiModel extends BaseModel {
         wajib_validasi_foto,
         reschedule_mulai,
         reschedule_selesai,
+        wajib_validasi_foto,
         prefix_app,
         tahun,
         urutan,
         keterangan,
         created_at,
-        updated_at
+        updated_at,
+        (
+            CASE 
+                WHEN CURDATE() BETWEEN reschedule_mulai AND reschedule_selesai 
+                THEN 1 
+                ELSE 0 
+            END
+        ) AS reschedule_aktif     
     `;
 
     static joinTables = '';

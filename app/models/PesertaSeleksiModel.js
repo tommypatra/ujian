@@ -39,6 +39,9 @@ class PesertaSeleksiModel extends BaseModel {
         s.nama AS seleksi_nama,
         s.waktu_mulai,
         s.waktu_selesai,
+        s.reschedule_mulai,
+        s.reschedule_selesai,
+        s.wajib_validasi_foto,
         s.prefix_app,
         s.tahun,
         s.keterangan,
@@ -48,7 +51,20 @@ class PesertaSeleksiModel extends BaseModel {
         js.is_mulai,
         js.lokasi_ujian,
         js.jam_mulai,
-        js.jam_selesai
+        js.jam_selesai,
+        (
+            CASE 
+                WHEN CURDATE() BETWEEN s.reschedule_mulai AND s.reschedule_selesai 
+                THEN 1 
+                ELSE 0 
+            END
+        ) AS reschedule_aktif,
+        ps.is_valid,
+        COUNT(mpp.id) as total_dijawab,
+        MAX(msp.total_soal) as total_soal,
+        ROUND(
+            (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
+        ,2) as nilai
     `;
 
     static joinTables = `
@@ -56,10 +72,18 @@ class PesertaSeleksiModel extends BaseModel {
         LEFT JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
         LEFT JOIN seleksis s ON s.id = p.seleksi_id
         LEFT JOIN media_paths mp ON mp.id = ps.media_path_id
+
+        LEFT JOIN (
+            SELECT peserta_seleksi_id, COUNT(*) AS total_soal
+            FROM maping_soal_pesertas
+            GROUP BY peserta_seleksi_id
+        ) msp ON msp.peserta_seleksi_id = ps.id
+        LEFT JOIN jawaban_pesertas mpp ON mpp.peserta_seleksi_id = ps.id
+        LEFT JOIN bank_soal_pilihans bsp ON bsp.id = mpp.bank_soal_pilihan_id
     `;
 
-    static countColumns = 'COUNT(ps.id)';
-
+    static countColumns = 'COUNT(*)';
+    static groupBy = 'ps.id';
     static orderBy = `
         ORDER BY
             s.tahun DESC,
@@ -274,8 +298,9 @@ class PesertaSeleksiModel extends BaseModel {
     }
 
     // app/models/PesertaSeleksiModel.js
-    static async enterUjian(conn, peserta_id, jadwal_seleksi_id, media_path_id) {
+    static async enterUjian(conn, peserta_id, jadwal_seleksi_id, wajib_validasi_foto, media_path_id) {
         try {
+            const is_allow = wajib_validasi_foto == 1 ? 0 : 1;
 
             const [result] = await conn.query(
                 `
@@ -286,7 +311,7 @@ class PesertaSeleksiModel extends BaseModel {
                     ps.is_enter = 1,
                     ps.media_path_id = ?,
                     ps.enter_at = NOW(),
-                    ps.is_allow = 0,
+                    ps.is_allow = ${is_allow},
                     ps.allow_at = NULL,
                     ps.updated_at = NOW()
                 WHERE ps.peserta_id = ?

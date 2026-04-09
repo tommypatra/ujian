@@ -110,12 +110,29 @@ class UjianModel extends BaseModel {
     static async statusPeserta(conn, peserta_id, peserta_seleksi_id){
         const [[row]] = await conn.query(
             `
-            SELECT p.is_login, ps.is_enter, ps.is_allow, ps.is_done, js.is_mulai, js.is_selesai
+            SELECT 
+                p.is_login, ps.is_enter, ps.is_allow, ps.is_done, js.is_mulai, js.is_selesai, js.id as jadwal_seleksi_id,
+                COUNT(mpp.id) as total_dijawab,
+                MAX(msp.total_soal) as total_soal,
+                ROUND(
+                    (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
+                ,2) as nilai
+
             FROM pesertas p
             INNER JOIN peserta_seleksis ps ON p.id = ps.peserta_id
             INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+
+            LEFT JOIN (
+                SELECT peserta_seleksi_id, COUNT(*) AS total_soal
+                FROM maping_soal_pesertas
+                GROUP BY peserta_seleksi_id
+            ) msp ON msp.peserta_seleksi_id = ps.id
+            LEFT JOIN jawaban_pesertas mpp ON mpp.peserta_seleksi_id = ps.id
+            LEFT JOIN bank_soal_pilihans bsp ON bsp.id = mpp.bank_soal_pilihan_id
+
             WHERE p.id = ? AND ps.id = ?
             LIMIT 1
+            GROUP BY ps.id
             `,
             [peserta_id, peserta_seleksi_id]
         );
@@ -346,6 +363,8 @@ class UjianModel extends BaseModel {
         if (result.affectedRows === 0) {
             throw new Error('Tidak berhak menyimpan jawaban');
         }
+
+        return result.affectedRows === 1;
     }
 
     static async selesaiUjian(conn, peserta_id, peserta_seleksi_id) {
@@ -491,7 +510,30 @@ class UjianModel extends BaseModel {
         return jadwalResult;
     }
 
+    static async assertSoalValid(conn, peserta_seleksi_id, bank_soal_id) {
+        const [rows] = await conn.query(`
+            SELECT 1
+            FROM maping_soal_pesertas
+            WHERE peserta_seleksi_id = ?
+            AND bank_soal_id = ?
+            LIMIT 1
+        `, [peserta_seleksi_id, bank_soal_id]);
 
+        if (!rows.length) {
+            throw new Error('Soal tidak valid');
+        }
+    }
+    
+    static async tambahTotalDijawab(conn, peserta_seleksi_id, jumlah) {
+
+        if (!jumlah || jumlah <= 0) return;
+
+        await conn.query(`
+            UPDATE peserta_seleksis
+            SET total_dijawab = total_dijawab + ?
+            WHERE id = ?
+        `, [jumlah, peserta_seleksi_id]);
+    }    
 }
 
 module.exports = UjianModel;

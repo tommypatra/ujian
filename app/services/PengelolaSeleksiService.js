@@ -25,7 +25,6 @@ class PengelolaSeleksiService {
         //untuk seleksi id
         where.push(`s.id = ?`);
         params.push(parseInt(seleksi_id));
-
         
         // search umum
         if (query.search) {
@@ -35,12 +34,6 @@ class PengelolaSeleksiService {
                 `%${query.search}%`,
                 `%${query.search}%`
             );
-        }
-
-
-        if (query.jabatan) {
-            where.push(`(ps.jabatan = ?)`);
-            params.push(query.jabatan);
         }
         
         const whereSql = where.length

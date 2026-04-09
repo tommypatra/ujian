@@ -128,7 +128,7 @@ class PengawasUjianController {
                 });
             }
 
-            const data_exec = await PengawasUjianService.validasiPeserta(seleksi_id, jadwal_seleksi_id, peserta_seleksi_id, req.user.id, value);
+            const data_exec = await PengawasUjianService.validasiPeserta(seleksi_id, peserta_seleksi_id, req.user.id, value);
             return res.status(200).json({
                 message: 'validasi berhasil',
                 data: data_exec
