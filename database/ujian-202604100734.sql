@@ -132,7 +132,7 @@ CREATE TABLE `jawaban_pesertas` (
   CONSTRAINT `jawaban_pesertas_ibfk_1` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`) ON DELETE CASCADE,
   CONSTRAINT `jawaban_pesertas_ibfk_2` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE CASCADE,
   CONSTRAINT `jawaban_pesertas_ibfk_3` FOREIGN KEY (`bank_soal_pilihan_id`) REFERENCES `bank_soal_pilihans` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -218,7 +218,7 @@ CREATE TABLE `maping_soal_pesertas` (
   KEY `soal_pesertas_peserta_seleksis_FK` (`peserta_seleksi_id`),
   CONSTRAINT `soal_pesertas_bank_soals_FK` FOREIGN KEY (`bank_soal_id`) REFERENCES `bank_soals` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `soal_pesertas_peserta_seleksis_FK` FOREIGN KEY (`peserta_seleksi_id`) REFERENCES `peserta_seleksis` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=160 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -238,7 +238,7 @@ CREATE TABLE `media_paths` (
   `updated_at` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `media_paths_unique` (`uuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=149 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -321,11 +321,15 @@ CREATE TABLE `peserta_seleksis` (
   `enter_at` datetime DEFAULT NULL,
   `is_done` tinyint(1) DEFAULT '0',
   `is_allow` tinyint(1) DEFAULT '0',
+  `is_valid` tinyint(1) NOT NULL DEFAULT '1',
   `allow_at` datetime DEFAULT NULL,
+  `total_soal` int NOT NULL DEFAULT '0',
+  `total_dijawab` int NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `peserta_seleksi_unique` (`peserta_id`,`jadwal_seleksi_id`),
+  UNIQUE KEY `peserta_seleksis_unique` (`peserta_id`,`is_valid`),
   KEY `jadwal_seleksi_id` (`jadwal_seleksi_id`),
   KEY `peserta_seleksis_media_paths_FK` (`media_path_id`),
   KEY `peserta_seleksis_peserta_id_IDX` (`peserta_id`) USING BTREE,
@@ -551,4 +555,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 20:41:25
+-- Dump completed on 2026-04-10  7:34:13
