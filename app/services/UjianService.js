@@ -139,62 +139,110 @@ class UjianService {
     //     }
     // }
 
+    // static async simpanJawabanBulk(peserta_id, peserta_seleksi_id, dataList) {
+    //     const conn = await db.getConnection();
+    //     let totalTambah = 0; // counter
+    //     try {
+    //         await conn.beginTransaction();
+
+    //         for (const data of dataList) {
+
+    //             const payload = {
+    //                 bank_soal_id: data.bank_soal_id,
+    //                 bank_soal_pilihan_id: data.pilihan_id ?? null,
+    //                 jawaban_text: data.jawaban_text ?? null,
+    //                 peserta_id: peserta_id,
+    //                 peserta_seleksi_id: peserta_seleksi_id
+    //             };
+
+    //             //VALIDASI SOAL MILIK PESERTA
+    //             await UjianModel.cekValidSoal(conn, peserta_seleksi_id, payload.bank_soal_id);
+
+    //             //VALIDASI PILIHAN
+    //             if (payload.bank_soal_pilihan_id) {
+    //                 const valid = await UjianModel.cekPilihanSoal(
+    //                     conn,
+    //                     payload.bank_soal_id,
+    //                     payload.bank_soal_pilihan_id
+    //                 );
+
+    //                 if (!valid) {
+    //                     throw new Error(
+    //                         `Pilihan tidak valid untuk soal ${payload.bank_soal_id}`
+    //                     );
+    //                 }
+    //             }
+
+    //             //SIMPAN
+    //             const isNew = await UjianModel.simpanJawaban(conn, payload);
+    //             if (isNew) {
+    //                 totalTambah++;
+    //             }            
+    //         }
+ 
+    //         // UPDATE COUNTER
+    //         await UjianModel.updateDijawabDanNilai(
+    //             conn,
+    //             peserta_seleksi_id
+    //         );
+
+    //         await conn.commit();
+
+    //         return {
+    //             success: true,
+    //             total: dataList.length,
+    //             totalTambah
+    //         };
+
+    //     } catch (err) {
+    //         await conn.rollback();
+    //         throw err;
+    //     } finally {
+    //         conn.release();
+    //     }
+    // }
+
     static async simpanJawabanBulk(peserta_id, peserta_seleksi_id, dataList) {
         const conn = await db.getConnection();
-        let totalTambah = 0; // counter
+
         try {
             await conn.beginTransaction();
 
-            for (const data of dataList) {
-
-                const payload = {
-                    bank_soal_id: data.bank_soal_id,
-                    bank_soal_pilihan_id: data.pilihan_id ?? null,
-                    jawaban_text: data.jawaban_text ?? null,
-                    peserta_id: peserta_id,
-                    peserta_seleksi_id: peserta_seleksi_id
-                };
-
-                //VALIDASI SOAL MILIK PESERTA
-                await UjianModel.cekValidSoal(conn, peserta_seleksi_id, payload.bank_soal_id);
-
-                //VALIDASI PILIHAN
-                if (payload.bank_soal_pilihan_id) {
-                    const valid = await UjianModel.cekPilihanSoal(
-                        conn,
-                        payload.bank_soal_id,
-                        payload.bank_soal_pilihan_id
-                    );
-
-                    if (!valid) {
-                        throw new Error(
-                            `Pilihan tidak valid untuk soal ${payload.bank_soal_id}`
-                        );
-                    }
-                }
-
-                //SIMPAN
-                const isNew = await UjianModel.simpanJawaban(conn, payload);
-                if (isNew) {
-                    totalTambah++;
-                }            
+            if (!dataList || dataList.length === 0) {
+                throw new Error('Tidak ada data jawaban');
             }
- 
-            // UPDATE COUNTER
-            if (totalTambah > 0) {
-                await UjianModel.tambahTotalDijawab(
-                    conn,
-                    peserta_seleksi_id,
-                    totalTambah
-                );
+
+            // Build values (loop ringan)
+            const values = dataList.map(d => [
+                d.bank_soal_id,
+                d.pilihan_id ?? null,
+                d.jawaban_text ?? null
+            ]);
+
+            // Simpan bulk (MODEL)
+            const result = await UjianModel.bulkInsertJawaban(
+                conn,
+                peserta_id,
+                peserta_seleksi_id,
+                values
+            );
+
+            if (result.affectedRows === 0) {
+                throw new Error('Tidak berhak menyimpan jawaban atau data tidak valid');
             }
+
+            // Update statistik (MODEL)
+            await UjianModel.updateDijawabDanNilai(
+                conn,
+                peserta_seleksi_id
+            );
 
             await conn.commit();
 
             return {
                 success: true,
                 total: dataList.length,
-                totalTambah
+                affectedRows: result.affectedRows
             };
 
         } catch (err) {
@@ -203,7 +251,7 @@ class UjianService {
         } finally {
             conn.release();
         }
-    }
+    }    
 
     static async enterUjian(peserta_id, jadwal_seleksi_id, data) {
         const conn = await db.getConnection();

@@ -49,38 +49,38 @@ class UjianController {
         }
     }
 
-    static async syncJawaban(req, res) {
-        try {
-            const peserta_id = req.user.id;
-            const { peserta_seleksi_id, jawaban } = req.body;
+    // static async syncJawaban(req, res) {
+    //     try {
+    //         const peserta_id = req.user.id;
+    //         const { peserta_seleksi_id, jawaban } = req.body;
 
-            if (!Array.isArray(jawaban) || !jawaban.length) {
-                return res.status(422).json({
-                    message: 'Data jawaban kosong',
-                    data: null
-                });
-            }
+    //         if (!Array.isArray(jawaban) || !jawaban.length) {
+    //             return res.status(422).json({
+    //                 message: 'Data jawaban kosong',
+    //                 data: null
+    //             });
+    //         }
 
-            const result = await UjianService.simpanJawabanBulk(
-                peserta_id,
-                peserta_seleksi_id,
-                jawaban
-            );
+    //         const result = await UjianService.simpanJawabanBulk(
+    //             peserta_id,
+    //             peserta_seleksi_id,
+    //             jawaban
+    //         );
 
-            return res.status(200).json({
-                message: 'Sync jawaban berhasil',
-                data: result
-            });
+    //         return res.status(200).json({
+    //             message: 'Sync jawaban berhasil',
+    //             data: result
+    //         });
 
-        } catch (err) {
-            console.error('UjianController.syncJawaban error:', err);
+    //     } catch (err) {
+    //         console.error('UjianController.syncJawaban error:', err);
 
-            return res.status(500).json({
-                message: isDev ? err.message : 'Internal server error',
-                data: null
-            });
-        }
-    }
+    //         return res.status(500).json({
+    //             message: isDev ? err.message : 'Internal server error',
+    //             data: null
+    //         });
+    //     }
+    // }
     
     static async statusPeserta(req, res) {
         try {

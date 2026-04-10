@@ -296,6 +296,70 @@ class UjianModel extends BaseModel {
         return !!row;        
     }
 
+static async bulkInsertJawaban(conn, peserta_id, peserta_seleksi_id, values) {
+
+    // 🔥 build SELECT UNION ALL
+    const selects = values.map(() => `
+        SELECT ? AS bank_soal_id, ? AS bank_soal_pilihan_id, ? AS jawaban_text
+    `).join(' UNION ALL ');
+
+    const sql = `
+        INSERT INTO jawaban_pesertas
+        (
+            peserta_seleksi_id,
+            bank_soal_id,
+            bank_soal_pilihan_id,
+            jawaban_text,
+            created_at,
+            updated_at
+        )
+        SELECT
+            ps.id,
+            v.bank_soal_id,
+            v.bank_soal_pilihan_id,
+            v.jawaban_text,
+            NOW(),
+            NOW()
+        FROM (
+            ${selects}
+        ) AS v
+
+        JOIN peserta_seleksis ps ON ps.id = ?
+        JOIN pesertas p ON p.id = ps.peserta_id
+        JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
+
+        JOIN maping_soal_pesertas msp 
+            ON msp.bank_soal_id = v.bank_soal_id
+            AND msp.peserta_seleksi_id = ps.id
+
+        LEFT JOIN bank_soal_pilihans bsp
+            ON bsp.id = v.bank_soal_pilihan_id
+            AND bsp.bank_soal_id = v.bank_soal_id
+
+        WHERE 
+            p.id = ?
+            AND p.is_login = 1
+            AND ps.is_allow = 1
+            AND (ps.is_done = 0 OR ps.is_done IS NULL)
+            AND js.is_mulai = 1
+            AND (js.is_selesai = 0 OR js.is_selesai IS NULL)
+
+        ON DUPLICATE KEY UPDATE
+            bank_soal_pilihan_id = VALUES(bank_soal_pilihan_id),
+            jawaban_text = VALUES(jawaban_text),
+            updated_at = NOW()
+    `;
+
+    const params = [
+        ...values.flat(),
+        peserta_seleksi_id,
+        peserta_id
+    ];
+
+    const [result] = await conn.query(sql, params);
+
+    return result;
+}
 
     static async simpanJawaban(conn, data) {
         // console.log(data);
@@ -552,16 +616,27 @@ class UjianModel extends BaseModel {
         }
     }
 
-    static async tambahTotalDijawab(conn, peserta_seleksi_id, jumlah) {
-
-        if (!jumlah || jumlah <= 0) return;
-
+    static async updateDijawabDanNilai(conn, peserta_seleksi_id) {
+        if (!peserta_seleksi_id) return;
         await conn.query(`
-            UPDATE peserta_seleksis
-            SET total_dijawab = total_dijawab + ?
-            WHERE id = ?
-        `, [jumlah, peserta_seleksi_id]);
-    }    
+            UPDATE peserta_seleksis ps
+            SET 
+                total_dijawab = (
+                    SELECT COUNT(jp.bank_soal_pilihan_id)
+                    FROM jawaban_pesertas jp
+                    WHERE jp.peserta_seleksi_id = ps.id
+                ),
+                total_benar = (
+                    SELECT COUNT(*)
+                    FROM jawaban_pesertas jp
+                    JOIN bank_soal_pilihans bsp 
+                        ON bsp.id = jp.bank_soal_pilihan_id
+                    WHERE jp.peserta_seleksi_id = ps.id
+                    AND bsp.is_benar = 1
+                )
+            WHERE ps.id = ?
+        `, [peserta_seleksi_id]);
+    }
 }
 
 module.exports = UjianModel;

@@ -63,7 +63,7 @@ class PesertaSeleksiModel extends BaseModel {
         ps.total_dijawab,
         ps.total_soal,
         ROUND(
-            (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
+            (ps.total_benar / ps.total_soal) * 100
         ,2) as nilai
     `;
 
@@ -73,11 +73,6 @@ class PesertaSeleksiModel extends BaseModel {
         LEFT JOIN seleksis s ON s.id = p.seleksi_id
         LEFT JOIN media_paths mp ON mp.id = ps.media_path_id
 
-        LEFT JOIN (
-            SELECT peserta_seleksi_id, COUNT(*) AS total_soal
-            FROM maping_soal_pesertas
-            GROUP BY peserta_seleksi_id
-        ) msp ON msp.peserta_seleksi_id = ps.id
         LEFT JOIN jawaban_pesertas mpp ON mpp.peserta_seleksi_id = ps.id
         LEFT JOIN bank_soal_pilihans bsp ON bsp.id = mpp.bank_soal_pilihan_id
     `;
