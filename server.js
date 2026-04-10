@@ -18,12 +18,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS (DEV)
+// CORS
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Form-Submit']
 }));
+
+// HANDLE PREFLIGHT
+app.options('*', cors());
 
 // =====================
 // ROUTES
