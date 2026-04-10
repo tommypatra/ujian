@@ -72,6 +72,20 @@ class UjianService {
         }
     }
 
+    static async jumlahSoal(peserta_seleksi_id) {
+        const conn = await db.getConnection();
+        try {
+            const data = await UjianModel.jumlahSoal(
+                conn,
+                peserta_seleksi_id,
+            );
+
+            return data;
+        } finally {
+            conn.release();
+        }
+    }
+
     static async findAllByPesertaId(peserta_id) {
         const conn = await db.getConnection();
         try {

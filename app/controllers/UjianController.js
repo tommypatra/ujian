@@ -102,6 +102,23 @@ class UjianController {
         }
     }
 
+    static async jumlahSoal(req, res) {
+        try {
+            const { peserta_seleksi_id } = req.params;
+            const data_exec = await UjianService.jumlahSoal(peserta_seleksi_id);
+            return res.status(200).json({
+                message: 'jumlah soal',
+                data: data_exec
+            });
+        } catch (err) {
+            console.error('UjianController.statusJawaban error:', err);
+            return res.status(500).json({
+                message: isDev ? err.message : 'Internal server error',
+                data: null
+            });
+        }
+    }
+
     static async statusJawaban(req, res) {
         try {
             const peserta_id = req.user.id;

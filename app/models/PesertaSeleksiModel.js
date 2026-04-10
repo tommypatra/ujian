@@ -60,8 +60,8 @@ class PesertaSeleksiModel extends BaseModel {
             END
         ) AS reschedule_aktif,
         ps.is_valid,
-        COUNT(mpp.id) as total_dijawab,
-        MAX(msp.total_soal) as total_soal,
+        ps.total_dijawab,
+        ps.total_soal,
         ROUND(
             (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
         ,2) as nilai

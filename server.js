@@ -74,6 +74,10 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+
+// 🔥 import WS
+const { initWebSocket } = require('./ws');
 
 const app = express();
 
@@ -106,13 +110,26 @@ app.use((req, res) => {
     });
 });
 
-// 🔥 INI WAJIB UNTUK CPANEL
+// =====================
+// 🔥 CREATE SERVER
+// =====================
+const server = http.createServer(app);
+
+// 🔥 INIT WS
+initWebSocket(server);
+
+// =====================
+// 🔥 EXPORT UNTUK CPANEL
+// =====================
 module.exports = app;
 
-// 🔥 AGAR LOCAL TETAP BISA
+// =====================
+// 🔥 LOCAL MODE (WS AKTIF)
+// =====================
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`🚀 Local jalan di ${PORT}`);
+
+    server.listen(PORT, () => {
+        console.log(`🚀 Local + WS jalan di ${PORT}`);
     });
 }

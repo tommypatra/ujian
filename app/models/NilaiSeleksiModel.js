@@ -23,8 +23,8 @@ class NilaiSeleksiModel extends BaseModel {
         ps.is_done,
         ps.is_valid,
 
-        COUNT(mpp.id) AS total_dijawab,
-        MAX(msp.total_soal) AS total_soal,
+        ps.total_dijawab,
+        ps.total_soal,
         ROUND(
             (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
         ,2) AS nilai,

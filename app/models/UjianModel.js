@@ -112,27 +112,13 @@ class UjianModel extends BaseModel {
             `
             SELECT 
                 p.is_login, ps.is_enter, ps.is_allow, ps.is_done, js.is_mulai, js.is_selesai, js.id as jadwal_seleksi_id,
-                COUNT(mpp.id) as total_dijawab,
-                MAX(msp.total_soal) as total_soal,
-                ROUND(
-                    (COUNT(CASE WHEN bsp.is_benar = 1 THEN 1 END) / COUNT(mpp.id)) * 100
-                ,2) as nilai
-
+                ps.total_dijawab,
+                ps.total_soal
             FROM pesertas p
             INNER JOIN peserta_seleksis ps ON p.id = ps.peserta_id
             INNER JOIN jadwal_seleksis js ON js.id = ps.jadwal_seleksi_id
-
-            LEFT JOIN (
-                SELECT peserta_seleksi_id, COUNT(*) AS total_soal
-                FROM maping_soal_pesertas
-                GROUP BY peserta_seleksi_id
-            ) msp ON msp.peserta_seleksi_id = ps.id
-            LEFT JOIN jawaban_pesertas mpp ON mpp.peserta_seleksi_id = ps.id
-            LEFT JOIN bank_soal_pilihans bsp ON bsp.id = mpp.bank_soal_pilihan_id
-
             WHERE p.id = ? AND ps.id = ?
             LIMIT 1
-            GROUP BY ps.id
             `,
             [peserta_id, peserta_seleksi_id]
         );
@@ -524,6 +510,48 @@ class UjianModel extends BaseModel {
         }
     }
     
+    static async jumlahSoal(conn, peserta_seleksi_id) {
+        if (!peserta_seleksi_id) return;
+        const [[row]] = await conn.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM maping_soal_pesertas msp
+            JOIN bank_soals b ON b.id = msp.bank_soal_id
+            WHERE msp.peserta_seleksi_id = ?`,
+            [peserta_seleksi_id]
+        );
+        return row.total;
+    }    
+
+    static async ubahTotalSoal(conn, peserta_seleksi_id) {
+        if (!peserta_seleksi_id) return;
+
+        await conn.query(`
+            UPDATE peserta_seleksis ps
+            SET total_soal = (
+                SELECT COUNT(*)
+                FROM maping_soal_pesertas msp
+                JOIN bank_soals b ON b.id = msp.bank_soal_id
+                WHERE msp.peserta_seleksi_id = ps.id
+            )
+            WHERE ps.id = ?
+        `, [peserta_seleksi_id]);
+    }
+
+    static async cekValidSoal(conn, peserta_seleksi_id, bank_soal_id) {
+        const [[row]] = await conn.query(`
+            SELECT 1
+            FROM maping_soal_pesertas
+            WHERE peserta_seleksi_id = ?
+            AND bank_soal_id = ?
+            LIMIT 1
+        `, [peserta_seleksi_id, bank_soal_id]);
+
+        if (!row) {
+            throw new Error('Soal tidak valid untuk peserta ini');
+        }
+    }
+
     static async tambahTotalDijawab(conn, peserta_seleksi_id, jumlah) {
 
         if (!jumlah || jumlah <= 0) return;

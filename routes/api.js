@@ -325,6 +325,8 @@ router.get('/status-peserta/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksi
 
 router.get('/status-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.statusJawaban);
 
+router.get('/jumlah-soal-peserta/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.jumlahSoal);
+
 router.get('/ujian/:peserta_seleksi_id/soal', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.index);
 // router.post('/ujian/:peserta_seleksi_id/simpan-jawaban', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.simpanJawaban);
 router.post('/sync-jawaban/:peserta_seleksi_id', AuthMiddleware, PesertaSeleksiMiddleware, UjianController.syncJawaban);

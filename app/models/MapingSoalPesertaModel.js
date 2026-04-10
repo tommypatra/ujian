@@ -135,6 +135,18 @@ class MapingSoalPesertaModel extends BaseModel {
         return rows;
     }
 
+    static async countSoalPeserta(conn, pesertaId) {
+        const [[row]] = await conn.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM maping_soal_pesertas msp
+            JOIN bank_soals b ON b.id = msp.bank_soal_id
+            WHERE msp.peserta_seleksi_id = ?`,
+            [pesertaId]
+        );
+        return row.total;
+    }
+
 
     static async countSoalPesertaByDomain(conn, pesertaId, domainSoalId) {
         const [[row]] = await conn.query(

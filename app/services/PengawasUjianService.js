@@ -284,6 +284,19 @@ class PengawasUjianService {
                 }
             }
         }
+
+        // hitung soal peserta keseluruhan
+        const jumlahSoal = await MapingSoalPesertaModel.countSoalPeserta(
+            conn,
+            peserta_seleksi_id
+        );
+
+        UjianModel.ubahTotalSoal(
+            conn,
+            peserta_seleksi_id,
+            jumlahSoal
+        );
+
     }
 
     /**
